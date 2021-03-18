@@ -1,33 +1,34 @@
 package vegancheckteam.untitled_vegan_app_server
 
-import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.request.*
-import io.ktor.features.*
-import org.slf4j.event.*
-import io.ktor.routing.*
-import io.ktor.http.*
-import com.fasterxml.jackson.databind.*
-import io.ktor.jackson.*
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.features.logging.*
-import kotlin.test.*
-import io.ktor.server.testing.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.server.testing.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ApplicationTest {
     @Test
     fun testRoot() {
         withTestApplication({ module(testing = true) }) {
-            handleRequest(HttpMethod.Get, "/").apply {
-                assertEquals(HttpStatusCode.OK, response.status())
-                assertEquals("HELLO WORLD!", response.content)
-            }
+            var response = handleRequest(HttpMethod.Get, "/is_registered/rob").response
+            assertEquals("nope", response.content)
+
+            response = handleRequest(HttpMethod.Get, "/register_user/rob").response
+            assertEquals("ok", response.content)
+
+            response = handleRequest(HttpMethod.Get, "/is_registered/rob").response
+            assertEquals("yep", response.content)
+
+            response = handleRequest(HttpMethod.Get, "/delete_user/rob").response
+            assertEquals("done!", response.content)
+
+            response = handleRequest(HttpMethod.Get, "/is_registered/rob").response
+            assertEquals("nope", response.content)
         }
     }
 
