@@ -12,12 +12,18 @@ data class Config(
     @JsonProperty("psql_pass")
     val psqlPassword: String,
     @JsonProperty("db_connection_attempts_timeout_seconds")
-    val dbConnectionAttemptsTimeoutSeconds: Int) {
+    val dbConnectionAttemptsTimeoutSeconds: Int,
+    @JsonProperty("jwt_secret")
+    val jwtSecret: String) {
 
     companion object {
-        fun fromFile(path: String): Config {
+        lateinit var instance: Config
+        var instanceInited = false
+
+        fun initFromFile(path: String) {
             val mapper = ObjectMapper()
-            return mapper.readValue(File(path).readText(), Config::class.java)
+            instance = mapper.readValue(File(path).readText(), Config::class.java)
+            instanceInited = true
         }
     }
 }

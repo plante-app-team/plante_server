@@ -6,52 +6,54 @@ import io.ktor.request.*
 import io.ktor.features.*
 import org.slf4j.event.*
 import io.ktor.routing.*
-import io.ktor.http.*
 import com.fasterxml.jackson.databind.*
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
+import io.ktor.auth.jwt.jwt
 import io.ktor.jackson.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.logging.*
+import io.ktor.locations.KtorExperimentalLocationsAPI
+import io.ktor.locations.Locations
+import io.ktor.locations.get
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.db.User
-import java.util.*
+import vegancheckteam.untitled_vegan_app_server.db.UserTable
+import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
+import vegancheckteam.untitled_vegan_app_server.auth.JwtController
+import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
+import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.routes.LoginParams
+import vegancheckteam.untitled_vegan_app_server.routes.RegisterParams
+import vegancheckteam.untitled_vegan_app_server.routes.SignOutAllParams
+import vegancheckteam.untitled_vegan_app_server.routes.UpdateUserDataParams
+import vegancheckteam.untitled_vegan_app_server.routes.UserDataParams
+import vegancheckteam.untitled_vegan_app_server.routes.loginUser
+import vegancheckteam.untitled_vegan_app_server.routes.registerUser
+import vegancheckteam.untitled_vegan_app_server.routes.signOutAll
+import vegancheckteam.untitled_vegan_app_server.routes.updateUserData
+import vegancheckteam.untitled_vegan_app_server.routes.userData
 
 object Main {
-    lateinit var config: Config
-    var configInited = false
-
     @JvmStatic
     fun main(args: Array<String>) {
         val configIndx = args.indexOf("--config-path")
         if (configIndx >= 0) {
-            config = Config.fromFile(args[configIndx+1])
-            configInited = true
+            Config.initFromFile(args[configIndx+1])
         }
-        print("Provided config:\n${config}\n\n")
         io.ktor.server.cio.EngineMain.main(args)
     }
 }
 
+@KtorExperimentalLocationsAPI
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
-    if (!Main.configInited) {
-        val path = System.getenv("CONFIG_FILE_PATH")
-        if (path == null) {
-            throw IllegalStateException("Please provide either --config-path or CONFIG_FILE_PATH env variable")
-        }
-        Main.config = Config.fromFile(path)
-        Main.configInited = true
-    }
+    mainServerInit()
 
-    Database.connect(
-        "jdbc:${Main.config.psqlUrl}",
-        user = Main.config.psqlUser,
-        password = Main.config.psqlPassword)
-    transaction {
-        SchemaUtils.createMissingTablesAndColumns(User)
-    }
+    install(Locations)
 
     install(CallLogging) {
         level = Level.INFO
@@ -64,47 +66,72 @@ fun Application.module(testing: Boolean = false) {
         }
     }
 
+    install(Authentication) {
+        jwt {
+            realm = "vegancheckteam.untitled_vegan_app server"
+            verifier(JwtController.verifier.value)
+            validate { JwtController.principalFromCredential(it) }
+        }
+    }
+
     val client = HttpClient(CIO) {
         install(Logging) {
             level = LogLevel.HEADERS
         }
+        install(HttpTimeout)
     }
+    GlobalStorage.httpTransport = CioHttpTransport(client)
+
 
     routing {
-        get("/") {
-            call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
-        }
+        get<RegisterParams> { call.respond(registerUser(it, testing)) }
+        get<LoginParams> { call.respond(loginUser(it, testing)) }
 
-        get("/register_user/{name}") {
-            val obtainedName = call.parameters["name"]!!
-            transaction {
-                User.insert {
-                    it[id] = UUID.randomUUID()
-                    it[name] = obtainedName
+        authenticate {
+            get<UserDataParams> {
+                val user = call.userPrincipal?.user
+                if (user == null) {
+                    call.respond(HttpResponse.failure("invalid_token"))
+                    return@get
                 }
+                call.respond(userData(it, user))
             }
-            call.respond("ok")
-        }
-
-        get("/is_registered/{name}") {
-            val obtainedName = call.parameters["name"]!!
-            val selected = transaction {
-                User.select {
-                    User.name eq obtainedName
-                }.toList()
-            }
-            call.respond(if (selected.isNotEmpty()) "yep" else "nope")
-        }
-
-        get("/delete_user/{name}") {
-            val obtainedName = call.parameters["name"]!!
-            transaction {
-                User.deleteWhere {
-                    User.name eq obtainedName
+            get<UpdateUserDataParams> {
+                val user = call.userPrincipal?.user
+                if (user == null) {
+                    call.respond(HttpResponse.failure("invalid_token"))
+                    return@get
                 }
+                call.respond(updateUserData(it, user))
             }
-            call.respond("done!")
+            get<SignOutAllParams> {
+                val user = call.userPrincipal?.user
+                if (user == null) {
+                    call.respond(HttpResponse.failure("invalid_token"))
+                    return@get
+                }
+                call.respond(signOutAll(it, user))
+            }
         }
     }
 }
 
+private fun mainServerInit() {
+    if (!Config.instanceInited) {
+        val path = System.getenv("CONFIG_FILE_PATH")
+        if (path == null) {
+            throw IllegalStateException("Please provide either --config-path or CONFIG_FILE_PATH env variable")
+        }
+        Config.initFromFile(path)
+    }
+    print("Provided config:\n${Config.instance}\n\n")
+
+    Database.connect(
+        "jdbc:${Config.instance.psqlUrl}",
+        user = Config.instance.psqlUser,
+        password = Config.instance.psqlPassword
+    )
+    transaction {
+        SchemaUtils.createMissingTablesAndColumns(UserTable)
+    }
+}

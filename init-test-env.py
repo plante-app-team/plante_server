@@ -78,7 +78,8 @@ def main(args):
    "psql_url": "{}",
    "psql_user": "{}",
    "psql_pass": "{}",
-   "db_connection_attempts_timeout_seconds": 10
+   "db_connection_attempts_timeout_seconds": 10,
+   "jwt_secret": "not so secret secret"
   }}
   '''
   postgres_url = 'postgresql://localhost/main'
