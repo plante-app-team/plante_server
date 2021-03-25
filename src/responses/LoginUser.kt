@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.routes
+package vegancheckteam.untitled_vegan_app_server.responses
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -11,6 +11,7 @@ import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
 
 @Location("/login_user/")
 data class LoginParams(val googleIdToken: String, val deviceId: String)
@@ -39,22 +40,5 @@ fun loginUser(params: LoginParams, testing: Boolean): Any {
     val user = User.from(existingUser)
     val jwtToken = JwtController.makeToken(user, params.deviceId)
 
-    return LoginResponse(
-        userId = existingUser[UserTable.id].toString(),
-        name = existingUser[UserTable.name],
-        client_token = jwtToken)
-}
-
-private data class LoginResponse(
-    @JsonProperty("user_id")
-    val userId: String,
-    @JsonProperty("client_token")
-    val client_token: String,
-    @JsonProperty("name")
-    val name: String) {
-
-    companion object {
-        private val mapper = ObjectMapper()
-    }
-    override fun toString(): String = mapper.writeValueAsString(this)
+    return UserDataResponse.from(user).copy(clientToken = jwtToken)
 }

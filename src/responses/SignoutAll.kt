@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.routes
+package vegancheckteam.untitled_vegan_app_server.responses
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,5 +19,5 @@ fun signOutAll(unused: SignOutAllParams, user: User): Any {
             row[loginGeneration] = user.loginGeneration + 1
         }
     }
-    return HttpResponse.success("ok")
+    return HttpResponse.success()
 }

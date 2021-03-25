@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.routes
+package vegancheckteam.untitled_vegan_app_server.responses
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -13,6 +13,7 @@ import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
 
 @Location("/register_user/")
 data class RegisterParams(val googleIdToken: String, val deviceId: String)
@@ -41,7 +42,6 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
     val user = User(
         id = UUID.randomUUID(),
         loginGeneration = 1,
-        name = "",
         googleId = googleId)
     val jwtToken = JwtController.makeToken(user, params.deviceId)
 
@@ -54,17 +54,5 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
         }[UserTable.id]
     }
 
-    return RegisterUserSuccess(userId.toString(), jwtToken)
-}
-
-private data class RegisterUserSuccess(
-    @JsonProperty("user_id")
-    val userId: String,
-    @JsonProperty("client_token")
-    val client_token: String) {
-
-    companion object {
-        private val mapper = ObjectMapper()
-    }
-    override fun toString(): String = mapper.writeValueAsString(this)
+    return UserDataResponse.from(user).copy(clientToken = jwtToken)
 }

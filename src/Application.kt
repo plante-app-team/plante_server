@@ -25,16 +25,16 @@ import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
 import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
-import vegancheckteam.untitled_vegan_app_server.routes.LoginParams
-import vegancheckteam.untitled_vegan_app_server.routes.RegisterParams
-import vegancheckteam.untitled_vegan_app_server.routes.SignOutAllParams
-import vegancheckteam.untitled_vegan_app_server.routes.UpdateUserDataParams
-import vegancheckteam.untitled_vegan_app_server.routes.UserDataParams
-import vegancheckteam.untitled_vegan_app_server.routes.loginUser
-import vegancheckteam.untitled_vegan_app_server.routes.registerUser
-import vegancheckteam.untitled_vegan_app_server.routes.signOutAll
-import vegancheckteam.untitled_vegan_app_server.routes.updateUserData
-import vegancheckteam.untitled_vegan_app_server.routes.userData
+import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
+import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
+import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
+import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.loginUser
+import vegancheckteam.untitled_vegan_app_server.responses.registerUser
+import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
+import vegancheckteam.untitled_vegan_app_server.responses.updateUserData
+import vegancheckteam.untitled_vegan_app_server.responses.userData
 
 object Main {
     @JvmStatic
@@ -94,6 +94,10 @@ fun Application.module(testing: Boolean = false) {
                     call.respond(HttpResponse.failure("invalid_token"))
                     return@get
                 }
+                if (user.banned) {
+                    call.respond(HttpResponse.failure("banned"))
+                    return@get
+                }
                 call.respond(userData(it, user))
             }
             get<UpdateUserDataParams> {
@@ -102,12 +106,20 @@ fun Application.module(testing: Boolean = false) {
                     call.respond(HttpResponse.failure("invalid_token"))
                     return@get
                 }
+                if (user.banned) {
+                    call.respond(HttpResponse.failure("banned"))
+                    return@get
+                }
                 call.respond(updateUserData(it, user))
             }
             get<SignOutAllParams> {
                 val user = call.userPrincipal?.user
                 if (user == null) {
                     call.respond(HttpResponse.failure("invalid_token"))
+                    return@get
+                }
+                if (user.banned) {
+                    call.respond(HttpResponse.failure("banned"))
                     return@get
                 }
                 call.respond(signOutAll(it, user))
