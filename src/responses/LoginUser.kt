@@ -1,7 +1,5 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction

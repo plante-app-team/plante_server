@@ -1,35 +1,38 @@
 package vegancheckteam.untitled_vegan_app_server
 
-import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.request.*
-import io.ktor.features.*
-import org.slf4j.event.*
-import io.ktor.routing.*
 import com.fasterxml.jackson.databind.*
+import io.ktor.application.*
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.auth.jwt.jwt
-import io.ktor.jackson.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.logging.*
+import io.ktor.features.*
+import io.ktor.jackson.*
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
+import org.slf4j.event.*
 import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
+import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
 import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
 import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
 import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.banMe
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
 import vegancheckteam.untitled_vegan_app_server.responses.registerUser
 import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
@@ -68,6 +71,7 @@ fun Application.module(testing: Boolean = false) {
 
     install(Authentication) {
         jwt {
+            // WARNING: beware of JWT changes - any change can lead to all tokens invalidation
             realm = "vegancheckteam.untitled_vegan_app server"
             verifier(JwtController.verifier.value)
             validate { JwtController.principalFromCredential(it) }
@@ -88,44 +92,53 @@ fun Application.module(testing: Boolean = false) {
         get<LoginParams> { call.respond(loginUser(it, testing)) }
 
         authenticate {
+            get<BanMeParams> {
+                if (!testing) {
+                    return@get
+                }
+                val user = call.userPrincipal?.user
+                validateUser(user)?.let { error ->
+                    call.respond(error)
+                    return@get
+                }
+                call.respond(banMe(user!!))
+            }
             get<UserDataParams> {
                 val user = call.userPrincipal?.user
-                if (user == null) {
-                    call.respond(HttpResponse.failure("invalid_token"))
+                validateUser(user)?.let { error ->
+                    call.respond(error)
                     return@get
                 }
-                if (user.banned) {
-                    call.respond(HttpResponse.failure("banned"))
-                    return@get
-                }
-                call.respond(userData(it, user))
+                call.respond(userData(it, user!!))
             }
             get<UpdateUserDataParams> {
                 val user = call.userPrincipal?.user
-                if (user == null) {
-                    call.respond(HttpResponse.failure("invalid_token"))
+                validateUser(user)?.let { error ->
+                    call.respond(error)
                     return@get
                 }
-                if (user.banned) {
-                    call.respond(HttpResponse.failure("banned"))
-                    return@get
-                }
-                call.respond(updateUserData(it, user))
+                call.respond(updateUserData(it, user!!))
             }
             get<SignOutAllParams> {
                 val user = call.userPrincipal?.user
-                if (user == null) {
-                    call.respond(HttpResponse.failure("invalid_token"))
+                validateUser(user)?.let { error ->
+                    call.respond(error)
                     return@get
                 }
-                if (user.banned) {
-                    call.respond(HttpResponse.failure("banned"))
-                    return@get
-                }
-                call.respond(signOutAll(it, user))
+                call.respond(signOutAll(it, user!!))
             }
         }
     }
+}
+
+fun validateUser(user: User?): HttpResponse? {
+    if (user == null) {
+        return HttpResponse.failure("invalid_token")
+    }
+    if (user.banned) {
+        return HttpResponse.failure("banned")
+    }
+    return null
 }
 
 private fun mainServerInit() {

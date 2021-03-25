@@ -191,6 +191,26 @@ class UserRequestsTest {
         }
     }
 
+    @Test
+    fun ban() {
+        withTestApplication({ module(testing = true) }) {
+            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            assertEquals(200, response.status()?.value)
+
+            var map = response.jsonMap()
+            val clientToken = map["client_token"] as String
+
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals("", map["name"])
+
+            map = authedGet(clientToken, "/ban_me/").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals("banned", map["error"])
+        }
+    }
+
     private fun TestApplicationEngine.get(url: String, clientToken: String? = null): TestApplicationCall {
         return handleRequest(HttpMethod.Get, url) {
             clientToken?.let {

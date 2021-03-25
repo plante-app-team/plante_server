@@ -12,6 +12,7 @@ import vegancheckteam.untitled_vegan_app_server.Config
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.User
 
+// WARNING: beware of JWT changes - any change can lead to all tokens invalidation
 object JwtController {
     private const val claimUserId = "user_id"
     private const val claimLoginGeneration = "login_generation"
