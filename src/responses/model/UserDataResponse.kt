@@ -3,6 +3,7 @@ package vegancheckteam.untitled_vegan_app_server.responses.model
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
+import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
 import vegancheckteam.untitled_vegan_app_server.model.User
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,7 +26,6 @@ data class UserDataResponse(
     val eatsHoney: Boolean? = null) {
 
     companion object {
-        private val mapper = ObjectMapper()
         fun from(user: User) = UserDataResponse(
                 userId = user.id.toString(),
                 name = user.name,
@@ -35,5 +35,5 @@ data class UserDataResponse(
                 eatsEggs = user.eatsEggs,
                 eatsHoney = user.eatsHoney)
     }
-    override fun toString(): String = mapper.writeValueAsString(this)
+    override fun toString(): String = jsonMapper.writeValueAsString(this)
 }

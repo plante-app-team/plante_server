@@ -4,7 +4,7 @@ import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 
 @Location("/ban_me/")
@@ -16,5 +16,5 @@ fun banMe(user: User): Any {
             it[banned] = true
         }
     }
-    return HttpResponse.success()
+    return GenericResponse.success()
 }

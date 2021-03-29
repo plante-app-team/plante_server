@@ -2,11 +2,11 @@ package vegancheckteam.untitled_vegan_app_server.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
+import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
 import vegancheckteam.untitled_vegan_app_server.base.readOrNull
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HttpResponse(
+data class GenericResponse(
     @JsonProperty("error")
     val error: String?,
     @JsonProperty("error_description")
@@ -15,11 +15,10 @@ data class HttpResponse(
     val result: String?) {
 
     companion object {
-        private val mapper = ObjectMapper()
-        fun fromString(str: String): HttpResponse? = mapper.readOrNull(str)
-        fun success() = HttpResponse(null, null, "ok")
-        fun failure(error: String, errorDescription: String? = null) = HttpResponse(error, errorDescription, null)
+        fun fromString(str: String): GenericResponse? = jsonMapper.readOrNull(str)
+        fun success() = GenericResponse(null, null, "ok")
+        fun failure(error: String, errorDescription: String? = null) = GenericResponse(error, errorDescription, null)
     }
 
-    override fun toString(): String = mapper.writeValueAsString(this)
+    override fun toString(): String = jsonMapper.writeValueAsString(this)
 }

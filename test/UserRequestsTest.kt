@@ -1,15 +1,10 @@
 package vegancheckteam.untitled_vegan_app_server
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.ktor.client.*
-import io.ktor.client.engine.mock.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.server.testing.*
-import io.ktor.utils.io.*
+import io.ktor.server.testing.withTestApplication
 import java.util.*
+import vegancheckteam.untitled_vegan_app_server.test_utils.authedGet
+import vegancheckteam.untitled_vegan_app_server.test_utils.get
+import vegancheckteam.untitled_vegan_app_server.test_utils.jsonMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -210,20 +205,4 @@ class UserRequestsTest {
             assertEquals("banned", map["error"])
         }
     }
-
-    private fun TestApplicationEngine.get(url: String, clientToken: String? = null): TestApplicationCall {
-        return handleRequest(HttpMethod.Get, url) {
-            clientToken?.let {
-                addHeader("Authorization", "Bearer $it")
-            }
-        }
-    }
-
-    private fun TestApplicationEngine.authedGet(token: String, url: String) = get(url, token)
-
-    private fun TestApplicationResponse.jsonMap(): Map<*, *> {
-        return ObjectMapper().readValue(content, MutableMap::class.java)
-    }
-
-    private fun TestApplicationCall.jsonMap() = response.jsonMap()
 }

@@ -7,7 +7,7 @@ import vegancheckteam.untitled_vegan_app_server.GlobalStorage
 import vegancheckteam.untitled_vegan_app_server.auth.GoogleAuthorizer
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
 
@@ -23,7 +23,7 @@ fun loginUser(params: LoginParams, testing: Boolean): Any {
 
     if (googleId.isNullOrEmpty()) {
         // TODO(https://trello.com/c/XgGFE05M/): log warning
-        return HttpResponse.failure("google_auth_failed")
+        return GenericResponse.failure("google_auth_failed")
     }
 
     val existingUser = transaction {
@@ -32,7 +32,7 @@ fun loginUser(params: LoginParams, testing: Boolean): Any {
         }.firstOrNull()
     }
     if (existingUser == null) {
-        return HttpResponse.failure("not_registered")
+        return GenericResponse.failure("not_registered")
     }
 
     val user = User.from(existingUser)

@@ -23,17 +23,25 @@ import org.slf4j.event.*
 import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
+import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
+import vegancheckteam.untitled_vegan_app_server.db.ProductTable
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
+import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductParams
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
+import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
 import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
 import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.banMe
+import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
+import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
+import vegancheckteam.untitled_vegan_app_server.responses.productData
 import vegancheckteam.untitled_vegan_app_server.responses.registerUser
 import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
 import vegancheckteam.untitled_vegan_app_server.responses.updateUserData
@@ -127,16 +135,40 @@ fun Application.module(testing: Boolean = false) {
                 }
                 call.respond(signOutAll(it, user!!))
             }
+            get<CreateUpdateProductParams> {
+                val user = call.userPrincipal?.user
+                validateUser(user)?.let { error ->
+                    call.respond(error)
+                    return@get
+                }
+                call.respond(createUpdateProduct(it, user!!))
+            }
+            get<ProductDataParams> {
+                val user = call.userPrincipal?.user
+                validateUser(user)?.let { error ->
+                    call.respond(error)
+                    return@get
+                }
+                call.respond(productData(it, user!!))
+            }
+            get<ProductChangesDataParams> {
+                val user = call.userPrincipal?.user
+                validateUser(user)?.let { error ->
+                    call.respond(error)
+                    return@get
+                }
+                call.respond(productChangesData(it, user!!))
+            }
         }
     }
 }
 
-fun validateUser(user: User?): HttpResponse? {
+fun validateUser(user: User?): GenericResponse? {
     if (user == null) {
-        return HttpResponse.failure("invalid_token")
+        return GenericResponse.failure("invalid_token")
     }
     if (user.banned) {
-        return HttpResponse.failure("banned")
+        return GenericResponse.failure("banned")
     }
     return null
 }
@@ -157,6 +189,9 @@ private fun mainServerInit() {
         password = Config.instance.psqlPassword
     )
     transaction {
-        SchemaUtils.createMissingTablesAndColumns(UserTable)
+        SchemaUtils.createMissingTablesAndColumns(
+            UserTable,
+            ProductTable,
+            ProductChangeTable)
     }
 }

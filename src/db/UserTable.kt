@@ -1,6 +1,7 @@
 package vegancheckteam.untitled_vegan_app_server.db
 
 import org.jetbrains.exposed.sql.Table
+import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
 
 object UserTable : Table("user") {
     val id = uuid("id")
@@ -13,5 +14,6 @@ object UserTable : Table("user") {
     val eatsMilk = bool("eats_milk").nullable()
     val eatsEggs = bool("eats_eggs").nullable()
     val eatsHoney = bool("eats_honey").nullable()
+    val userRightsGroup = text("user_rights_group").default(UserRightsGroup.NORMAL.groupName)
     override val primaryKey = PrimaryKey(id)
 }

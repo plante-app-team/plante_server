@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.Gender
-import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 
 @Location("/update_user_data/")
@@ -23,7 +23,7 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
     val gender: Gender? = if (params.gender != null) {
         val gender = Gender.fromStringName(params.gender)
         if (gender == null) {
-            return HttpResponse.failure("invalid_gender", "Provided gender: ${params.gender}");
+            return GenericResponse.failure("invalid_gender", "Provided gender: ${params.gender}");
         }
         gender
     } else {
@@ -35,7 +35,7 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
         try {
             DateTimeFormatter.ofPattern(expectedFormat).parse(params.birthday)
         } catch (e: DateTimeParseException) {
-            return HttpResponse.failure("invalid_date", "Provided date: ${params.birthday}");
+            return GenericResponse.failure("invalid_date", "Provided date: ${params.birthday}");
         }
     }
 
@@ -49,5 +49,5 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
             params.eatsHoney?.let { row[eatsHoney] = it }
         }
     }
-    return HttpResponse.success()
+    return GenericResponse.success()
 }

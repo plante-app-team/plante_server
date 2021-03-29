@@ -1,8 +1,8 @@
 package vegancheckteam.untitled_vegan_app_server
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.File
+import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
 
 data class Config(
     @JsonProperty("psql_url")
@@ -21,8 +21,7 @@ data class Config(
         var instanceInited = false
 
         fun initFromFile(path: String) {
-            val mapper = ObjectMapper()
-            instance = mapper.readValue(File(path).readText(), Config::class.java)
+            instance = jsonMapper.readValue(File(path).readText(), Config::class.java)
             instanceInited = true
         }
     }

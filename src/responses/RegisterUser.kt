@@ -1,7 +1,5 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.locations.Location
 import java.util.*
 import org.jetbrains.exposed.sql.insert
@@ -11,7 +9,7 @@ import vegancheckteam.untitled_vegan_app_server.GlobalStorage
 import vegancheckteam.untitled_vegan_app_server.auth.GoogleAuthorizer
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.HttpResponse
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
 
@@ -27,7 +25,7 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
 
     if (googleId.isNullOrEmpty()) {
         // TODO(https://trello.com/c/XgGFE05M/): log warning
-        return HttpResponse.failure("google_auth_failed")
+        return GenericResponse.failure("google_auth_failed")
     }
 
     val existingUser = transaction {
@@ -36,7 +34,7 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
         }.firstOrNull()
     }
     if (existingUser != null) {
-        return HttpResponse.failure("already_registered")
+        return GenericResponse.failure("already_registered")
     }
 
     val user = User(
@@ -45,7 +43,7 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
         googleId = googleId)
     val jwtToken = JwtController.makeToken(user, params.deviceId)
 
-    val userId = transaction {
+    transaction {
         UserTable.insert {
             it[id] = user.id
             it[loginGeneration] = user.loginGeneration
