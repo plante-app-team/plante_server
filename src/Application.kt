@@ -22,12 +22,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.event.*
 import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
-import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
+import vegancheckteam.untitled_vegan_app_server.db.UserQuizTable
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
 import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductParams
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
@@ -37,6 +35,8 @@ import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
 import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
 import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.UserQuizDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.UserQuizParams
 import vegancheckteam.untitled_vegan_app_server.responses.banMe
 import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
@@ -46,6 +46,8 @@ import vegancheckteam.untitled_vegan_app_server.responses.registerUser
 import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
 import vegancheckteam.untitled_vegan_app_server.responses.updateUserData
 import vegancheckteam.untitled_vegan_app_server.responses.userData
+import vegancheckteam.untitled_vegan_app_server.responses.userQuiz
+import vegancheckteam.untitled_vegan_app_server.responses.userQuizData
 
 object Main {
     @JvmStatic
@@ -100,77 +102,38 @@ fun Application.module(testing: Boolean = false) {
         get<LoginParams> { call.respond(loginUser(it, testing)) }
 
         authenticate {
-            get<BanMeParams> {
+            getAuthed<BanMeParams> { _, user ->
                 if (!testing) {
-                    return@get
+                    return@getAuthed
                 }
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(banMe(user!!))
+                call.respond(banMe(user))
             }
-            get<UserDataParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(userData(it, user!!))
+            getAuthed<UserDataParams> { params, user ->
+                call.respond(userData(params, user))
             }
-            get<UpdateUserDataParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(updateUserData(it, user!!))
+            getAuthed<UpdateUserDataParams> { params, user ->
+                call.respond(updateUserData(params, user))
             }
-            get<SignOutAllParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(signOutAll(it, user!!))
+            getAuthed<SignOutAllParams> { params, user ->
+                call.respond(signOutAll(params, user))
             }
-            get<CreateUpdateProductParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(createUpdateProduct(it, user!!))
+            getAuthed<CreateUpdateProductParams> { params, user ->
+                call.respond(createUpdateProduct(params, user))
             }
-            get<ProductDataParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(productData(it, user!!))
+            getAuthed<ProductDataParams> { params, user ->
+                call.respond(productData(params, user))
             }
-            get<ProductChangesDataParams> {
-                val user = call.userPrincipal?.user
-                validateUser(user)?.let { error ->
-                    call.respond(error)
-                    return@get
-                }
-                call.respond(productChangesData(it, user!!))
+            getAuthed<ProductChangesDataParams> { params, user ->
+                call.respond(productChangesData(params, user))
+            }
+            getAuthed<UserQuizParams> { params, user ->
+                call.respond(userQuiz(params, user))
+            }
+            getAuthed<UserQuizDataParams> { _, user ->
+                call.respond(userQuizData(user))
             }
         }
     }
-}
-
-fun validateUser(user: User?): GenericResponse? {
-    if (user == null) {
-        return GenericResponse.failure("invalid_token")
-    }
-    if (user.banned) {
-        return GenericResponse.failure("banned")
-    }
-    return null
 }
 
 private fun mainServerInit() {
@@ -192,6 +155,7 @@ private fun mainServerInit() {
         SchemaUtils.createMissingTablesAndColumns(
             UserTable,
             ProductTable,
-            ProductChangeTable)
+            ProductChangeTable,
+            UserQuizTable)
     }
 }

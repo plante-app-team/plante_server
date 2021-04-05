@@ -1,10 +1,12 @@
 package vegancheckteam.untitled_vegan_app_server
 
 import io.ktor.server.testing.withTestApplication
+import vegancheckteam.untitled_vegan_app_server.responses.MAX_QUIZ_ANSWERS_COUNT
 import java.util.*
 import vegancheckteam.untitled_vegan_app_server.test_utils.authedGet
 import vegancheckteam.untitled_vegan_app_server.test_utils.get
 import vegancheckteam.untitled_vegan_app_server.test_utils.jsonMap
+import vegancheckteam.untitled_vegan_app_server.test_utils.register
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -203,6 +205,75 @@ class UserRequestsTest {
 
             map = authedGet(clientToken, "/user_data/").jsonMap()
             assertEquals("banned", map["error"])
+        }
+    }
+
+    @Test
+    fun quiz() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+
+            var map = authedGet(clientToken, "/user_quiz/?question=what&answer=nothing").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(clientToken, "/user_quiz/?question=how&answer=noway").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/user_quiz_data/").jsonMap()
+            val questions = map["questions"] as List<*>
+            val answers = map["answers"] as List<*>
+            assertEquals(2, questions.size)
+            assertEquals(2, answers.size)
+            assertEquals("what", questions[0])
+            assertEquals("nothing", answers[0])
+            assertEquals("how", questions[1])
+            assertEquals("noway", answers[1])
+        }
+    }
+
+    @Test
+    fun `quiz answer overriding`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+
+            authedGet(clientToken, "/user_quiz/?question=what&answer=nothing").jsonMap()
+            var map = authedGet(clientToken, "/user_quiz_data/").jsonMap()
+            var questions = map["questions"] as List<*>
+            var answers = map["answers"] as List<*>
+            assertEquals("what", questions[0])
+            assertEquals("nothing", answers[0])
+            assertEquals(1, questions.size)
+            assertEquals(1, answers.size)
+
+            authedGet(clientToken, "/user_quiz/?question=what&answer=something").jsonMap()
+            map = authedGet(clientToken, "/user_quiz_data/").jsonMap()
+            questions = map["questions"] as List<*>
+            answers = map["answers"] as List<*>
+            assertEquals("what", questions[0])
+            assertEquals("something", answers[0])
+            assertEquals(1, questions.size)
+            assertEquals(1, answers.size)
+        }
+    }
+
+    @Test
+    fun `quiz too many answers`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+
+            for (index in 0..(MAX_QUIZ_ANSWERS_COUNT*2)) {
+                val map = authedGet(clientToken, "/user_quiz/?question=what$index&answer=answer$index").jsonMap()
+                if (index < MAX_QUIZ_ANSWERS_COUNT) {
+                    assertEquals("ok", map["result"], "Index: $index, map: $map")
+                } else {
+                    assertEquals("too_many_answers", map["error"], "Index: $index, map: $map")
+                }
+            }
+
+            val map = authedGet(clientToken, "/user_quiz_data/").jsonMap()
+            val questions = map["questions"] as List<*>
+            val answers = map["answers"] as List<*>
+            assertEquals(MAX_QUIZ_ANSWERS_COUNT, questions.size)
+            assertEquals(MAX_QUIZ_ANSWERS_COUNT, answers.size)
         }
     }
 }
