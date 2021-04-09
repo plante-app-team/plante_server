@@ -1,11 +1,17 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import java.time.ZonedDateTime
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import vegancheckteam.untitled_vegan_app_server.db.MAX_PRODUCT_CHANGES_COUNT
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTask
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable.barcode
@@ -14,6 +20,7 @@ import vegancheckteam.untitled_vegan_app_server.model.Product
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.model.VegStatus
 import vegancheckteam.untitled_vegan_app_server.model.VegStatusSource
+import java.lang.Integer.max
 
 @Location("/create_update_product/")
 data class CreateUpdateProductParams(
@@ -56,16 +63,53 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): Any {
             }
             ProductTable.select { barcode eq params.barcode }.first()
         }
-        insertProductChangeInfo(oldProduct, Product.from(productRow), user)
+        val newProduct = Product.from(productRow)
+        maybeInsertProductChangeInfo(oldProduct, newProduct, user)
+        deleteExtraProductChanges(newProduct.barcode)
+        maybeCreateModeratorTask(newProduct.barcode, user)
     }
     return GenericResponse.success()
 }
 
-private fun insertProductChangeInfo(oldProduct: Product?, newProduct: Product, editor: User)
-        = ProductChangeTable.insert {
-    it[editorId] = editor.id
-    it[productBarcode] = newProduct.barcode
-    it[time] = ZonedDateTime.now().toEpochSecond()
-    it[oldProductJson] = oldProduct?.toString() ?: "{}"
-    it[newProductJson] = newProduct.toString()
+private fun maybeInsertProductChangeInfo(oldProduct: Product?, newProduct: Product, editor: User) {
+    val oldProductJsonVal = oldProduct?.toString() ?: "{}"
+    val newProductJsonVal = newProduct.toString()
+    if (oldProductJsonVal == newProductJsonVal) {
+        return
+    }
+    ProductChangeTable.insert {
+        it[editorId] = editor.id
+        it[productBarcode] = newProduct.barcode
+        it[time] = ZonedDateTime.now().toEpochSecond()
+        it[oldProductJson] = oldProductJsonVal
+        it[newProductJson] = newProductJsonVal
+    }
+}
+
+private fun deleteExtraProductChanges(barcode: String) {
+    val rows = ProductChangeTable.select {
+        ProductChangeTable.productBarcode eq barcode
+    }.orderBy(ProductChangeTable.time, order = SortOrder.ASC)
+
+    val ids = rows.map { it[ProductChangeTable.id] }
+    val extraRowsCount = max(0, ids.size - MAX_PRODUCT_CHANGES_COUNT)
+    val idsToDelete = ids.take(extraRowsCount)
+    ProductChangeTable.deleteWhere {
+        ProductChangeTable.id inList idsToDelete
+    }
+}
+
+fun maybeCreateModeratorTask(barcode: String, user: User) {
+    // NOTE: we create a moderator task even if product change was not inserted -
+    // that is because not all product changes happen on this server, some happen on OFF.
+    ModeratorTask.deleteWhere {
+        (ModeratorTask.productBarcode eq barcode) and
+                (ModeratorTask.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentId)
+    }
+    ModeratorTask.insert {
+        it[productBarcode] = barcode
+        it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentId
+        it[taskSourceUserId] = user.id
+        it[time] = ZonedDateTime.now().toEpochSecond()
+    }
 }

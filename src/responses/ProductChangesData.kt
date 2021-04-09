@@ -1,6 +1,7 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
@@ -18,8 +19,10 @@ fun productChangesData(params: ProductChangesDataParams, user: User): Any {
         return GenericResponse.failure("denied")
     }
     val changes = transaction {
-        val changesRows = ProductChangeTable.select { ProductChangeTable.productBarcode eq params.barcode }
+        val changesRows = ProductChangeTable.select {
+            ProductChangeTable.productBarcode eq params.barcode
+        }.orderBy(ProductChangeTable.time, order = SortOrder.ASC)
         changesRows.map { ProductChange.from(it) }
     }
-    return ProductsChangesList(changes.sortedBy { it.time })
+    return ProductsChangesList(changes)
 }

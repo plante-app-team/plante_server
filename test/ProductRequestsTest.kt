@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
+import vegancheckteam.untitled_vegan_app_server.db.MAX_PRODUCT_CHANGES_COUNT
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
@@ -15,7 +16,9 @@ import vegancheckteam.untitled_vegan_app_server.test_utils.authedGet
 import vegancheckteam.untitled_vegan_app_server.test_utils.get
 import vegancheckteam.untitled_vegan_app_server.test_utils.jsonMap
 import vegancheckteam.untitled_vegan_app_server.test_utils.register
+import vegancheckteam.untitled_vegan_app_server.test_utils.registerModerator
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class ProductRequestsTest {
@@ -167,20 +170,7 @@ class ProductRequestsTest {
 
             Thread.sleep(1001) // To make changes times different
 
-            val moderator = User(
-                id = UUID.randomUUID(),
-                loginGeneration = 1,
-                googleId = null)
-            transaction {
-                UserTable.insert {
-                    it[id] = moderator.id
-                    it[loginGeneration] = moderator.loginGeneration
-                    it[name] = moderator.name
-                    it[googleId] = moderator.googleId
-                    it[userRightsGroup] = UserRightsGroup.MODERATOR.groupName
-                }
-            }
-            val moderatorClientToken = JwtController.makeToken(moderator, "device id")
+            val moderatorClientToken = registerModerator()
 
             map = authedGet(moderatorClientToken, "/product_changes_data/?barcode=${barcode}").jsonMap()
             val changes = map["changes"] as List<*>
@@ -222,6 +212,64 @@ class ProductRequestsTest {
 
             map = authedGet(clientToken, "/product_changes_data/?barcode=${barcode}").jsonMap()
             assertEquals("denied", map["error"])
+        }
+    }
+
+    @Test
+    fun `duplicating product changes are not stored in product changes history`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+
+            // Save it twice
+            val barcode = UUID.randomUUID().toString()
+            var map = authedGet(clientToken, "/create_update_product/?"
+                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(clientToken, "/create_update_product/?"
+                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/product_changes_data/?barcode=${barcode}").jsonMap()
+            val changes = map["changes"] as List<*>
+            assertEquals(1, changes.size, changes.toString())
+        }
+    }
+
+    @Test
+    fun `product changes history is limited`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+
+            val barcode = UUID.randomUUID().toString()
+            var map = authedGet(clientToken, "/create_update_product/?"
+                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            Thread.sleep(1001) // To make changes times different
+
+            for (index in 0 until MAX_PRODUCT_CHANGES_COUNT) {
+                map = authedGet(clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                assertEquals("ok", map["result"])
+                map = authedGet(clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=negative&veganStatus=positive").jsonMap()
+                assertEquals("ok", map["result"])
+            }
+
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/product_changes_data/?barcode=${barcode}").jsonMap()
+            val changes = map["changes"] as List<*>
+            assertEquals(MAX_PRODUCT_CHANGES_COUNT, changes.size, changes.toString())
+
+            // "unknown" status was the first one and we expect this change to be erased
+            // because changes limit was reached
+            for (change in changes) {
+                val changeMap = change as Map<*, *>
+                val updatedProduct = changeMap["updated_product"] as Map<*,*>
+                assertNotEquals("unknown", updatedProduct["vegetarian_status"])
+                assertNotEquals("unknown", updatedProduct["vegan_status"])
+            }
         }
     }
 }

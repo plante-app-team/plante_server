@@ -2,6 +2,8 @@ package vegancheckteam.untitled_vegan_app_server.db
 
 import org.jetbrains.exposed.sql.Table
 
+const val MAX_PRODUCT_CHANGES_COUNT = 10
+
 object ProductChangeTable : Table("product_change") {
     val id = integer("id").autoIncrement()
     val productBarcode = text("barcode").references(ProductTable.barcode).index()

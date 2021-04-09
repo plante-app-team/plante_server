@@ -22,6 +22,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.event.*
 import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
 import vegancheckteam.untitled_vegan_app_server.auth.JwtController
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTask
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
 import vegancheckteam.untitled_vegan_app_server.db.UserQuizTable
@@ -29,6 +30,7 @@ import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
 import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductParams
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
+import vegancheckteam.untitled_vegan_app_server.responses.MakeReportParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
@@ -40,6 +42,7 @@ import vegancheckteam.untitled_vegan_app_server.responses.UserQuizParams
 import vegancheckteam.untitled_vegan_app_server.responses.banMe
 import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
+import vegancheckteam.untitled_vegan_app_server.responses.makeReport
 import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
 import vegancheckteam.untitled_vegan_app_server.responses.productData
 import vegancheckteam.untitled_vegan_app_server.responses.registerUser
@@ -132,6 +135,9 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<UserQuizDataParams> { _, user ->
                 call.respond(userQuizData(user))
             }
+            getAuthed<MakeReportParams> { params, user ->
+                call.respond(makeReport(params, user, testing))
+            }
         }
     }
 }
@@ -156,6 +162,7 @@ private fun mainServerInit() {
             UserTable,
             ProductTable,
             ProductChangeTable,
-            UserQuizTable)
+            UserQuizTable,
+            ModeratorTask)
     }
 }
