@@ -9,7 +9,9 @@ enum class ModeratorTaskType(val persistentId: String) {
 
 object ModeratorTask : Table("moderator_task") {
     val id = integer("id").autoIncrement()
-    val productBarcode = text("barcode").references(ProductTable.barcode).index()
+    // NOTE: it doesn't reference a field in the Product table because
+    // user can report a product from OFF.
+    val productBarcode = text("barcode").index()
     val taskType = text("task_type")
     val taskSourceUserId = uuid("task_source_user_id").references(UserTable.id).index()
     val textFromUser = text("text_from_user").nullable()
