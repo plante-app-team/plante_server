@@ -37,6 +37,22 @@ class UserRequestsTest {
     }
 
     @Test
+    fun registerFailGoogleAuthFail() {
+        withTestApplication({ module(testing = true) }) {
+            val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_FAIL_FOR_TESTING").jsonMap()
+            assertEquals("google_auth_failed", map["error"])
+        }
+    }
+
+    @Test
+    fun registerFailEmailNotVerified() {
+        withTestApplication({ module(testing = true) }) {
+            val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_EMAIL_NOT_VERIFIED").jsonMap()
+            assertEquals("google_email_not_verified", map["error"])
+        }
+    }
+
+    @Test
     fun unauthorizedUpdate() {
         withTestApplication({ module(testing = true) }) {
             var response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
