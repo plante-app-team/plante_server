@@ -4,7 +4,7 @@ import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTask
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
@@ -23,8 +23,8 @@ data class MakeReportParams(val barcode: String, val text: String)
 fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     val maxReportsForUser = if (testing) MAX_REPORTS_FOR_USER_TESTING else MAX_REPORTS_FOR_USER
     val existingTasksOfUser = transaction {
-        val existingModeratorTasksOfUser = ModeratorTask.select {
-            ModeratorTask.taskSourceUserId eq user.id
+        val existingModeratorTasksOfUser = ModeratorTaskTable.select {
+            ModeratorTaskTable.taskSourceUserId eq user.id
         }
         existingModeratorTasksOfUser.count()
     }
@@ -36,8 +36,8 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
 
     val maxReportsForProduct = if (testing) MAX_REPORTS_FOR_PRODUCT_TESTING else MAX_REPORTS_FOR_PRODUCT
     val existingTasksOfProduct = transaction {
-        val existingModeratorTasksOfProduct = ModeratorTask.select {
-            ModeratorTask.productBarcode eq params.barcode
+        val existingModeratorTasksOfProduct = ModeratorTaskTable.select {
+            ModeratorTaskTable.productBarcode eq params.barcode
         }
         existingModeratorTasksOfProduct.count()
     }
@@ -55,7 +55,7 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     }
 
     transaction {
-        ModeratorTask.insert {
+        ModeratorTaskTable.insert {
             it[productBarcode] = params.barcode
             it[taskType] = ModeratorTaskType.USER_REPORT.persistentId
             it[taskSourceUserId] = user.id

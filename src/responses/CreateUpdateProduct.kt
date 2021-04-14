@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.untitled_vegan_app_server.db.MAX_PRODUCT_CHANGES_COUNT
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTask
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
@@ -102,11 +102,11 @@ private fun deleteExtraProductChanges(barcode: String) {
 fun maybeCreateModeratorTask(barcode: String, user: User) {
     // NOTE: we create a moderator task even if product change was not inserted -
     // that is because not all product changes happen on this server, some happen on OFF.
-    ModeratorTask.deleteWhere {
-        (ModeratorTask.productBarcode eq barcode) and
-                (ModeratorTask.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentId)
+    ModeratorTaskTable.deleteWhere {
+        (ModeratorTaskTable.productBarcode eq barcode) and
+                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentId)
     }
-    ModeratorTask.insert {
+    ModeratorTaskTable.insert {
         it[productBarcode] = barcode
         it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentId
         it[taskSourceUserId] = user.id

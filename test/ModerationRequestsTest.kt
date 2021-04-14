@@ -7,13 +7,10 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.Before
 import org.junit.Test
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTask
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
-import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_PRODUCT
 import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_PRODUCT_TESTING
-import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_USER
 import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_USER_TESTING
 import vegancheckteam.untitled_vegan_app_server.responses.REPORT_TEXT_MAX_LENGTH
 import vegancheckteam.untitled_vegan_app_server.responses.REPORT_TEXT_MIN_LENGTH
@@ -34,8 +31,8 @@ class ModerationRequestsTest {
 
             // No moderator task yet
             val tasksCount = transaction {
-                ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode
+                ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode
                 }.count()
             }
             assertEquals(0, tasksCount)
@@ -47,17 +44,17 @@ class ModerationRequestsTest {
 
             // Now there is a task
             transaction {
-                val tasks = ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode
+                val tasks = ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTask.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
             }
 
             // Clear
             transaction {
-                ModeratorTask.deleteWhere {
-                    ModeratorTask.productBarcode eq barcode
+                ModeratorTaskTable.deleteWhere {
+                    ModeratorTaskTable.productBarcode eq barcode
                 }
             }
 
@@ -68,11 +65,11 @@ class ModerationRequestsTest {
 
             // Now there is a task again
             transaction {
-                val tasks = ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode
+                val tasks = ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTask.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
             }
         }
     }
@@ -95,11 +92,11 @@ class ModerationRequestsTest {
 
             // Expecting 1 task only
             transaction {
-                val tasks = ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode
+                val tasks = ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTask.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
             }
         }
     }
@@ -123,12 +120,12 @@ class ModerationRequestsTest {
 
             // Expecting 2 tasks, 1 for each product
             transaction {
-                val tasks1 = ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode1
+                val tasks1 = ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode1
                 }
                 assertEquals(1, tasks1.count())
-                val tasks2 = ModeratorTask.select {
-                    ModeratorTask.productBarcode eq barcode2
+                val tasks2 = ModeratorTaskTable.select {
+                    ModeratorTaskTable.productBarcode eq barcode2
                 }
                 assertEquals(1, tasks2.count())
             }
@@ -153,13 +150,13 @@ class ModerationRequestsTest {
             assertEquals("ok", map["result"])
 
             transaction {
-                val tasks = ModeratorTask.select {
-                    (ModeratorTask.productBarcode eq barcode) and
-                            (ModeratorTask.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
+                val tasks = ModeratorTaskTable.select {
+                    (ModeratorTaskTable.productBarcode eq barcode) and
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
                 }.toList()
                 assertEquals(3, tasks.count())
 
-                val texts = tasks.map { it[ModeratorTask.textFromUser] }
+                val texts = tasks.map { it[ModeratorTaskTable.textFromUser] }
                 assertTrue("text1" in texts);
                 assertTrue("text2" in texts);
                 assertTrue("text3" in texts);
@@ -172,7 +169,7 @@ class ModerationRequestsTest {
         withTestApplication({ module(testing = true) }) {
             // Set up
             transaction {
-                ModeratorTask.deleteAll()
+                ModeratorTaskTable.deleteAll()
             }
 
             val clientToken = register()
@@ -202,7 +199,7 @@ class ModerationRequestsTest {
 
             // Ensure there's a max number of tasks
             transaction {
-                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTask.selectAll().count().toInt())
+                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTaskTable.selectAll().count().toInt())
             }
 
             // Error expected now
@@ -215,7 +212,7 @@ class ModerationRequestsTest {
 
             // Ensure there's still a max number of tasks
             transaction {
-                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTask.selectAll().count().toInt())
+                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTaskTable.selectAll().count().toInt())
             }
         }
     }
@@ -225,7 +222,7 @@ class ModerationRequestsTest {
         withTestApplication({ module(testing = true) }) {
             // Set up
             transaction {
-                ModeratorTask.deleteAll()
+                ModeratorTaskTable.deleteAll()
             }
 
             val clientToken1 = register()
@@ -251,7 +248,7 @@ class ModerationRequestsTest {
 
             // Ensure there's a max number of tasks
             transaction {
-                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTask.selectAll().count().toInt())
+                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
             }
 
             // Error expected now
@@ -264,7 +261,7 @@ class ModerationRequestsTest {
 
             // Ensure there's still a max number of tasks
             transaction {
-                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTask.selectAll().count().toInt())
+                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
             }
         }
     }
@@ -289,9 +286,9 @@ class ModerationRequestsTest {
 
             // No reports should be created
             transaction {
-                val tasks = ModeratorTask.select {
-                    (ModeratorTask.productBarcode eq barcode) and
-                            (ModeratorTask.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
+                val tasks = ModeratorTaskTable.select {
+                    (ModeratorTaskTable.productBarcode eq barcode) and
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
                 }
                 assertEquals(0, tasks.count())
             }

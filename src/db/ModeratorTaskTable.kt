@@ -7,7 +7,7 @@ enum class ModeratorTaskType(val persistentId: String) {
     PRODUCT_CHANGE("product_change")
 }
 
-object ModeratorTask : Table("moderator_task") {
+object ModeratorTaskTable : Table("moderator_task") {
     val id = integer("id").autoIncrement()
     // NOTE: it doesn't reference a field in the Product table because
     // user can report a product from OFF.
