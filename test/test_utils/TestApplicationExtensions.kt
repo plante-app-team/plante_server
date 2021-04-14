@@ -12,6 +12,7 @@ import vegancheckteam.untitled_vegan_app_server.auth.JwtController
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
+import java.time.ZonedDateTime
 import java.util.*
 import kotlin.test.assertEquals
 
@@ -46,6 +47,7 @@ fun registerModerator(): String {
         UserTable.insert {
             it[id] = moderator.id
             it[loginGeneration] = moderator.loginGeneration
+            it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = moderator.name
             it[googleId] = moderator.googleId
             it[userRightsGroup] = UserRightsGroup.MODERATOR.groupName

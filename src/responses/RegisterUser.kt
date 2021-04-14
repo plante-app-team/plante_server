@@ -12,6 +12,7 @@ import vegancheckteam.untitled_vegan_app_server.db.UserTable
 import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
+import java.time.ZonedDateTime
 import java.util.*
 
 @Location("/register_user/")
@@ -43,6 +44,7 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
         UserTable.insert {
             it[id] = user.id
             it[loginGeneration] = user.loginGeneration
+            it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = user.name
             it[UserTable.googleId] = user.googleId
         }[UserTable.id]

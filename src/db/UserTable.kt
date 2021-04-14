@@ -8,6 +8,7 @@ object UserTable : Table("user") {
     val banned = bool("banned").default(false)
     val googleId = text("google_id").nullable()
     val loginGeneration = integer("login_generation")
+    val creationTime = long("creation_time")
     val name = text("name")
     val gender = text("gender").nullable()
     val birthday = text("birthday").nullable()
