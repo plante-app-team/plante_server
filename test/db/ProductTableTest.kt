@@ -23,10 +23,10 @@ class ProductTableTest {
             transaction {
                 val values1 = ProductTable.insert {
                     it[ProductTable.barcode] = barcode
-                    it[vegetarianStatus] = VegStatus.UNKNOWN.name
-                    it[vegetarianStatusSource] = VegStatusSource.UNKNOWN.name
-                    it[veganStatus] = VegStatus.UNKNOWN.name
-                    it[veganStatusSource] = VegStatusSource.UNKNOWN.name
+                    it[vegetarianStatus] = VegStatus.UNKNOWN.persistentCode
+                    it[vegetarianStatusSource] = VegStatusSource.UNKNOWN.persistentCode
+                    it[veganStatus] = VegStatus.UNKNOWN.persistentCode
+                    it[veganStatusSource] = VegStatusSource.UNKNOWN.persistentCode
                 }.resultedValues
                 inserted1 = values1 == null || values1.isNotEmpty()
             }
@@ -34,10 +34,10 @@ class ProductTableTest {
                 transaction {
                     val values2 = ProductTable.insert {
                         it[ProductTable.barcode] = barcode
-                        it[vegetarianStatus] = VegStatus.POSITIVE.name
-                        it[vegetarianStatusSource] = VegStatusSource.COMMUNITY.name
-                        it[veganStatus] = VegStatus.POSITIVE.name
-                        it[veganStatusSource] = VegStatusSource.COMMUNITY.name
+                        it[vegetarianStatus] = VegStatus.POSITIVE.persistentCode
+                        it[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
+                        it[veganStatus] = VegStatus.POSITIVE.persistentCode
+                        it[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                     }.resultedValues
                     inserted2 = values2 == null || values2.isNotEmpty()
                 }

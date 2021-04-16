@@ -42,7 +42,7 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
     transaction {
         UserTable.update({ UserTable.id eq user.id }) { row ->
             params.name?.let { row[name] = it }
-            gender?.let { row[UserTable.gender] = it.genderName }
+            gender?.let { row[UserTable.gender] = it.persistentCode }
             params.birthday?.let { row[birthday] = it }
             params.eatsMilk?.let { row[eatsMilk] = it }
             params.eatsEggs?.let { row[eatsEggs] = it }

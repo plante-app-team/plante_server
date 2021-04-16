@@ -29,8 +29,8 @@ data class Product(
             veganStatus = vegStatusFrom(tableRow[ProductTable.veganStatus]),
             vegetarianStatusSource = vegStatusSourceFrom(tableRow[ProductTable.vegetarianStatusSource]),
             veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]))
-        private fun vegStatusFrom(str: String) = VegStatus.fromStringName(str) ?: VegStatus.UNKNOWN
-        private fun vegStatusSourceFrom(str: String) = VegStatusSource.fromStringName(str) ?: VegStatusSource.UNKNOWN
+        private fun vegStatusFrom(code: Short) = VegStatus.fromPersistentCode(code) ?: VegStatus.UNKNOWN
+        private fun vegStatusSourceFrom(code: Short) = VegStatusSource.fromPersistentCode(code) ?: VegStatusSource.UNKNOWN
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
 }

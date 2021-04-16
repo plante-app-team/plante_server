@@ -2,19 +2,15 @@ package vegancheckteam.untitled_vegan_app_server.model
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-enum class VegStatus(@JsonValue val statusName: String) {
-    POSITIVE("positive"),
-    NEGATIVE("negative"),
-    POSSIBLE("possible"),
-    UNKNOWN("unknown");
+enum class VegStatus(
+        @JsonValue val statusName: String,
+        val persistentCode: Short) {
+    POSITIVE("positive", 1),
+    NEGATIVE("negative", 2),
+    POSSIBLE("possible", 3),
+    UNKNOWN("unknown", 4);
     companion object {
-        fun fromStringName(str: String): VegStatus? {
-            for (status in values()) {
-                if (status.statusName == str.toLowerCase()) {
-                    return status;
-                }
-            }
-            return null
-        }
+        fun fromStringName(str: String) = values().find { it.statusName == str.toLowerCase() }
+        fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
     }
 }

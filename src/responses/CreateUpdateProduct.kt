@@ -45,20 +45,20 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): Any {
         val productRow = if (oldProduct == null) {
             ProductTable.insert { row ->
                 row[barcode] = params.barcode
-                row[ProductTable.vegetarianStatus] = (vegetarianStatus ?: VegStatus.UNKNOWN).statusName
-                row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.sourceName
-                row[ProductTable.veganStatus] = (veganStatus ?: VegStatus.UNKNOWN).statusName
-                row[veganStatusSource] = VegStatusSource.COMMUNITY.sourceName
+                row[ProductTable.vegetarianStatus] = (vegetarianStatus ?: VegStatus.UNKNOWN).persistentCode
+                row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
+                row[ProductTable.veganStatus] = (veganStatus ?: VegStatus.UNKNOWN).persistentCode
+                row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
             }.resultedValues!![0]
         } else {
             ProductTable.update { row ->
                 if (vegetarianStatus != null) {
-                    row[ProductTable.vegetarianStatus] = vegetarianStatus.statusName
-                    row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.sourceName
+                    row[ProductTable.vegetarianStatus] = vegetarianStatus.persistentCode
+                    row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                 }
                 if (veganStatus != null) {
-                    row[ProductTable.veganStatus] = veganStatus.statusName
-                    row[veganStatusSource] = VegStatusSource.COMMUNITY.sourceName
+                    row[ProductTable.veganStatus] = veganStatus.persistentCode
+                    row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                 }
             }
             ProductTable.select { barcode eq params.barcode }.first()
@@ -104,11 +104,11 @@ fun maybeCreateModeratorTask(barcode: String, user: User) {
     // that is because not all product changes happen on this server, some happen on OFF.
     ModeratorTaskTable.deleteWhere {
         (ModeratorTaskTable.productBarcode eq barcode) and
-                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentId)
+                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentCode)
     }
     ModeratorTaskTable.insert {
         it[productBarcode] = barcode
-        it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentId
+        it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentCode
         it[taskSourceUserId] = user.id
         it[time] = ZonedDateTime.now().toEpochSecond()
     }

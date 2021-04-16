@@ -50,7 +50,7 @@ fun registerModerator(): String {
             it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = moderator.name
             it[googleId] = moderator.googleId
-            it[userRightsGroup] = UserRightsGroup.MODERATOR.groupName
+            it[userRightsGroup] = UserRightsGroup.MODERATOR.persistentCode
         }
     }
     return JwtController.makeToken(moderator, "device id")

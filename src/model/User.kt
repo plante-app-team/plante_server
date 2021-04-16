@@ -24,13 +24,13 @@ data class User(
                 loginGeneration = tableRow[UserTable.loginGeneration],
                 name = tableRow[UserTable.name],
                 googleId = tableRow[UserTable.googleId],
-                gender = tableRow[UserTable.gender]?.let { Gender.fromStringName(it) },
+                gender = tableRow[UserTable.gender]?.let { Gender.fromPersistentCode(it) },
                 birthday = tableRow[UserTable.birthday],
                 eatsMilk = tableRow[UserTable.eatsMilk],
                 eatsEggs = tableRow[UserTable.eatsEggs],
                 eatsHoney = tableRow[UserTable.eatsHoney],
                 userRightsGroup = extractUserRightsGroup(tableRow[UserTable.userRightsGroup]))
-        private fun extractUserRightsGroup(str: String) =
-            UserRightsGroup.fromStringName(str) ?: UserRightsGroup.NORMAL
+        private fun extractUserRightsGroup(code: Short) =
+            UserRightsGroup.fromPersistentCode(code) ?: UserRightsGroup.NORMAL
     }
 }

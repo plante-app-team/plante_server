@@ -57,7 +57,7 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     transaction {
         ModeratorTaskTable.insert {
             it[productBarcode] = params.barcode
-            it[taskType] = ModeratorTaskType.USER_REPORT.persistentId
+            it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
             it[taskSourceUserId] = user.id
             it[textFromUser] = params.text
             it[time] = ZonedDateTime.now().toEpochSecond()

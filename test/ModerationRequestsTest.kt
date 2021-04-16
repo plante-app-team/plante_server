@@ -48,7 +48,7 @@ class ModerationRequestsTest {
                     ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentCode, tasks[0][ModeratorTaskTable.taskType])
             }
 
             // Clear
@@ -69,7 +69,7 @@ class ModerationRequestsTest {
                     ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentCode, tasks[0][ModeratorTaskTable.taskType])
             }
         }
     }
@@ -96,7 +96,7 @@ class ModerationRequestsTest {
                     ModeratorTaskTable.productBarcode eq barcode
                 }.toList()
                 assertEquals(1, tasks.count())
-                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentId, tasks[0][ModeratorTaskTable.taskType])
+                assertEquals(ModeratorTaskType.PRODUCT_CHANGE.persistentCode, tasks[0][ModeratorTaskTable.taskType])
             }
         }
     }
@@ -152,7 +152,7 @@ class ModerationRequestsTest {
             transaction {
                 val tasks = ModeratorTaskTable.select {
                     (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentCode)
                 }.toList()
                 assertEquals(3, tasks.count())
 
@@ -288,7 +288,7 @@ class ModerationRequestsTest {
             transaction {
                 val tasks = ModeratorTaskTable.select {
                     (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentId)
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentCode)
                 }
                 assertEquals(0, tasks.count())
             }
