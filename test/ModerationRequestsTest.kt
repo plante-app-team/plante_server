@@ -631,6 +631,47 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `can get resolved tasks if want to`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Assign the task
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var allTasks = map["tasks"] as List<*>
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Now let's get all tasks including resolved
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/?includeResolved=true").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            // Now let's get assigned tasks including resolved
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/?includeResolved=true").jsonMap()
+            var tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+
+            // Now let's repeat that without 'includeResolved' just in case
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(0, allTasks.size, map.toString())
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(0, tasks.size, map.toString())
+        }
+    }
+
+    @Test
     fun `cannot resolve not existing task`() {
         withTestApplication({ module(testing = true) }) {
             val moderatorClientToken = registerModerator()
@@ -830,6 +871,73 @@ class ModerationRequestsTest {
             map = authedGet(
                 clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
             assertEquals("ok", map["result"])
+        }
+    }
+
+    @Test
+    fun `can unresolve task`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Get task ID
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 0 tasks now
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(0, allTasks.size)
+
+            // Unresolve the task
+            map = authedGet(moderatorClientToken, "/unresolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 1 task now
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size)
+        }
+    }
+
+    @Test
+    fun `cannot unresolve task by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Get task ID
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 0 tasks now
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(0, allTasks.size)
+
+            // Unresolve the task by simple user
+            map = authedGet(simpleUserClientToken, "/unresolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("denied", map["error"])
         }
     }
 }

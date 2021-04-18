@@ -2,6 +2,7 @@ package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -19,6 +20,7 @@ const val ASSIGNATION_TIME_LIMIT_MINUTES = 5L
 @Location("/assigned_moderator_tasks_data/")
 data class AssignedModeratorTasksDataParams(
     val assignee: String? = null,
+    val includeResolved: Boolean = false,
     val testingNow: Long? = null)
 
 fun assignedModeratorTasksData(params: AssignedModeratorTasksDataParams, user: User, testing: Boolean): Any {
@@ -41,11 +43,21 @@ fun assignedModeratorTasksData(params: AssignedModeratorTasksDataParams, user: U
 
         val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
 
-        val tasks = ModeratorTaskTable.select {
-            (ModeratorTaskTable.assignee eq assignee) and
-                    (ModeratorTaskTable.assignTime greater oldestAcceptable) and
-                    (ModeratorTaskTable.resolutionTime eq null)
-        }.orderBy(ModeratorTaskTable.creationTime).map { ModeratorTask.from(it) }
+        val mainConstraint = (ModeratorTaskTable.assignee eq assignee) and
+                (ModeratorTaskTable.assignTime greater oldestAcceptable)
+        val query = if (params.includeResolved) {
+            ModeratorTaskTable.select {
+                mainConstraint
+            }
+        } else {
+            ModeratorTaskTable.select {
+                mainConstraint and
+                        (ModeratorTaskTable.resolutionTime eq null)
+            }
+        }
+        val tasks = query
+            .orderBy(ModeratorTaskTable.creationTime)
+            .map { ModeratorTask.from(it) }
         ModeratorTasksDataResponse(tasks)
     }
 }
