@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.untitled_vegan_app_server.db.MAX_PRODUCT_CHANGES_COUNT
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
+import vegancheckteam.untitled_vegan_app_server.model.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable.barcode
@@ -110,6 +110,6 @@ fun maybeCreateModeratorTask(barcode: String, user: User) {
         it[productBarcode] = barcode
         it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentCode
         it[taskSourceUserId] = user.id
-        it[time] = ZonedDateTime.now().toEpochSecond()
+        it[creationTime] = ZonedDateTime.now().toEpochSecond()
     }
 }

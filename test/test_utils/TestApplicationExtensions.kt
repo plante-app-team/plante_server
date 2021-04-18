@@ -33,19 +33,25 @@ fun TestApplicationResponse.jsonMap(): Map<*, *> {
 fun TestApplicationCall.jsonMap() = response.jsonMap()
 
 fun TestApplicationEngine.register(): String {
-    val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
-    assertEquals(200, response.status()?.value)
-    return response.jsonMap()["client_token"] as String
+    return registerAndGetTokenWithID().first
 }
 
-fun registerModerator(): String {
+fun TestApplicationEngine.registerAndGetTokenWithID(): Pair<String, String> {
+    val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+    assertEquals(200, response.status()?.value)
+    val token = response.jsonMap()["client_token"] as String
+    val id = response.jsonMap()["user_id"] as String
+    return Pair(token, id)
+}
+
+fun registerModerator(id: UUID = UUID.randomUUID()): String {
     val moderator = User(
-        id = UUID.randomUUID(),
+        id = id,
         loginGeneration = 1,
         googleId = null)
     transaction {
         UserTable.insert {
-            it[id] = moderator.id
+            it[UserTable.id] = moderator.id
             it[loginGeneration] = moderator.loginGeneration
             it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = moderator.name

@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskType
+import vegancheckteam.untitled_vegan_app_server.model.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
 import vegancheckteam.untitled_vegan_app_server.model.User
 import java.time.ZonedDateTime
@@ -60,7 +60,7 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
             it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
             it[taskSourceUserId] = user.id
             it[textFromUser] = params.text
-            it[time] = ZonedDateTime.now().toEpochSecond()
+            it[creationTime] = ZonedDateTime.now().toEpochSecond()
         }
     }
     return GenericResponse.success()

@@ -28,10 +28,13 @@ import vegancheckteam.untitled_vegan_app_server.db.ProductScanTable
 import vegancheckteam.untitled_vegan_app_server.db.ProductTable
 import vegancheckteam.untitled_vegan_app_server.db.UserQuizTable
 import vegancheckteam.untitled_vegan_app_server.db.UserTable
+import vegancheckteam.untitled_vegan_app_server.responses.AssignModeratorTaskParams
+import vegancheckteam.untitled_vegan_app_server.responses.AssignedModeratorTasksDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
 import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductParams
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
 import vegancheckteam.untitled_vegan_app_server.responses.MakeReportParams
+import vegancheckteam.untitled_vegan_app_server.responses.AllModeratorTasksDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductScanParams
@@ -41,10 +44,13 @@ import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserQuizDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserQuizParams
+import vegancheckteam.untitled_vegan_app_server.responses.assignModeratorTask
+import vegancheckteam.untitled_vegan_app_server.responses.assignedModeratorTasksData
 import vegancheckteam.untitled_vegan_app_server.responses.banMe
 import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
 import vegancheckteam.untitled_vegan_app_server.responses.makeReport
+import vegancheckteam.untitled_vegan_app_server.responses.allModeratorTasksData
 import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
 import vegancheckteam.untitled_vegan_app_server.responses.productData
 import vegancheckteam.untitled_vegan_app_server.responses.productScan
@@ -143,6 +149,15 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ProductScanParams> { params, user ->
                 call.respond(productScan(params, user, testing))
+            }
+            getAuthed<AssignModeratorTaskParams> { params, user ->
+                call.respond(assignModeratorTask(params, user, testing))
+            }
+            getAuthed<AssignedModeratorTasksDataParams> { params, user ->
+                call.respond(assignedModeratorTasksData(params, user, testing))
+            }
+            getAuthed<AllModeratorTasksDataParams> { params, user ->
+                call.respond(allModeratorTasksData(params, user, testing))
             }
         }
     }
