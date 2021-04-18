@@ -39,6 +39,7 @@ import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataPara
 import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductScanParams
 import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
+import vegancheckteam.untitled_vegan_app_server.responses.ResolveModeratorTaskParams
 import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
 import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
@@ -55,6 +56,7 @@ import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
 import vegancheckteam.untitled_vegan_app_server.responses.productData
 import vegancheckteam.untitled_vegan_app_server.responses.productScan
 import vegancheckteam.untitled_vegan_app_server.responses.registerUser
+import vegancheckteam.untitled_vegan_app_server.responses.resolveModeratorTask
 import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
 import vegancheckteam.untitled_vegan_app_server.responses.updateUserData
 import vegancheckteam.untitled_vegan_app_server.responses.userData
@@ -158,6 +160,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<AllModeratorTasksDataParams> { params, user ->
                 call.respond(allModeratorTasksData(params, user, testing))
+            }
+            getAuthed<ResolveModeratorTaskParams> { params, user ->
+                call.respond(resolveModeratorTask(params, user, testing))
             }
         }
     }

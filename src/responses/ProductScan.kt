@@ -18,7 +18,7 @@ data class ProductScanParams(
     val testingNow: Long? = null)
 
 fun productScan(params: ProductScanParams, user: User, testing: Boolean): Any {
-    val now = if (testing && params.testingNow != null) {
+    val now = if (params.testingNow != null && testing) {
         params.testingNow
     } else {
         ZonedDateTime.now().toEpochSecond()

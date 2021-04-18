@@ -23,7 +23,9 @@ data class ModeratorTask(
     @JsonProperty("assignee")
     val assignee: String?,
     @JsonProperty("assign_time")
-    val assignTime: Long?) {
+    val assignTime: Long?,
+    @JsonProperty("resolution_time")
+    val resolutionTime: Long?) {
     companion object {
         fun from(tableRow: ResultRow) = ModeratorTask(
             id = tableRow[ModeratorTaskTable.id],
@@ -33,7 +35,8 @@ data class ModeratorTask(
             textFromUser = tableRow[ModeratorTaskTable.textFromUser],
             creationTime = tableRow[ModeratorTaskTable.creationTime],
             assignee = tableRow[ModeratorTaskTable.assignee]?.toString(),
-            assignTime = tableRow[ModeratorTaskTable.assignTime])
+            assignTime = tableRow[ModeratorTaskTable.assignTime],
+            resolutionTime = tableRow[ModeratorTaskTable.resolutionTime])
         private fun taskTypeFrom(code: Short) = ModeratorTaskType.fromPersistentCode(code)
     }
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)

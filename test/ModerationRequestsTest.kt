@@ -12,6 +12,7 @@ import org.junit.Test
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
 import vegancheckteam.untitled_vegan_app_server.model.ModeratorTaskType
 import vegancheckteam.untitled_vegan_app_server.responses.ASSIGNATION_TIME_LIMIT_MINUTES
+import vegancheckteam.untitled_vegan_app_server.responses.DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS
 import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_PRODUCT_TESTING
 import vegancheckteam.untitled_vegan_app_server.responses.MAX_REPORTS_FOR_USER_TESTING
 import vegancheckteam.untitled_vegan_app_server.responses.REPORT_TEXT_MAX_LENGTH
@@ -589,6 +590,246 @@ class ModerationRequestsTest {
             assertEquals(moderatorId.toString(), task["assignee"])
             assertEquals(moderatorId.toString(), task["assignee"])
             assertEquals("user_report", task["task_type"])
+        }
+    }
+
+    @Test
+    fun `can resolve task`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Assign the task
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 1 task expected
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            var tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+            val taskId = (tasks[0] as Map<*, *>)["id"]
+
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 0 tasks expected
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(0, allTasks.size, map.toString())
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(0, tasks.size, map.toString())
+        }
+    }
+
+    @Test
+    fun `cannot resolve not existing task`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=100").jsonMap()
+            assertEquals("task_not_found", map["error"])
+        }
+    }
+
+    @Test
+    fun `resolved tasks are deleted after some time`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Assign the task
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+            // Get task ID
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 1 task still expected to exist
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/?includeResolved=true").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+
+            // Pass some time
+            val now = ZonedDateTime.now().toEpochSecond() + DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS * 24 * 60 * 60 + 1
+
+            // 0 tasks expected to exist now
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/?includeResolved=true&testingNow=$now").jsonMap()
+            allTasks = map["tasks"] as List<*>
+            assertEquals(0, allTasks.size, map.toString())
+        }
+    }
+
+    @Test
+    fun `resolved tasks cannot be randomly assigned`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Assign the task
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+            // Get task ID
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+            // Resolve the task
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Reassign the task
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("no_unresolved_moderator_tasks", map["error"])
+        }
+    }
+
+    @Test
+    fun `cannot resolve task by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=222&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Get task ID
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+
+            // Resolve the task by simple user
+            map = authedGet(simpleUserClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("denied", map["error"])
+        }
+    }
+
+    @Test
+    fun `max reports for user consider only unresolved tasks`() {
+        withTestApplication({ module(testing = true) }) {
+            // Set up
+            transaction {
+                ModeratorTaskTable.deleteAll()
+            }
+
+            val clientToken = register()
+
+            val barcode1 = UUID.randomUUID().toString()
+            var map = authedGet(clientToken, "/create_update_product/?"
+                    + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+            val barcode2 = UUID.randomUUID().toString()
+            map = authedGet(clientToken, "/create_update_product/?"
+                    + "barcode=${barcode2}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 2' is because
+            // product creation also creates a moderator task
+            // and there are 2 products
+            for (index in 0 until MAX_REPORTS_FOR_USER_TESTING - 2) {
+                val barcode = if (index % 2 == 1) {
+                    barcode1
+                } else {
+                    barcode2
+                }
+                map = authedGet(
+                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
+                assertEquals("ok", map["result"], map.toString())
+            }
+
+            // Error expected now
+            map = authedGet(
+                clientToken, "/make_report/?barcode=${barcode1}&text=finaltext1").jsonMap()
+            assertEquals("too_many_reports_for_user", map["error"])
+
+            // Resolve 1 task
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Can make another report now
+            map = authedGet(
+                clientToken, "/make_report/?barcode=${barcode1}&text=finaltext1").jsonMap()
+            assertEquals("ok", map["result"])
+        }
+    }
+
+    @Test
+    fun `max reports for product consider only unresolved tasks`() {
+        withTestApplication({ module(testing = true) }) {
+            // Set up
+            transaction {
+                ModeratorTaskTable.deleteAll()
+            }
+
+            val clientToken1 = register()
+            val clientToken2 = register()
+
+            val barcode = UUID.randomUUID().toString()
+            var map = authedGet(clientToken1, "/create_update_product/?"
+                    + "barcode=${barcode}&vegetarianStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 1' is because
+            // product creation also creates a moderator task
+            for (index in 0 until MAX_REPORTS_FOR_PRODUCT_TESTING - 1) {
+                val clientToken = if (index % 2 == 1) {
+                    clientToken1
+                } else {
+                    clientToken2
+                }
+                map = authedGet(
+                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
+                assertEquals("ok", map["result"], map.toString())
+            }
+
+            // Ensure there's a max number of tasks
+            transaction {
+                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
+            }
+
+            // Error expected now
+            map = authedGet(
+                clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
+            assertEquals("too_many_reports_for_product", map["error"])
+
+            // Resolve 1 task
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            val taskId = (allTasks[0] as Map<*, *>)["id"]
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Can make another report now
+            map = authedGet(
+                clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
+            assertEquals("ok", map["result"])
         }
     }
 }

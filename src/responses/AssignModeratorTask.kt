@@ -1,6 +1,7 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -44,8 +45,9 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
             params.taskId
         } else {
             val task = ModeratorTaskTable.select {
-                (ModeratorTaskTable.assignTime eq null) or
-                        (ModeratorTaskTable.assignTime less oldestAcceptable)
+                (ModeratorTaskTable.resolutionTime eq null) and
+                        ((ModeratorTaskTable.assignTime eq null) or
+                        (ModeratorTaskTable.assignTime less oldestAcceptable))
             }.orderBy(ModeratorTaskTable.creationTime)
                 .map { ModeratorTask.from(it) }
                 .sortedBy { it.taskType.priority }

@@ -1,6 +1,8 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -24,7 +26,8 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     val maxReportsForUser = if (testing) MAX_REPORTS_FOR_USER_TESTING else MAX_REPORTS_FOR_USER
     val existingTasksOfUser = transaction {
         val existingModeratorTasksOfUser = ModeratorTaskTable.select {
-            ModeratorTaskTable.taskSourceUserId eq user.id
+            (ModeratorTaskTable.taskSourceUserId eq user.id) and
+                    (ModeratorTaskTable.resolutionTime eq null)
         }
         existingModeratorTasksOfUser.count()
     }
@@ -37,7 +40,8 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     val maxReportsForProduct = if (testing) MAX_REPORTS_FOR_PRODUCT_TESTING else MAX_REPORTS_FOR_PRODUCT
     val existingTasksOfProduct = transaction {
         val existingModeratorTasksOfProduct = ModeratorTaskTable.select {
-            ModeratorTaskTable.productBarcode eq params.barcode
+            (ModeratorTaskTable.productBarcode eq params.barcode) and
+                    (ModeratorTaskTable.resolutionTime eq null)
         }
         existingModeratorTasksOfProduct.count()
     }

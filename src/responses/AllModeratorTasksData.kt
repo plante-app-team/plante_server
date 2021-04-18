@@ -1,6 +1,7 @@
 package vegancheckteam.untitled_vegan_app_server.responses
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
@@ -13,6 +14,7 @@ import java.time.ZonedDateTime
 
 @Location("/all_moderator_tasks_data/")
 data class AllModeratorTasksDataParams(
+    val includeResolved: Boolean = false,
     val testingNow: Long? = null)
 
 fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testing: Boolean): Any {
@@ -27,9 +29,18 @@ fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testi
     }
 
     return transaction {
+        deleteResolvedTasks(now)
+
         val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
 
-        val tasks = ModeratorTaskTable.selectAll()
+        val query = if (params.includeResolved) {
+            ModeratorTaskTable.selectAll()
+        } else {
+            ModeratorTaskTable.select {
+                ModeratorTaskTable.resolutionTime eq null
+            }
+        }
+        val tasks = query
             .orderBy(ModeratorTaskTable.creationTime)
             .map { ModeratorTask.from(it) }
             .map {

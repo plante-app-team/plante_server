@@ -1,0 +1,49 @@
+package vegancheckteam.untitled_vegan_app_server.responses
+
+import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
+import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
+import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
+import java.time.ZonedDateTime
+
+const val DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS = 7
+
+@Location("/resolve_moderator_task/")
+data class ResolveModeratorTaskParams(
+    val taskId: Int,
+    val testingNow: Long? = null)
+
+fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing: Boolean): Any {
+    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+        return GenericResponse.failure("denied")
+    }
+
+    val now = if (params.testingNow != null && testing) {
+        params.testingNow
+    } else {
+        ZonedDateTime.now().toEpochSecond()
+    }
+
+    val updated = transaction {
+        deleteResolvedTasks(now)
+        ModeratorTaskTable.update( { ModeratorTaskTable.id eq params.taskId } ) {
+            it[resolutionTime] = now
+        }
+    }
+    if (updated > 0) {
+        return GenericResponse.success()
+    } else {
+        return GenericResponse.failure("task_not_found", "Task for id ${params.taskId} not found")
+    }
+}
+
+fun deleteResolvedTasks(now: Long) {
+    val earliestAllowedTasksExistence = now - DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS * 24 * 60 * 60
+    ModeratorTaskTable.deleteWhere {
+        ModeratorTaskTable.resolutionTime less earliestAllowedTasksExistence
+    }
+}
