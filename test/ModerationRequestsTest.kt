@@ -940,4 +940,99 @@ class ModerationRequestsTest {
             assertEquals("denied", map["error"])
         }
     }
+
+    @Test
+    fun `product veg statuses moderation`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("unknown", map["vegetarian_status"])
+            assertEquals("community", map["vegetarian_status_source"])
+            assertEquals("unknown", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
+                    + "vegetarianStatus=positive&veganStatus=negative").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("positive", map["vegetarian_status"])
+            assertEquals("moderator", map["vegetarian_status_source"])
+            assertEquals("negative", map["vegan_status"])
+            assertEquals("moderator", map["vegan_status_source"])
+        }
+    }
+
+    @Test
+    fun `product veg statuses moderation by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("unknown", map["vegetarian_status"])
+            assertEquals("community", map["vegetarian_status_source"])
+            assertEquals("unknown", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+
+            map = authedGet(clientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
+                    + "vegetarianStatus=positive&veganStatus=negative").jsonMap()
+            assertEquals("denied", map["error"])
+        }
+    }
+
+    @Test
+    fun `product veg statuses moderation with invalid veg statuses`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
+                    + "vegetarianStatus=POPOPOSITIVE&veganStatus=negative").jsonMap()
+            assertEquals("invalid_veg_status", map["error"])
+
+            map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
+                    + "vegetarianStatus=positive&veganStatus=NENENEGATIVE").jsonMap()
+            assertEquals("invalid_veg_status", map["error"])
+        }
+    }
+
+    @Test
+    fun `product veg statuses moderation does not work with 1 param only`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderatorClientToken = registerModerator()
+            var resp = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&veganStatus=negative")
+            assertEquals(404, resp.response.status()!!.value)
+
+            resp = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&vegetarianStatus=negative")
+            assertEquals(404, resp.response.status()!!.value)
+        }
+    }
 }

@@ -35,7 +35,7 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): Any {
         return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.vegetarianStatus}")
     }
     if (veganStatus == null && params.veganStatus != null) {
-        return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.vegetarianStatus}")
+        return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.veganStatus}")
     }
 
     transaction {

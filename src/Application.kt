@@ -35,6 +35,7 @@ import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductPar
 import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
 import vegancheckteam.untitled_vegan_app_server.responses.MakeReportParams
 import vegancheckteam.untitled_vegan_app_server.responses.AllModeratorTasksDataParams
+import vegancheckteam.untitled_vegan_app_server.responses.ModerateProductVegStatusesParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
 import vegancheckteam.untitled_vegan_app_server.responses.ProductScanParams
@@ -53,6 +54,7 @@ import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
 import vegancheckteam.untitled_vegan_app_server.responses.loginUser
 import vegancheckteam.untitled_vegan_app_server.responses.makeReport
 import vegancheckteam.untitled_vegan_app_server.responses.allModeratorTasksData
+import vegancheckteam.untitled_vegan_app_server.responses.moderateProductVegStatuses
 import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
 import vegancheckteam.untitled_vegan_app_server.responses.productData
 import vegancheckteam.untitled_vegan_app_server.responses.productScan
@@ -168,6 +170,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<UnresolveModeratorTaskParams> { params, user ->
                 call.respond(unresolveModeratorTask(params, user, testing))
+            }
+            getAuthed<ModerateProductVegStatusesParams> { params, user ->
+                call.respond(moderateProductVegStatuses(params, user))
             }
         }
     }
