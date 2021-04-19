@@ -23,7 +23,9 @@ data class UserDataResponse(
     @JsonProperty("eats_eggs")
     val eatsEggs: Boolean? = null,
     @JsonProperty("eats_honey")
-    val eatsHoney: Boolean? = null) {
+    val eatsHoney: Boolean? = null,
+    @JsonProperty("rights_group")
+    val rightsGroup: Short? = null) {
 
     companion object {
         fun from(user: User) = UserDataResponse(
@@ -33,7 +35,8 @@ data class UserDataResponse(
                 birthday = user.birthday,
                 eatsMilk = user.eatsMilk,
                 eatsEggs = user.eatsEggs,
-                eatsHoney = user.eatsHoney)
+                eatsHoney = user.eatsHoney,
+                rightsGroup = user.userRightsGroup.persistentCode)
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
 }
