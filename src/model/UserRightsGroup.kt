@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.model
+package vegancheckteam.plante_server.model
 
 enum class UserRightsGroup(
         val groupName: String,

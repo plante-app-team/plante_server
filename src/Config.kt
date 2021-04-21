@@ -1,8 +1,8 @@
-package vegancheckteam.untitled_vegan_app_server
+package vegancheckteam.plante_server
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
-import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
+import vegancheckteam.plante_server.GlobalStorage.jsonMapper
 
 data class Config(
     @JsonProperty("psql_url")

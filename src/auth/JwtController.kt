@@ -1,16 +1,14 @@
-package vegancheckteam.untitled_vegan_app_server.auth
+package vegancheckteam.plante_server.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import io.ktor.auth.Credential
 import io.ktor.auth.jwt.JWTCredential
 import java.util.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.Config
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.plante_server.Config
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.User
 
 // WARNING: beware of JWT changes - any change can lead to all tokens invalidation
 object JwtController {

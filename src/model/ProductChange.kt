@@ -1,10 +1,10 @@
-package vegancheckteam.untitled_vegan_app_server.model
+package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 import org.jetbrains.exposed.sql.ResultRow
-import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
-import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
+import vegancheckteam.plante_server.GlobalStorage.jsonMapper
+import vegancheckteam.plante_server.db.ProductChangeTable
 
 data class ProductChange(
     @JsonProperty("barcode")

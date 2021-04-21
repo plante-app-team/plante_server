@@ -1,8 +1,8 @@
-package vegancheckteam.untitled_vegan_app_server.model
+package vegancheckteam.plante_server.model
 
 import java.util.*
 import org.jetbrains.exposed.sql.ResultRow
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
+import vegancheckteam.plante_server.db.UserTable
 
 data class User(
     val id: UUID,

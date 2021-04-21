@@ -10,7 +10,7 @@ if not os.path.exists(testing_env_dir):
   os.makedirs(testing_env_dir)
 current_time = time.time()
 stdout_log_file = open(os.path.join(testing_env_dir, 'logs_stdout_{}'.format(current_time)), 'w')
-docker_repo_dir = os.path.join(testing_env_dir, 'untitled_vegan_app_docker')
+docker_repo_dir = os.path.join(testing_env_dir, 'plante_docker')
 
 def step(msg):
   print('#### {}'.format(msg), end='\r\n')
@@ -43,7 +43,7 @@ def main(args):
   elif not os.path.exists(docker_repo_dir):
     step('No docker repo dir found - clonning docker repo into dir: {}'.format(docker_repo_dir))
     os.makedirs(docker_repo_dir, exist_ok=True)
-    check_call('git clone https://github.com/blazern/untitled_vegan_app_docker.git {}'.format(docker_repo_dir))
+    check_call('git clone https://github.com/blazern/plante_docker.git {}'.format(docker_repo_dir))
   else:
     step('Docker repo dir found, no need to clone the repo')
 
@@ -54,7 +54,7 @@ def main(args):
   step('Building db container')
   db_container_dir = os.path.join(docker_repo_dir, 'db')
   users_password = '123'
-  db_container_name = 'db_container_for_untitled_vegan_app_server_tests'
+  db_container_name = 'db_container_for_plante_server_tests'
   check_call('docker build -t {} {} --build-arg USER_PASSWORD={}'.format(db_container_name, db_container_dir, users_password))
 
   step('Trying to stop already spinning db container')

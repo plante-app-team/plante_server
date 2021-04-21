@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.auth
+package vegancheckteam.plante_server.auth
 
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.http.LowLevelHttpRequest

@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.base
+package vegancheckteam.plante_server.base
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException

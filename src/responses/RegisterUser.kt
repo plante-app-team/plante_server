@@ -1,17 +1,17 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.auth.GoogleAuthorizer
-import vegancheckteam.untitled_vegan_app_server.auth.GoogleIdOrServerError
-import vegancheckteam.untitled_vegan_app_server.auth.JwtController
-import vegancheckteam.untitled_vegan_app_server.auth.authOrServerError
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
-import vegancheckteam.untitled_vegan_app_server.responses.model.UserDataResponse
+import vegancheckteam.plante_server.auth.GoogleAuthorizer
+import vegancheckteam.plante_server.auth.GoogleIdOrServerError
+import vegancheckteam.plante_server.auth.JwtController
+import vegancheckteam.plante_server.auth.authOrServerError
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.responses.model.UserDataResponse
 import java.time.ZonedDateTime
 import java.util.*
 

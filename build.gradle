@@ -14,9 +14,9 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-group 'vegancheckteam.untitled_vegan_app_server'
+group 'vegancheckteam.plante_server'
 version '0.0.1'
-mainClassName = "vegancheckteam.untitled_vegan_app_server.Main"
+mainClassName = "vegancheckteam.plante_server.Main"
 
 shadowJar {
     manifest {

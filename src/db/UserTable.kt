@@ -1,7 +1,7 @@
-package vegancheckteam.untitled_vegan_app_server.db
+package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Table
-import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
+import vegancheckteam.plante_server.model.UserRightsGroup
 
 object UserTable : Table("user") {
     val id = uuid("id")

@@ -1,10 +1,10 @@
-package vegancheckteam.untitled_vegan_app_server.auth
+package vegancheckteam.plante_server.auth
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.gson.GsonFactory
-import vegancheckteam.untitled_vegan_app_server.GlobalStorage
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
+import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.model.GenericResponse
 
 object GoogleAuthorizer {
     private val jsonFactory = GsonFactory()

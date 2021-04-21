@@ -1,11 +1,11 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.User
 
 @Location("/sign_out_all/")
 data class SignOutAllParams(val unused: Int = 123)

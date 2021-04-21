@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.db
+package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Table
 

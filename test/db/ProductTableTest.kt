@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.db
+package vegancheckteam.plante_server.db
 
 import io.ktor.server.testing.withTestApplication
 import java.util.*
@@ -6,10 +6,9 @@ import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
-import org.postgresql.util.PSQLException
-import vegancheckteam.untitled_vegan_app_server.model.VegStatus
-import vegancheckteam.untitled_vegan_app_server.model.VegStatusSource
-import vegancheckteam.untitled_vegan_app_server.module
+import vegancheckteam.plante_server.model.VegStatus
+import vegancheckteam.plante_server.model.VegStatusSource
+import vegancheckteam.plante_server.module
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 

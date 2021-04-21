@@ -1,13 +1,13 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.db.ProductScanTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.plante_server.db.ProductScanTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.User
 import java.time.ZonedDateTime
 
 const val PRODUCT_SCAN_STORAGE_DAYS_LIMIT = 7L

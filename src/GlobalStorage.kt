@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server
+package vegancheckteam.plante_server
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule

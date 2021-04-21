@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server
+package vegancheckteam.plante_server
 
 import com.fasterxml.jackson.databind.*
 import io.ktor.application.*
@@ -20,52 +20,52 @@ import io.ktor.routing.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.event.*
-import vegancheckteam.untitled_vegan_app_server.auth.CioHttpTransport
-import vegancheckteam.untitled_vegan_app_server.auth.JwtController
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
-import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
-import vegancheckteam.untitled_vegan_app_server.db.ProductScanTable
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable
-import vegancheckteam.untitled_vegan_app_server.db.UserQuizTable
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.responses.AssignModeratorTaskParams
-import vegancheckteam.untitled_vegan_app_server.responses.AssignedModeratorTasksDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.BanMeParams
-import vegancheckteam.untitled_vegan_app_server.responses.CreateUpdateProductParams
-import vegancheckteam.untitled_vegan_app_server.responses.LoginParams
-import vegancheckteam.untitled_vegan_app_server.responses.MakeReportParams
-import vegancheckteam.untitled_vegan_app_server.responses.AllModeratorTasksDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.ModerateProductVegStatusesParams
-import vegancheckteam.untitled_vegan_app_server.responses.ProductChangesDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.ProductDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.ProductScanParams
-import vegancheckteam.untitled_vegan_app_server.responses.RegisterParams
-import vegancheckteam.untitled_vegan_app_server.responses.ResolveModeratorTaskParams
-import vegancheckteam.untitled_vegan_app_server.responses.SignOutAllParams
-import vegancheckteam.untitled_vegan_app_server.responses.UnresolveModeratorTaskParams
-import vegancheckteam.untitled_vegan_app_server.responses.UpdateUserDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.UserDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.UserQuizDataParams
-import vegancheckteam.untitled_vegan_app_server.responses.UserQuizParams
-import vegancheckteam.untitled_vegan_app_server.responses.assignModeratorTask
-import vegancheckteam.untitled_vegan_app_server.responses.assignedModeratorTasksData
-import vegancheckteam.untitled_vegan_app_server.responses.banMe
-import vegancheckteam.untitled_vegan_app_server.responses.createUpdateProduct
-import vegancheckteam.untitled_vegan_app_server.responses.loginUser
-import vegancheckteam.untitled_vegan_app_server.responses.makeReport
-import vegancheckteam.untitled_vegan_app_server.responses.allModeratorTasksData
-import vegancheckteam.untitled_vegan_app_server.responses.moderateProductVegStatuses
-import vegancheckteam.untitled_vegan_app_server.responses.productChangesData
-import vegancheckteam.untitled_vegan_app_server.responses.productData
-import vegancheckteam.untitled_vegan_app_server.responses.productScan
-import vegancheckteam.untitled_vegan_app_server.responses.registerUser
-import vegancheckteam.untitled_vegan_app_server.responses.resolveModeratorTask
-import vegancheckteam.untitled_vegan_app_server.responses.signOutAll
-import vegancheckteam.untitled_vegan_app_server.responses.unresolveModeratorTask
-import vegancheckteam.untitled_vegan_app_server.responses.updateUserData
-import vegancheckteam.untitled_vegan_app_server.responses.userData
-import vegancheckteam.untitled_vegan_app_server.responses.userQuiz
-import vegancheckteam.untitled_vegan_app_server.responses.userQuizData
+import vegancheckteam.plante_server.auth.CioHttpTransport
+import vegancheckteam.plante_server.auth.JwtController
+import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.ProductChangeTable
+import vegancheckteam.plante_server.db.ProductScanTable
+import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.db.UserQuizTable
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.responses.AssignModeratorTaskParams
+import vegancheckteam.plante_server.responses.AssignedModeratorTasksDataParams
+import vegancheckteam.plante_server.responses.BanMeParams
+import vegancheckteam.plante_server.responses.CreateUpdateProductParams
+import vegancheckteam.plante_server.responses.LoginParams
+import vegancheckteam.plante_server.responses.MakeReportParams
+import vegancheckteam.plante_server.responses.AllModeratorTasksDataParams
+import vegancheckteam.plante_server.responses.ModerateProductVegStatusesParams
+import vegancheckteam.plante_server.responses.ProductChangesDataParams
+import vegancheckteam.plante_server.responses.ProductDataParams
+import vegancheckteam.plante_server.responses.ProductScanParams
+import vegancheckteam.plante_server.responses.RegisterParams
+import vegancheckteam.plante_server.responses.ResolveModeratorTaskParams
+import vegancheckteam.plante_server.responses.SignOutAllParams
+import vegancheckteam.plante_server.responses.UnresolveModeratorTaskParams
+import vegancheckteam.plante_server.responses.UpdateUserDataParams
+import vegancheckteam.plante_server.responses.UserDataParams
+import vegancheckteam.plante_server.responses.UserQuizDataParams
+import vegancheckteam.plante_server.responses.UserQuizParams
+import vegancheckteam.plante_server.responses.assignModeratorTask
+import vegancheckteam.plante_server.responses.assignedModeratorTasksData
+import vegancheckteam.plante_server.responses.banMe
+import vegancheckteam.plante_server.responses.createUpdateProduct
+import vegancheckteam.plante_server.responses.loginUser
+import vegancheckteam.plante_server.responses.makeReport
+import vegancheckteam.plante_server.responses.allModeratorTasksData
+import vegancheckteam.plante_server.responses.moderateProductVegStatuses
+import vegancheckteam.plante_server.responses.productChangesData
+import vegancheckteam.plante_server.responses.productData
+import vegancheckteam.plante_server.responses.productScan
+import vegancheckteam.plante_server.responses.registerUser
+import vegancheckteam.plante_server.responses.resolveModeratorTask
+import vegancheckteam.plante_server.responses.signOutAll
+import vegancheckteam.plante_server.responses.unresolveModeratorTask
+import vegancheckteam.plante_server.responses.updateUserData
+import vegancheckteam.plante_server.responses.userData
+import vegancheckteam.plante_server.responses.userQuiz
+import vegancheckteam.plante_server.responses.userQuizData
 
 object Main {
     @JvmStatic
@@ -100,7 +100,7 @@ fun Application.module(testing: Boolean = false) {
     install(Authentication) {
         jwt {
             // WARNING: beware of JWT changes - any change can lead to all tokens invalidation
-            realm = "vegancheckteam.untitled_vegan_app server"
+            realm = "vegancheckteam.plante server"
             verifier(JwtController.verifier.value)
             validate { JwtController.principalFromCredential(it) }
         }

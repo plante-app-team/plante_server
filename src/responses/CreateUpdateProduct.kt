@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
@@ -9,17 +9,17 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import vegancheckteam.untitled_vegan_app_server.db.MAX_PRODUCT_CHANGES_COUNT
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
-import vegancheckteam.untitled_vegan_app_server.model.ModeratorTaskType
-import vegancheckteam.untitled_vegan_app_server.db.ProductChangeTable
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable.barcode
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.Product
-import vegancheckteam.untitled_vegan_app_server.model.User
-import vegancheckteam.untitled_vegan_app_server.model.VegStatus
-import vegancheckteam.untitled_vegan_app_server.model.VegStatusSource
+import vegancheckteam.plante_server.db.MAX_PRODUCT_CHANGES_COUNT
+import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.model.ModeratorTaskType
+import vegancheckteam.plante_server.db.ProductChangeTable
+import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.db.ProductTable.barcode
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.Product
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.VegStatus
+import vegancheckteam.plante_server.model.VegStatusSource
 import java.lang.Integer.max
 
 @Location("/create_update_product/")

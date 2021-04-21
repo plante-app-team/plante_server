@@ -1,14 +1,14 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
-import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
-import vegancheckteam.untitled_vegan_app_server.model.VegStatus
-import vegancheckteam.untitled_vegan_app_server.model.VegStatusSource
+import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserRightsGroup
+import vegancheckteam.plante_server.model.VegStatus
+import vegancheckteam.plante_server.model.VegStatusSource
 
 @Location("/moderate_product_veg_statuses/")
 data class ModerateProductVegStatusesParams(

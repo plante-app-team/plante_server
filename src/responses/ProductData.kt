@@ -1,12 +1,12 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.Product
-import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.Product
+import vegancheckteam.plante_server.model.User
 
 @Location("/product_data/")
 data class ProductDataParams(val barcode: String)

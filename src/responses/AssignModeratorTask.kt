@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.responses
+package vegancheckteam.plante_server.responses
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.and
@@ -6,12 +6,12 @@ import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.ModeratorTask
-import vegancheckteam.untitled_vegan_app_server.model.User
-import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
+import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.ModeratorTask
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserRightsGroup
 import java.time.ZonedDateTime
 import java.util.*
 

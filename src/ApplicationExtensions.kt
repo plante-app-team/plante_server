@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server
+package vegancheckteam.plante_server
 
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -10,9 +10,9 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.method
 import io.ktor.util.pipeline.PipelineContext
-import vegancheckteam.untitled_vegan_app_server.auth.userPrincipal
-import vegancheckteam.untitled_vegan_app_server.model.GenericResponse
-import vegancheckteam.untitled_vegan_app_server.model.User
+import vegancheckteam.plante_server.auth.userPrincipal
+import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.User
 
 @KtorExperimentalLocationsAPI
 inline fun <reified T : Any> Route.getAuthed(

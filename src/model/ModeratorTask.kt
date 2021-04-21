@@ -1,10 +1,10 @@
-package vegancheckteam.untitled_vegan_app_server.model
+package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.exposed.sql.ResultRow
-import vegancheckteam.untitled_vegan_app_server.GlobalStorage
-import vegancheckteam.untitled_vegan_app_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.db.ModeratorTaskTable
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ModeratorTask(

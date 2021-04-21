@@ -1,12 +1,12 @@
-package vegancheckteam.untitled_vegan_app_server
+package vegancheckteam.plante_server
 
 import io.ktor.server.testing.withTestApplication
-import vegancheckteam.untitled_vegan_app_server.responses.MAX_QUIZ_ANSWERS_COUNT
+import vegancheckteam.plante_server.responses.MAX_QUIZ_ANSWERS_COUNT
 import java.util.*
-import vegancheckteam.untitled_vegan_app_server.test_utils.authedGet
-import vegancheckteam.untitled_vegan_app_server.test_utils.get
-import vegancheckteam.untitled_vegan_app_server.test_utils.jsonMap
-import vegancheckteam.untitled_vegan_app_server.test_utils.register
+import vegancheckteam.plante_server.test_utils.authedGet
+import vegancheckteam.plante_server.test_utils.get
+import vegancheckteam.plante_server.test_utils.jsonMap
+import vegancheckteam.plante_server.test_utils.register
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

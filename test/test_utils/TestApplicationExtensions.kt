@@ -1,4 +1,4 @@
-package vegancheckteam.untitled_vegan_app_server.test_utils
+package vegancheckteam.plante_server.test_utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.http.HttpMethod
@@ -8,10 +8,10 @@ import io.ktor.server.testing.TestApplicationResponse
 import io.ktor.server.testing.handleRequest
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.untitled_vegan_app_server.auth.JwtController
-import vegancheckteam.untitled_vegan_app_server.db.UserTable
-import vegancheckteam.untitled_vegan_app_server.model.User
-import vegancheckteam.untitled_vegan_app_server.model.UserRightsGroup
+import vegancheckteam.plante_server.auth.JwtController
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserRightsGroup
 import java.time.ZonedDateTime
 import java.util.*
 import kotlin.test.assertEquals

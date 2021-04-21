@@ -1,11 +1,9 @@
-package vegancheckteam.untitled_vegan_app_server.model
+package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.jetbrains.exposed.sql.ResultRow
-import vegancheckteam.untitled_vegan_app_server.GlobalStorage.jsonMapper
-import vegancheckteam.untitled_vegan_app_server.db.ProductTable
+import vegancheckteam.plante_server.GlobalStorage.jsonMapper
+import vegancheckteam.plante_server.db.ProductTable
 
 data class Product(
     @JsonProperty("server_id")
