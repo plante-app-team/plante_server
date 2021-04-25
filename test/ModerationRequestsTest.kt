@@ -27,6 +27,7 @@ import java.util.*
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ModerationRequestsTest {
@@ -1033,6 +1034,42 @@ class ModerationRequestsTest {
 
             resp = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&vegetarianStatus=negative")
             assertEquals(404, resp.response.status()!!.value)
+        }
+    }
+
+    @Test
+    fun `user deletion by moderator`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId = UUID.randomUUID()
+            val moderatorClientToken = registerModerator(id = moderatorId)
+            val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
+
+            // At first can send a request by the user
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=123&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Delete user
+            map = authedGet(moderatorClientToken, "/delete_user/?userId=$simpleUserId").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Now the user cannot do anything
+            val resp = authedGet(simpleUserClientToken, "/make_report/?barcode=123&text=someText").response
+            assertNull(resp.content)
+            assertEquals(401, resp.status()?.value)
+        }
+    }
+
+    @Test
+    fun `user deletion by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val (simpleUserClientToken1, simpleUserId1) = registerAndGetTokenWithID()
+            val (simpleUserClientToken2, simpleUserId2) = registerAndGetTokenWithID()
+
+            var map = authedGet(simpleUserClientToken1, "/make_report/?barcode=123&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(simpleUserClientToken2, "/delete_user/?userId=$simpleUserId1").jsonMap()
+            assertEquals("denied", map["error"])
         }
     }
 }

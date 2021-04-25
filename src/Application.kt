@@ -35,6 +35,7 @@ import vegancheckteam.plante_server.responses.CreateUpdateProductParams
 import vegancheckteam.plante_server.responses.LoginParams
 import vegancheckteam.plante_server.responses.MakeReportParams
 import vegancheckteam.plante_server.responses.AllModeratorTasksDataParams
+import vegancheckteam.plante_server.responses.DeleteUserParams
 import vegancheckteam.plante_server.responses.ModerateProductVegStatusesParams
 import vegancheckteam.plante_server.responses.ProductChangesDataParams
 import vegancheckteam.plante_server.responses.ProductDataParams
@@ -54,6 +55,7 @@ import vegancheckteam.plante_server.responses.createUpdateProduct
 import vegancheckteam.plante_server.responses.loginUser
 import vegancheckteam.plante_server.responses.makeReport
 import vegancheckteam.plante_server.responses.allModeratorTasksData
+import vegancheckteam.plante_server.responses.deleteUser
 import vegancheckteam.plante_server.responses.moderateProductVegStatuses
 import vegancheckteam.plante_server.responses.productChangesData
 import vegancheckteam.plante_server.responses.productData
@@ -173,6 +175,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ModerateProductVegStatusesParams> { params, user ->
                 call.respond(moderateProductVegStatuses(params, user))
+            }
+            getAuthed<DeleteUserParams> { params, user ->
+                call.respond(deleteUser(params, user))
             }
         }
     }
