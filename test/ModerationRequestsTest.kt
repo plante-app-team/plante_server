@@ -1060,6 +1060,18 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `deletion of not existing user`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId = UUID.randomUUID()
+            val moderatorClientToken = registerModerator(id = moderatorId)
+            val simpleUserId = UUID.randomUUID()
+
+            val map = authedGet(moderatorClientToken, "/delete_user/?userId=$simpleUserId").jsonMap()
+            assertEquals("user_not_found", map["error"])
+        }
+    }
+
+    @Test
     fun `user deletion by simple user`() {
         withTestApplication({ module(testing = true) }) {
             val (simpleUserClientToken1, simpleUserId1) = registerAndGetTokenWithID()

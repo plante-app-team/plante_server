@@ -16,7 +16,7 @@ fun deleteUser(params: DeleteUserParams, user: User): Any {
     if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
         return GenericResponse.failure("denied")
     }
-    transaction {
+    val updated = transaction {
         UserTable.update({ UserTable.id eq UUID.fromString(params.userId) }) { row ->
             row[googleId] = null
             row[name] = ""
@@ -24,5 +24,9 @@ fun deleteUser(params: DeleteUserParams, user: User): Any {
             row[loginGeneration] = user.loginGeneration + 1 // Sign out
         }
     }
-    return GenericResponse.success()
+    return if (updated > 0) {
+        GenericResponse.success()
+    } else {
+        GenericResponse.failure("user_not_found", "No user with ID: ${params.userId}")
+    }
 }
