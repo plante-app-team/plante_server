@@ -92,7 +92,7 @@ def main(args):
   step('Wrote config to file: {}'.format(config_file))
 
   step('Blocking until db container finishes')
-  step('You can start the tests now, don\'t forget to export env var CONFIG_FILE_PATH with value: {}'.format(config_file))
+  step('You can start the tests now, don\'t forget to export env var PLANTE_BACKEND_CONFIG_FILE_PATH with value: {}'.format(config_file))
 
   docker_run_process.communicate()
   step('Finishing')

@@ -180,9 +180,9 @@ fun Application.module(testing: Boolean = false) {
 
 private fun mainServerInit() {
     if (!Config.instanceInited) {
-        val path = System.getenv("CONFIG_FILE_PATH")
+        val path = System.getenv("PLANTE_BACKEND_CONFIG_FILE_PATH")
         if (path == null) {
-            throw IllegalStateException("Please provide either --config-path or CONFIG_FILE_PATH env variable")
+            throw IllegalStateException("Please provide either --config-path or PLANTE_BACKEND_CONFIG_FILE_PATH env variable")
         }
         Config.initFromFile(path)
     }
