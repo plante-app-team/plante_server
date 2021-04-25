@@ -14,7 +14,9 @@ data class Config(
     @JsonProperty("db_connection_attempts_timeout_seconds")
     val dbConnectionAttemptsTimeoutSeconds: Int,
     @JsonProperty("jwt_secret")
-    val jwtSecret: String) {
+    val jwtSecret: String,
+    @JsonProperty("always_moderator_name")
+    val alwaysModeratorName: String?) {
 
     companion object {
         lateinit var instance: Config

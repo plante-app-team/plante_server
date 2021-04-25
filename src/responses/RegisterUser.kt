@@ -4,6 +4,7 @@ import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import vegancheckteam.plante_server.Config
 import vegancheckteam.plante_server.auth.GoogleAuthorizer
 import vegancheckteam.plante_server.auth.GoogleIdOrServerError
 import vegancheckteam.plante_server.auth.JwtController
@@ -11,12 +12,16 @@ import vegancheckteam.plante_server.auth.authOrServerError
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.responses.model.UserDataResponse
 import java.time.ZonedDateTime
 import java.util.*
 
 @Location("/register_user/")
-data class RegisterParams(val googleIdToken: String, val deviceId: String)
+data class RegisterParams(
+    val googleIdToken: String,
+    val deviceId: String,
+    val userName: String? = null)
 
 fun registerUser(params: RegisterParams, testing: Boolean): Any {
     val idOrError = GoogleAuthorizer.authOrServerError(params.googleIdToken, testing)
@@ -40,6 +45,13 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
         googleId = googleId)
     val jwtToken = JwtController.makeToken(user, params.deviceId)
 
+    val alwaysModeratorName = Config.instance.alwaysModeratorName
+    val userGroup = if (alwaysModeratorName != null && params.userName == alwaysModeratorName) {
+        UserRightsGroup.MODERATOR
+    } else {
+        UserRightsGroup.NORMAL
+    }
+
     transaction {
         UserTable.insert {
             it[id] = user.id
@@ -47,6 +59,7 @@ fun registerUser(params: RegisterParams, testing: Boolean): Any {
             it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = user.name
             it[UserTable.googleId] = user.googleId
+            it[userRightsGroup] = userGroup.persistentCode
         }[UserTable.id]
     }
 
