@@ -28,7 +28,7 @@ data class CreateUpdateProductParams(
     val vegetarianStatus: String? = null,
     val veganStatus: String? = null)
 
-fun createUpdateProduct(params: CreateUpdateProductParams, user: User): Any {
+fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericResponse {
     val vegetarianStatus = params.vegetarianStatus?.let { VegStatus.fromStringName(it) }
     val veganStatus = params.veganStatus?.let { VegStatus.fromStringName(it) }
     if (vegetarianStatus == null && params.vegetarianStatus != null) {

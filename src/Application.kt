@@ -23,9 +23,11 @@ import org.slf4j.event.*
 import vegancheckteam.plante_server.auth.CioHttpTransport
 import vegancheckteam.plante_server.auth.JwtController
 import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductChangeTable
 import vegancheckteam.plante_server.db.ProductScanTable
 import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.UserQuizTable
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.responses.AssignModeratorTaskParams
@@ -40,6 +42,8 @@ import vegancheckteam.plante_server.responses.ModerateProductVegStatusesParams
 import vegancheckteam.plante_server.responses.ProductChangesDataParams
 import vegancheckteam.plante_server.responses.ProductDataParams
 import vegancheckteam.plante_server.responses.ProductScanParams
+import vegancheckteam.plante_server.responses.ProductsAtShopsDataParams
+import vegancheckteam.plante_server.responses.PutProductToShopParams
 import vegancheckteam.plante_server.responses.RegisterParams
 import vegancheckteam.plante_server.responses.ResolveModeratorTaskParams
 import vegancheckteam.plante_server.responses.SignOutAllParams
@@ -56,10 +60,13 @@ import vegancheckteam.plante_server.responses.loginUser
 import vegancheckteam.plante_server.responses.makeReport
 import vegancheckteam.plante_server.responses.allModeratorTasksData
 import vegancheckteam.plante_server.responses.deleteUser
+import vegancheckteam.plante_server.responses.model.ProductsAtShopsResponse
 import vegancheckteam.plante_server.responses.moderateProductVegStatuses
 import vegancheckteam.plante_server.responses.productChangesData
 import vegancheckteam.plante_server.responses.productData
 import vegancheckteam.plante_server.responses.productScan
+import vegancheckteam.plante_server.responses.productsAtShopsData
+import vegancheckteam.plante_server.responses.putProductToShop
 import vegancheckteam.plante_server.responses.registerUser
 import vegancheckteam.plante_server.responses.resolveModeratorTask
 import vegancheckteam.plante_server.responses.signOutAll
@@ -179,6 +186,12 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
             }
+            getAuthed<PutProductToShopParams> { params, user ->
+                call.respond(putProductToShop(params, user))
+            }
+            getAuthed<ProductsAtShopsDataParams> { params, user ->
+                call.respond(productsAtShopsData(params, user))
+            }
         }
     }
 }
@@ -205,6 +218,9 @@ private fun mainServerInit() {
             ProductChangeTable,
             UserQuizTable,
             ModeratorTaskTable,
-            ProductScanTable)
+            ProductScanTable,
+            ShopTable,
+            ProductAtShopTable
+        )
     }
 }
