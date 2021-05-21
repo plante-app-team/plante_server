@@ -13,9 +13,12 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 
 @Location("/put_product_to_shop/")
-data class PutProductToShopParams(val barcode: String, val shopOsmId: String)
+data class PutProductToShopParams(
+    val barcode: String,
+    val shopOsmId: String,
+    val testingNow: Long? = null)
 
-fun putProductToShop(params: PutProductToShopParams, user: User): Any {
+fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolean): GenericResponse {
     return transaction {
         val existingProduct = ProductTable.select { ProductTable.barcode eq params.barcode }.firstOrNull()
         val productId = if (existingProduct != null) {
@@ -47,11 +50,22 @@ fun putProductToShop(params: PutProductToShopParams, user: User): Any {
             return@transaction GenericResponse.success()
         }
 
+        val now = if (params.testingNow != null && testing) {
+            params.testingNow
+        } else {
+            ZonedDateTime.now().toEpochSecond()
+        }
         ProductAtShopTable.insert {
             it[ProductAtShopTable.productId] = productId
             it[ProductAtShopTable.shopId] = shopId
-            it[creationTime] = ZonedDateTime.now().toEpochSecond()
+            it[creationTime] = now
         }
+
+        productPresenceVote(
+            ProductPresenceVoteParams(params.barcode, params.shopOsmId, 1, params.testingNow),
+            user,
+            testing)
+
         GenericResponse.success()
     }
 }

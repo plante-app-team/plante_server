@@ -42,6 +42,8 @@ import vegancheckteam.plante_server.cmds.DeleteUserParams
 import vegancheckteam.plante_server.cmds.ModerateProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.ProductChangesDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
+import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
+import vegancheckteam.plante_server.cmds.ProductPresenceVotesDataParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
@@ -64,6 +66,8 @@ import vegancheckteam.plante_server.cmds.deleteUser
 import vegancheckteam.plante_server.cmds.moderateProductVegStatuses
 import vegancheckteam.plante_server.cmds.productChangesData
 import vegancheckteam.plante_server.cmds.productData
+import vegancheckteam.plante_server.cmds.productPresenceVote
+import vegancheckteam.plante_server.cmds.productPresenceVotesData
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.putProductToShop
@@ -187,10 +191,16 @@ fun Application.module(testing: Boolean = false) {
                 call.respond(deleteUser(params, user))
             }
             getAuthed<PutProductToShopParams> { params, user ->
-                call.respond(putProductToShop(params, user))
+                call.respond(putProductToShop(params, user, testing))
             }
             getAuthed<ProductsAtShopsDataParams> { params, user ->
                 call.respond(productsAtShopsData(params, user))
+            }
+            getAuthed<ProductPresenceVoteParams> { params, user ->
+                call.respond(productPresenceVote(params, user, testing))
+            }
+            getAuthed<ProductPresenceVotesDataParams> { params, user ->
+                call.respond(productPresenceVotesData(params, user))
             }
         }
     }
@@ -220,7 +230,8 @@ private fun mainServerInit() {
             ModeratorTaskTable,
             ProductScanTable,
             ShopTable,
-            ProductAtShopTable
+            ProductAtShopTable,
+            ProductPresenceVoteTable,
         )
     }
 }
