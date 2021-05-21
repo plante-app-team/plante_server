@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location

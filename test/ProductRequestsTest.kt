@@ -7,7 +7,7 @@ import org.junit.Test
 import vegancheckteam.plante_server.db.MAX_PRODUCT_CHANGES_COUNT
 import vegancheckteam.plante_server.db.ProductScanTable
 import vegancheckteam.plante_server.model.VegStatus
-import vegancheckteam.plante_server.responses.PRODUCT_SCAN_STORAGE_DAYS_LIMIT
+import vegancheckteam.plante_server.cmds.PRODUCT_SCAN_STORAGE_DAYS_LIMIT
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.get
 import vegancheckteam.plante_server.test_utils.jsonMap

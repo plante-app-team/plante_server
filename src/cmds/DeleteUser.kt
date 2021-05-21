@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.*
 import org.jetbrains.exposed.sql.transactions.transaction

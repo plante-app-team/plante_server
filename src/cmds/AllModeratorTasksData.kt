@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.select
@@ -9,7 +9,7 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTask
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import vegancheckteam.plante_server.responses.model.ModeratorTasksDataResponse
+import vegancheckteam.plante_server.cmds.model.ModeratorTasksDataResponse
 import java.time.ZonedDateTime
 
 @Location("/all_moderator_tasks_data/")

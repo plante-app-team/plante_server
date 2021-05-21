@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses.model
+package vegancheckteam.plante_server.cmds.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import vegancheckteam.plante_server.model.ModeratorTask

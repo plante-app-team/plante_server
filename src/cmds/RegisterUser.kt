@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.insert
@@ -13,7 +13,7 @@ import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import vegancheckteam.plante_server.responses.model.UserDataResponse
+import vegancheckteam.plante_server.cmds.model.UserDataResponse
 import java.time.ZonedDateTime
 import java.util.*
 

@@ -1,7 +1,7 @@
 package vegancheckteam.plante_server
 
 import io.ktor.server.testing.withTestApplication
-import vegancheckteam.plante_server.responses.MAX_QUIZ_ANSWERS_COUNT
+import vegancheckteam.plante_server.cmds.MAX_QUIZ_ANSWERS_COUNT
 import java.util.*
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.get

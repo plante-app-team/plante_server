@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.select
@@ -9,7 +9,7 @@ import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
-import vegancheckteam.plante_server.responses.model.ProductsAtShopsResponse
+import vegancheckteam.plante_server.cmds.model.ProductsAtShopsResponse
 
 @Location("/products_at_shops_data/")
 data class ProductsAtShopsDataParams(val osmShopsIds: List<String>)

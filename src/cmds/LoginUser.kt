@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.responses
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.select
@@ -10,7 +10,7 @@ import vegancheckteam.plante_server.auth.authOrServerError
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
-import vegancheckteam.plante_server.responses.model.UserDataResponse
+import vegancheckteam.plante_server.cmds.model.UserDataResponse
 
 @Location("/login_user/")
 data class LoginParams(val googleIdToken: String, val deviceId: String)
