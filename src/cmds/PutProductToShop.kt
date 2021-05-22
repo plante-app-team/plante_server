@@ -1,11 +1,11 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
-import java.time.ZonedDateTime
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -50,11 +50,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             return@transaction GenericResponse.success()
         }
 
-        val now = if (params.testingNow != null && testing) {
-            params.testingNow
-        } else {
-            ZonedDateTime.now().toEpochSecond()
-        }
+        val now = now(params.testingNow, testing)
         ProductAtShopTable.insert {
             it[ProductAtShopTable.productId] = productId
             it[ProductAtShopTable.shopId] = shopId

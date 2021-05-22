@@ -9,7 +9,7 @@ import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
-import java.time.ZonedDateTime
+import vegancheckteam.plante_server.base.now
 
 const val MAX_REPORTS_FOR_PRODUCT = 100
 const val MAX_REPORTS_FOR_PRODUCT_TESTING = 10
@@ -63,7 +63,7 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
             it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
             it[taskSourceUserId] = user.id
             it[textFromUser] = params.text
-            it[creationTime] = ZonedDateTime.now().toEpochSecond()
+            it[creationTime] = now()
         }
     }
     return GenericResponse.success()

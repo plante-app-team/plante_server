@@ -8,7 +8,7 @@ import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import java.time.ZonedDateTime
+import vegancheckteam.plante_server.base.now
 
 const val DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS = 7
 
@@ -22,11 +22,7 @@ fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing
         return GenericResponse.failure("denied")
     }
 
-    val now = if (params.testingNow != null && testing) {
-        params.testingNow
-    } else {
-        ZonedDateTime.now().toEpochSecond()
-    }
+    val now = now(params.testingNow, testing)
 
     val updated = transaction {
         deleteResolvedTasks(now)

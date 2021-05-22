@@ -4,7 +4,6 @@ import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import java.time.ZonedDateTime
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -21,6 +20,7 @@ import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.VegStatus
 import vegancheckteam.plante_server.model.VegStatusSource
 import java.lang.Integer.max
+import vegancheckteam.plante_server.base.now
 
 @Location("/create_update_product/")
 data class CreateUpdateProductParams(
@@ -80,7 +80,7 @@ private fun maybeInsertProductChangeInfo(oldProduct: Product?, newProduct: Produ
     ProductChangeTable.insert {
         it[editorId] = editor.id
         it[productBarcode] = newProduct.barcode
-        it[time] = ZonedDateTime.now().toEpochSecond()
+        it[time] = now()
         it[oldProductJson] = oldProductJsonVal
         it[newProductJson] = newProductJsonVal
     }
@@ -110,6 +110,6 @@ fun maybeCreateModeratorTask(barcode: String, user: User) {
         it[productBarcode] = barcode
         it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentCode
         it[taskSourceUserId] = user.id
-        it[creationTime] = ZonedDateTime.now().toEpochSecond()
+        it[creationTime] = now()
     }
 }

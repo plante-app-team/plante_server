@@ -10,7 +10,7 @@ import vegancheckteam.plante_server.model.ModeratorTask
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.cmds.model.ModeratorTasksDataResponse
-import java.time.ZonedDateTime
+import vegancheckteam.plante_server.base.now
 
 @Location("/all_moderator_tasks_data/")
 data class AllModeratorTasksDataParams(
@@ -22,11 +22,7 @@ fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testi
         return GenericResponse.failure("denied")
     }
 
-    val now = if (params.testingNow != null && testing) {
-        params.testingNow
-    } else {
-        ZonedDateTime.now().toEpochSecond()
-    }
+    val now = now(params.testingNow, testing)
 
     return transaction {
         deleteResolvedTasks(now)

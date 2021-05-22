@@ -12,8 +12,8 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTask
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import java.time.ZonedDateTime
 import java.util.*
+import vegancheckteam.plante_server.base.now
 
 @Location("/assign_moderator_task/")
 data class AssignModeratorTaskParams(
@@ -26,11 +26,7 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
         return GenericResponse.failure("denied")
     }
 
-    val now = if (params.testingNow != null && testing) {
-        params.testingNow
-    } else {
-        ZonedDateTime.now().toEpochSecond()
-    }
+    val now = now(params.testingNow, testing)
 
     val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
 

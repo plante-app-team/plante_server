@@ -1,13 +1,13 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
-import java.time.ZonedDateTime
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
@@ -42,11 +42,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         return@transaction GenericResponse.failure("shop_not_found", "OSM ID: ${params.shopOsmId}")
     }
 
-    val now = if (params.testingNow != null && testing) {
-        params.testingNow
-    } else {
-        ZonedDateTime.now().toEpochSecond()
-    }
+    val now = now(params.testingNow, testing)
     val product = Product.from(productRow)
     val shop = Shop.from(shopRow)
 

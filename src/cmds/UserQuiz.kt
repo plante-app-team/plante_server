@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
+import java.time.Instant
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -8,7 +9,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.db.UserQuizTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
-import java.time.ZonedDateTime
+import vegancheckteam.plante_server.base.now
 
 // So that a malicious user wouldn't overfill the DB
 const val MAX_QUIZ_ANSWERS_COUNT = 10;
@@ -23,6 +24,7 @@ fun userQuiz(params: UserQuizParams, user: User): Any {
         }
         existingAnswers.count()
     }
+
     if (existingAnswers >= MAX_QUIZ_ANSWERS_COUNT) {
         return GenericResponse.failure("too_many_answers", "User has too many answers: $existingAnswers")
     }
@@ -33,7 +35,7 @@ fun userQuiz(params: UserQuizParams, user: User): Any {
         }
         UserQuizTable.insert {
             it[userId] = user.id
-            it[time] = ZonedDateTime.now().toEpochSecond()
+            it[time] = now()
             it[question] = params.question
             it[answer] = params.answer
         }
