@@ -9,5 +9,5 @@ object ProductPresenceVoteTable : Table("product_presence_vote") {
     val votedUserId = uuid("voted_user_id").references(UserTable.id).index()
     val voteTime = long("vote_time").index()
     val voteVal = short("vote_val")
-    override val primaryKey = PrimaryKey(ProductPresenceVoteTable.id)
+    override val primaryKey = PrimaryKey(id)
 }

@@ -50,17 +50,17 @@ class ShopRequestsTest {
             val results = map["results"] as Map<*, *>
             assertEquals(2, results.size)
 
-            val shop1Barcodes = (results[shop1] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            val shop1Barcodes = productsOfShop(results, shop1).map { it["barcode"] }
             assertEquals(2, shop1Barcodes.size)
             assertTrue(shop1Barcodes.contains(barcode1))
             assertTrue(shop1Barcodes.contains(barcode2))
 
-            val shop2Products = results[shop2] as List<*>
-            val shop2Barcodes = shop2Products.map { (it as Map<*, *>)["barcode"] }
+            val shop2Products = productsOfShop(results, shop2)
+            val shop2Barcodes = shop2Products.map { it["barcode"] }
             assertEquals(1, shop2Barcodes.size)
             assertTrue(shop2Barcodes.contains(barcode2))
 
-            val shop2Product = shop2Products[0] as Map<*, *>
+            val shop2Product = shop2Products[0]
             assertEquals("positive", shop2Product["vegetarian_status"])
             assertEquals("negative", shop2Product["vegan_status"])
             assertEquals("community", shop2Product["vegetarian_status_source"])
@@ -91,7 +91,7 @@ class ShopRequestsTest {
             val results = map["results"] as Map<*, *>
             assertEquals(1, results.size)
 
-            val shopBarcodes = (results[shop] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            val shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode))
         }
@@ -120,7 +120,7 @@ class ShopRequestsTest {
             // 1 product at the shop
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
             var results = map["results"] as Map<*, *>
-            var shopBarcodes = (results[shop] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            var shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
 
@@ -134,7 +134,7 @@ class ShopRequestsTest {
             // 2 products at the shop
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
             results = map["results"] as Map<*, *>
-            shopBarcodes = (results[shop] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(2, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
             assertTrue(shopBarcodes.contains(barcode2))
@@ -155,7 +155,7 @@ class ShopRequestsTest {
             // 1 product at the shop
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
             var results = map["results"] as Map<*, *>
-            var shopBarcodes = (results[shop] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            var shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
 
             // Oops, I did it again!
@@ -165,7 +165,7 @@ class ShopRequestsTest {
             // 1 product at the shop still!
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
             results = map["results"] as Map<*, *>
-            shopBarcodes = (results[shop] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
         }
     }
@@ -261,7 +261,7 @@ class ShopRequestsTest {
             val barcode = UUID.randomUUID().toString()
             val shop = UUID.randomUUID().toString()
 
-            var now = 123;
+            var now = 123
             var map = authedGet(user, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
@@ -645,8 +645,7 @@ class ShopRequestsTest {
             assertEquals(0, votes.size)
             // Expecting product 1 TO NOT BE in shop 2
             map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
-            val productsAtShop = map["results"] as Map<*, *>
-            val shopBarcodes = (productsAtShop[shop2] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            val shopBarcodes = productsOfShop(map["results"] as Map<*, *>, shop2).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
             assertFalse(shopBarcodes.contains(barcode1))
             assertTrue(shopBarcodes.contains(barcode2))
@@ -690,11 +689,79 @@ class ShopRequestsTest {
             assertEquals(1, votes.size)
             // Expecting product 1 TO BE in shop 2
             map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
-            val productsAtShop = map["results"] as Map<*, *>
-            val shopBarcodes = (productsAtShop[shop2] as List<*>).map { (it as Map<*, *>)["barcode"] }
+            val shopBarcodes = productsOfShop(map["results"] as Map<*, *>, shop2).map { it["barcode"] }
             assertEquals(2, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
             assertTrue(shopBarcodes.contains(barcode2))
         }
     }
+
+    @Test
+    fun `products at shop latest seen time`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val barcode3 = UUID.randomUUID().toString()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
+
+            var now = 123
+
+            // Put all products to shop 1
+            var map = authedGet(user, "/put_product_to_shop/?barcode=$barcode1&shopOsmId=$shop1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            val product1ExpectedLastSeenTime = now
+            map = authedGet(user, "/put_product_to_shop/?barcode=$barcode2&shopOsmId=$shop1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/put_product_to_shop/?barcode=$barcode3&shopOsmId=$shop1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Vote for product 2 presence a couple of times
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            val product2ExpectedLastSeenTime = now
+
+            // Vote for product 3 presence and then against of it
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            val product3ExpectedLastSeenTime = now
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Try to mess with all times by adding the products into another shop and voting for them
+            map = authedGet(user, "/put_product_to_shop/?barcode=$barcode1&shopOsmId=$shop2&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/put_product_to_shop/?barcode=$barcode2&shopOsmId=$shop2&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/put_product_to_shop/?barcode=$barcode3&shopOsmId=$shop2&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Now verify proper times
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop1").jsonMap()
+            val results = map["results"] as Map<*, *>
+            assertEquals(1, results.size)
+            val shop1Result = results[shop1] as Map<*, *>
+
+            val productsLastSeen = shop1Result["products_last_seen_utc"] as Map<*, *>
+            assertEquals(3, productsLastSeen.size)
+            assertEquals(product1ExpectedLastSeenTime, productsLastSeen[barcode1])
+            assertEquals(product2ExpectedLastSeenTime, productsLastSeen[barcode2])
+            assertEquals(product3ExpectedLastSeenTime, productsLastSeen[barcode3])
+        }
+    }
+}
+
+private fun productsOfShop(shops: Map<*, *>, shopOsmId: String): List<Map<*, *>> {
+    val shop = shops[shopOsmId] as Map<*, *>
+    val products = shop["products"] as List<*>
+    return products.map { it as Map<*, *> }
 }

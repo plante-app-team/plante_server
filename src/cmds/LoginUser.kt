@@ -10,7 +10,7 @@ import vegancheckteam.plante_server.auth.authOrServerError
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
-import vegancheckteam.plante_server.cmds.model.UserDataResponse
+import vegancheckteam.plante_server.model.UserDataResponse
 
 @Location("/login_user/")
 data class LoginParams(val googleIdToken: String, val deviceId: String)

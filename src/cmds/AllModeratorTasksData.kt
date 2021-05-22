@@ -9,7 +9,7 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTask
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import vegancheckteam.plante_server.cmds.model.ModeratorTasksDataResponse
+import vegancheckteam.plante_server.model.ModeratorTasksDataResponse
 import vegancheckteam.plante_server.base.now
 
 @Location("/all_moderator_tasks_data/")

@@ -1,9 +1,8 @@
-package vegancheckteam.plante_server.cmds.model
+package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import vegancheckteam.plante_server.GlobalStorage.jsonMapper
-import vegancheckteam.plante_server.model.User
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class UserDataResponse(

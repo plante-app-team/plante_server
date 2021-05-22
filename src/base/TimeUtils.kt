@@ -6,5 +6,5 @@ fun now(testingNow: Long? = null, testing: Boolean = false): Long {
     if (testingNow != null && testing) {
         return testingNow
     }
-    return Instant.now().epochSecond;
+    return Instant.now().epochSecond
 }

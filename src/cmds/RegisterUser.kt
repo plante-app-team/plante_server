@@ -13,7 +13,7 @@ import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
-import vegancheckteam.plante_server.cmds.model.UserDataResponse
+import vegancheckteam.plante_server.model.UserDataResponse
 import java.util.*
 import vegancheckteam.plante_server.base.now
 
