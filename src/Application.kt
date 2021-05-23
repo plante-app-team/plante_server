@@ -1,44 +1,41 @@
 package vegancheckteam.plante_server
 
-import com.fasterxml.jackson.databind.*
-import io.ktor.application.*
+import com.fasterxml.jackson.databind.SerializationFeature
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.auth.jwt.jwt
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.HttpTimeout
-import io.ktor.client.features.logging.*
-import io.ktor.features.*
-import io.ktor.jackson.*
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.features.logging.Logging
+import io.ktor.features.CallLogging
+import io.ktor.features.ContentNegotiation
+import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import org.jetbrains.exposed.sql.*
+import io.ktor.request.path
+import io.ktor.response.respond
+import io.ktor.routing.routing
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.slf4j.event.*
+import org.slf4j.event.Level
 import vegancheckteam.plante_server.auth.CioHttpTransport
 import vegancheckteam.plante_server.auth.JwtController
-import vegancheckteam.plante_server.db.ModeratorTaskTable
-import vegancheckteam.plante_server.db.ProductAtShopTable
-import vegancheckteam.plante_server.db.ProductChangeTable
-import vegancheckteam.plante_server.db.ProductPresenceVoteTable
-import vegancheckteam.plante_server.db.ProductScanTable
-import vegancheckteam.plante_server.db.ProductTable
-import vegancheckteam.plante_server.db.ShopTable
-import vegancheckteam.plante_server.db.UserQuizTable
-import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.cmds.AllModeratorTasksDataParams
 import vegancheckteam.plante_server.cmds.AssignModeratorTaskParams
 import vegancheckteam.plante_server.cmds.AssignedModeratorTasksDataParams
 import vegancheckteam.plante_server.cmds.BanMeParams
+import vegancheckteam.plante_server.cmds.CreateShopParams
 import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
+import vegancheckteam.plante_server.cmds.DeleteUserParams
 import vegancheckteam.plante_server.cmds.LoginParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
-import vegancheckteam.plante_server.cmds.AllModeratorTasksDataParams
-import vegancheckteam.plante_server.cmds.DeleteUserParams
 import vegancheckteam.plante_server.cmds.ModerateProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.ProductChangesDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
@@ -55,14 +52,15 @@ import vegancheckteam.plante_server.cmds.UpdateUserDataParams
 import vegancheckteam.plante_server.cmds.UserDataParams
 import vegancheckteam.plante_server.cmds.UserQuizDataParams
 import vegancheckteam.plante_server.cmds.UserQuizParams
+import vegancheckteam.plante_server.cmds.allModeratorTasksData
 import vegancheckteam.plante_server.cmds.assignModeratorTask
 import vegancheckteam.plante_server.cmds.assignedModeratorTasksData
 import vegancheckteam.plante_server.cmds.banMe
+import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
+import vegancheckteam.plante_server.cmds.deleteUser
 import vegancheckteam.plante_server.cmds.loginUser
 import vegancheckteam.plante_server.cmds.makeReport
-import vegancheckteam.plante_server.cmds.allModeratorTasksData
-import vegancheckteam.plante_server.cmds.deleteUser
 import vegancheckteam.plante_server.cmds.moderateProductVegStatuses
 import vegancheckteam.plante_server.cmds.productChangesData
 import vegancheckteam.plante_server.cmds.productData
@@ -79,6 +77,15 @@ import vegancheckteam.plante_server.cmds.updateUserData
 import vegancheckteam.plante_server.cmds.userData
 import vegancheckteam.plante_server.cmds.userQuiz
 import vegancheckteam.plante_server.cmds.userQuizData
+import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.ProductAtShopTable
+import vegancheckteam.plante_server.db.ProductChangeTable
+import vegancheckteam.plante_server.db.ProductPresenceVoteTable
+import vegancheckteam.plante_server.db.ProductScanTable
+import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.UserQuizTable
+import vegancheckteam.plante_server.db.UserTable
 
 object Main {
     @JvmStatic
@@ -201,6 +208,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ProductPresenceVotesDataParams> { params, user ->
                 call.respond(productPresenceVotesData(params, user))
+            }
+            getAuthed<CreateShopParams> { params, user ->
+                call.respond(createShop(params, user, testing, client))
             }
         }
     }

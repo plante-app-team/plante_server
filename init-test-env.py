@@ -33,6 +33,8 @@ def Popen(cmd):
 
 def main(args):
   parser = argparse.ArgumentParser()
+  parser.add_argument('--osm-testing-user', required=True, help='User at https://master.apis.dev.openstreetmap.org')
+  parser.add_argument('--osm-testing-password', required=True, help='Password of user at https://master.apis.dev.openstreetmap.org')
   args = parser.parse_args()
   step('Args: {}'.format(args))
   step('std out log file: {}'.format(stdout_log_file))
@@ -80,11 +82,20 @@ def main(args):
    "psql_pass": "{}",
    "db_connection_attempts_timeout_seconds": 10,
    "jwt_secret": "not so secret secret",
+   "osm_testing_user": "{}",
+   "osm_testing_password": "{}",
+   "osm_prod_user": "intentionally invalid so that tests wouldn't screw with prod osm db",
+   "osm_prod_password": "",
    "always_moderator_name": "local always moderator"
   }}
   '''
   postgres_url = 'postgresql://localhost/main'
-  config = config_template.format(postgres_url, 'main_user', users_password)
+  config = config_template.format(
+    postgres_url,
+    'main_user',
+    users_password,
+    args.osm_testing_user,
+    args.osm_testing_password)
 
   step('Writing config to a file')
   config_file = os.path.join(testing_env_dir, 'testing_config.json')

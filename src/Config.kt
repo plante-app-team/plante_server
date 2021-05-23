@@ -15,6 +15,14 @@ data class Config(
     val dbConnectionAttemptsTimeoutSeconds: Int,
     @JsonProperty("jwt_secret")
     val jwtSecret: String,
+    @JsonProperty("osm_prod_user")
+    val osmProdUser: String,
+    @JsonProperty("osm_prod_password")
+    val osmProdPassword: String,
+    @JsonProperty("osm_testing_user")
+    val osmTestingUser: String,
+    @JsonProperty("osm_testing_password")
+    val osmTestingPassword: String,
     @JsonProperty("always_moderator_name")
     val alwaysModeratorName: String?) {
 

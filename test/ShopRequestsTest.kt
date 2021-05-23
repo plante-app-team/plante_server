@@ -2,6 +2,7 @@ package vegancheckteam.plante_server
 
 import io.ktor.server.testing.withTestApplication
 import java.time.ZonedDateTime
+import java.util.Base64
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -10,6 +11,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
+import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.cmds.MAX_PRODUCT_PRESENCE_VOTES_COUNT
 import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
 import vegancheckteam.plante_server.db.ProductAtShopTable
@@ -756,6 +758,40 @@ class ShopRequestsTest {
             assertEquals(product1ExpectedLastSeenTime, productsLastSeen[barcode1])
             assertEquals(product2ExpectedLastSeenTime, productsLastSeen[barcode2])
             assertEquals(product3ExpectedLastSeenTime, productsLastSeen[barcode3])
+        }
+    }
+
+    @Test
+    fun `create shop with fake osm responses`() {
+        withTestApplication({ module(testing = true) }) {
+            val fakeOsmResponses = String(
+                Base64.getEncoder().encode(
+                    CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
+            val user = register()
+            val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&testingResponsesJsonBase64=$fakeOsmResponses").jsonMap()
+            assertEquals("654321", map["osm_id"])
+        }
+    }
+
+    @Test
+    fun `create shop with invalid shop type`() {
+        withTestApplication({ module(testing = true) }) {
+            val fakeOsmResponses = String(
+                Base64.getEncoder().encode(
+                    CreateShopTestingOsmResponses("you", "are", "boldone").toString().toByteArray()))
+            val user = register()
+            val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=generalkenobi&testingResponsesJsonBase64=$fakeOsmResponses").jsonMap()
+            assertEquals("invalid_shop_type", map["error"])
+        }
+    }
+
+    @Test
+    fun `a very fragile test of create_shop with REAL osm responses`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&productionDb=false").jsonMap()
+            val osmId = map["osm_id"] as String
+            assertTrue(0 < osmId.toLong() && osmId.toLong() < Long.MAX_VALUE)
         }
     }
 }
