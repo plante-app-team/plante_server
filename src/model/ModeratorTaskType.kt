@@ -8,8 +8,8 @@ enum class ModeratorTaskType(
         val persistentCode: Short,
         val priority: Short /** the lower the better **/) {
     USER_REPORT("user_report", 1, 1),
-    OSM_SHOP_CREATION("osm_shop_creation", 2, 2),
-    PRODUCT_CHANGE("product_change", 3, 3);
+    PRODUCT_CHANGE("product_change", 2, 3),
+    OSM_SHOP_CREATION("osm_shop_creation", 3, 2);
     companion object {
         fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
     }
