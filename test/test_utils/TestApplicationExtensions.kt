@@ -6,6 +6,8 @@ import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationResponse
 import io.ktor.server.testing.handleRequest
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.auth.JwtController
@@ -16,15 +18,33 @@ import java.time.ZonedDateTime
 import java.util.*
 import kotlin.test.assertEquals
 
-fun TestApplicationEngine.get(url: String, clientToken: String? = null): TestApplicationCall {
-    return handleRequest(HttpMethod.Get, url) {
+fun TestApplicationEngine.get(
+        url: String,
+        clientToken: String? = null,
+        queryParams: Map<String, String> = emptyMap()): TestApplicationCall {
+    val queryParamsStr = queryParams
+        .map {
+            val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8)
+            val value = URLEncoder.encode(it.value, StandardCharsets.UTF_8)
+            "$key=$value"
+        }
+        .joinToString(separator = "&")
+    val urlFinal = if (url.contains("?")) {
+        "$url&$queryParamsStr"
+    } else {
+        "$url?$queryParamsStr"
+    }
+    return handleRequest(HttpMethod.Get, urlFinal) {
         clientToken?.let {
             addHeader("Authorization", "Bearer $it")
         }
     }
 }
 
-fun TestApplicationEngine.authedGet(token: String, url: String) = get(url, token)
+fun TestApplicationEngine.authedGet(
+    token: String,
+    url: String,
+    queryParams: Map<String, String> = emptyMap()) = get(url, token, queryParams)
 
 fun TestApplicationResponse.jsonMap(): Map<*, *> {
     return ObjectMapper().readValue(content, MutableMap::class.java)

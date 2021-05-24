@@ -10,10 +10,15 @@ import io.ktor.client.statement.readText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.base64.Base64
 import vegancheckteam.plante_server.Config
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.User
 
 enum class ShopTypes(val typeName: String) {
@@ -61,6 +66,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         null
     }
 
+    // Start OSM shop creation
     val osmChangesetId = if (testingResponse != null) {
         testingResponse.resp1
     } else {
@@ -82,6 +88,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         resp.readText()
     }
 
+    // Put a shop creation into the OSM changeset
     val osmShopId = if (testingResponse != null) {
         testingResponse.resp2
     } else {
@@ -101,6 +108,18 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
             return GenericResponse.failure("osm_error")
         }
         resp.readText()
+    }
+
+    // Create a moderator task
+    if (params.productionDb) {
+        transaction {
+            ModeratorTaskTable.insert {
+                it[osmId] = osmShopId
+                it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
+                it[taskSourceUserId] = user.id
+                it[creationTime] = now()
+            }
+        }
     }
 
     if (testingResponse != null) {
