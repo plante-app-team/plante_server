@@ -7,19 +7,23 @@ import io.ktor.client.request.header
 import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.base64.Base64
 import vegancheckteam.plante_server.Config
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.User
+
+const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
+const val SHOPS_CREATION_SEQUENCE_LENGTH_SECS = 60 * 60 * 24 // a day
 
 enum class ShopTypes(val typeName: String) {
     SUPERMARKET("supermarket"),
@@ -39,12 +43,25 @@ data class CreateShopParams(
     val name: String,
     val type: String,
     val productionDb: Boolean = true,
-    val testingResponsesJsonBase64: String? = null)
+    val testingResponsesJsonBase64: String? = null,
+    val testingNow: Long? = null)
 
 suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, client: HttpClient): Any {
     val supportedShopTypes = ShopTypes.values().map { it.typeName }
     if (params.type !in supportedShopTypes) {
         return GenericResponse.failure("invalid_shop_type", "Supported types: $supportedShopTypes")
+    }
+
+    val now = now(params.testingNow, testing)
+    val shopsCreationSequenceSize = transaction {
+         ShopTable.select {
+             (ShopTable.creationTime greater (now - SHOPS_CREATION_SEQUENCE_LENGTH_SECS)) and
+                     (ShopTable.createdNewOsmNode eq true)
+
+        }.count()
+    }
+    if (shopsCreationSequenceSize >= MAX_CREATED_SHOPS_IN_SEQUENCE) {
+        return GenericResponse.failure("max_shops_created_for_now", "Already created $shopsCreationSequenceSize shops")
     }
 
     val (osmUrl, osmUser, osmPass) = if (params.productionDb) {
@@ -113,11 +130,17 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
     // Create a moderator task
     if (params.productionDb) {
         transaction {
+            ShopTable.insert {
+                it[osmId] = osmShopId
+                it[creationTime] = now
+                it[createdNewOsmNode] = true
+                it[creatorUserId] = user.id
+            }
             ModeratorTaskTable.insert {
                 it[osmId] = osmShopId
                 it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
                 it[taskSourceUserId] = user.id
-                it[creationTime] = now()
+                it[creationTime] = now
             }
         }
     }

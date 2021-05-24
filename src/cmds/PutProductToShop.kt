@@ -32,12 +32,15 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             newProduct[ProductTable.id]
         }
 
+        val now = now(params.testingNow, testing)
         val existingShop = ShopTable.select { ShopTable.osmId eq params.shopOsmId }.firstOrNull()
         val shopId = if (existingShop != null) {
             existingShop[ShopTable.id]
         } else {
             val inserted = ShopTable.insert {
                 it[osmId] = params.shopOsmId
+                it[creationTime] = now
+                it[creatorUserId] = user.id
             }.resultedValues!![0]
             inserted[ShopTable.id]
         }
@@ -50,7 +53,6 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             return@transaction GenericResponse.success()
         }
 
-        val now = now(params.testingNow, testing)
         ProductAtShopTable.insert {
             it[ProductAtShopTable.productId] = productId
             it[ProductAtShopTable.shopId] = shopId

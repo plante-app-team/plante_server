@@ -14,10 +14,13 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
+import vegancheckteam.plante_server.cmds.MAX_CREATED_SHOPS_IN_SEQUENCE
 import vegancheckteam.plante_server.cmds.MAX_PRODUCT_PRESENCE_VOTES_COUNT
 import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
+import vegancheckteam.plante_server.cmds.SHOPS_CREATION_SEQUENCE_LENGTH_SECS
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
+import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
@@ -30,6 +33,9 @@ class ShopRequestsTest {
         withTestApplication({ module(testing = true) }) {
             transaction {
                 ModeratorTaskTable.deleteAll()
+                ProductPresenceVoteTable.deleteAll()
+                ProductAtShopTable.deleteAll()
+                ShopTable.deleteAll()
             }
         }
     }
@@ -811,7 +817,7 @@ class ShopRequestsTest {
             val moderator = registerModerator(moderatorId)
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
-                    CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
+                    CreateShopTestingOsmResponses("123456", "654322", "").toString().toByteArray()))
 
             // No moderator tasks yet
             var map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
@@ -825,7 +831,7 @@ class ShopRequestsTest {
                     "name" to "myshop",
                     "type" to "general",
                     "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
-            assertEquals("654321", map["osm_id"])
+            assertEquals("654322", map["osm_id"])
 
             // A moderator task appeared
             map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
@@ -834,7 +840,7 @@ class ShopRequestsTest {
             val tasks = map["tasks"] as List<*>
             assertEquals(1, tasks.size, map.toString())
             val task = tasks[0] as Map<*, *>
-            assertEquals("654321", task["osm_id"])
+            assertEquals("654322", task["osm_id"])
             assertEquals("osm_shop_creation", task["task_type"])
         }
     }
@@ -847,7 +853,7 @@ class ShopRequestsTest {
             val moderator = registerModerator(moderatorId)
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
-                    CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
+                    CreateShopTestingOsmResponses("123456", "654323", "").toString().toByteArray()))
 
             // No moderator tasks yet
             var map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
@@ -862,13 +868,114 @@ class ShopRequestsTest {
                 "type" to "general",
                 "productionDb" to "false",
                 "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
-            assertEquals("654321", map["osm_id"])
+            assertEquals("654323", map["osm_id"])
 
             // A moderator still not appeared
             map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
             assertEquals("no_unresolved_moderator_tasks", map["error"])
             map = authedGet(moderator, "/assigned_moderator_tasks_data/").jsonMap()
             assertEquals(emptyList<Any>(), map["tasks"])
+        }
+    }
+
+    @Test
+    fun `shops creation sequence max`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+
+            var now = 123
+            for (index in 0 until MAX_CREATED_SHOPS_IN_SEQUENCE) {
+                val osmId = "65434$index"
+                val fakeOsmResponses = String(
+                    Base64.getEncoder().encode(
+                        CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
+                val map = authedGet(
+                    user, "/create_shop/", mapOf(
+                        "testingNow" to "$now",
+                        "lat" to "-24",
+                        "lon" to "44",
+                        "name" to "myshop",
+                        "type" to "general",
+                        "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
+                assertEquals(osmId, map["osm_id"])
+            }
+            // Trying to create another shop over the sequence max
+            var fakeOsmResponses = String(
+                Base64.getEncoder().encode(
+                    CreateShopTestingOsmResponses("123456", "65435", "").toString().toByteArray()))
+            var map = authedGet(
+                user, "/create_shop/", mapOf(
+                    "testingNow" to "$now",
+                    "lat" to "-24",
+                    "lon" to "44",
+                    "name" to "myshop",
+                    "type" to "general",
+                    "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
+            assertEquals("max_shops_created_for_now", map["error"])
+
+            // Trying to create another shop over the sequence max AFTER timeout has passed
+            now += SHOPS_CREATION_SEQUENCE_LENGTH_SECS + 1
+            fakeOsmResponses = String(
+                Base64.getEncoder().encode(
+                    CreateShopTestingOsmResponses("123456", "65435", "").toString().toByteArray()))
+            map = authedGet(
+                user, "/create_shop/", mapOf(
+                    "testingNow" to "$now",
+                    "lat" to "-24",
+                    "lon" to "44",
+                    "name" to "myshop",
+                    "type" to "general",
+                    "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
+            assertEquals("65435", map["osm_id"])
+        }
+    }
+
+    @Test
+    fun `when shop creation sequence max is reached existing osm shops can be added to db anyways`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+
+            // Create too many shops
+            val now = 123
+            for (index in 0 until MAX_CREATED_SHOPS_IN_SEQUENCE * 2) {
+                val osmId = "65436$index"
+                val fakeOsmResponses = String(
+                    Base64.getEncoder().encode(
+                        CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
+                val map = authedGet(
+                    user, "/create_shop/", mapOf(
+                        "testingNow" to "$now",
+                        "lat" to "-24",
+                        "lon" to "44",
+                        "name" to "myshop",
+                        "type" to "general",
+                        "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
+                if (index < MAX_CREATED_SHOPS_IN_SEQUENCE) {
+                    assertEquals(osmId, map["osm_id"])
+                } else {
+                    assertEquals("max_shops_created_for_now", map["error"])
+                }
+            }
+
+            // But another shop still can be created when a request to osm is not needed
+            val barcode = UUID.randomUUID()
+            val osmId = "65437"
+
+            var newShopExists = transaction {
+                !ShopTable.select { ShopTable.osmId eq osmId }.empty()
+            }
+            assertFalse(newShopExists)
+
+            val map = authedGet(user, "/put_product_to_shop/", mapOf(
+                "testingNow" to "$now",
+                "barcode" to "$barcode",
+                "shopOsmId" to osmId)).jsonMap()
+            assertEquals("ok", map["result"])
+
+            newShopExists = transaction {
+                !ShopTable.select { ShopTable.osmId eq osmId }.empty()
+            }
+            assertTrue(newShopExists)
         }
     }
 }
