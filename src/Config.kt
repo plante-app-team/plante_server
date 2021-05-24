@@ -24,7 +24,9 @@ data class Config(
     @JsonProperty("osm_testing_password")
     val osmTestingPassword: String,
     @JsonProperty("always_moderator_name")
-    val alwaysModeratorName: String?) {
+    val alwaysModeratorName: String?,
+    @JsonProperty("allow_cors")
+    val allowCors: Boolean = false) {
 
     companion object {
         lateinit var instance: Config

@@ -86,7 +86,8 @@ def main(args):
    "osm_testing_password": "{}",
    "osm_prod_user": "intentionally invalid so that tests wouldn't screw with prod osm db",
    "osm_prod_password": "",
-   "always_moderator_name": "local always moderator"
+   "always_moderator_name": "local always moderator",
+   "allow_cors": true
   }}
   '''
   postgres_url = 'postgresql://localhost/main'

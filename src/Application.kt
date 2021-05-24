@@ -12,14 +12,19 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logging
+import io.ktor.features.CORS
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
 import io.ktor.request.path
 import io.ktor.response.respond
+import io.ktor.routing.options
 import io.ktor.routing.routing
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -123,6 +128,17 @@ fun Application.module(testing: Boolean = false) {
             realm = "vegancheckteam.plante server"
             verifier(JwtController.verifier.value)
             validate { JwtController.principalFromCredential(it) }
+        }
+    }
+
+    if (Config.instance.allowCors) {
+        install(CORS) {
+            method(HttpMethod.Options)
+            header(HttpHeaders.Authorization)
+            header(HttpHeaders.ContentType)
+            allowCredentials = true
+            allowNonSimpleContentTypes = true
+            anyHost()
         }
     }
 
