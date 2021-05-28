@@ -1,10 +1,12 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
@@ -53,10 +55,17 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             return@transaction GenericResponse.success()
         }
 
+        // Insert product
         ProductAtShopTable.insert {
             it[ProductAtShopTable.productId] = productId
             it[ProductAtShopTable.shopId] = shopId
             it[creationTime] = now
+        }
+        // Increase products count
+        ShopTable.update( { ShopTable.id eq shopId } ) {
+            with(SqlExpressionBuilder) {
+                it.update(productsCount, productsCount + 1)
+            }
         }
 
         productPresenceVote(

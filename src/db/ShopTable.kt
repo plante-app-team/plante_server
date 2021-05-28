@@ -8,5 +8,6 @@ object ShopTable : Table("shop") {
     val creationTime = long("creation_time").index()
     val createdNewOsmNode = bool("created_new_osm_node").default(false)
     val creatorUserId = uuid("creator_user_id").references(UserTable.id).index()
+    val productsCount = integer("products_count").default(0)
     override val primaryKey = PrimaryKey(id)
 }

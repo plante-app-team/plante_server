@@ -23,6 +23,8 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
 import io.ktor.request.path
+import io.ktor.request.receive
+import io.ktor.request.receiveText
 import io.ktor.response.respond
 import io.ktor.routing.options
 import io.ktor.routing.routing
@@ -51,6 +53,8 @@ import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
 import vegancheckteam.plante_server.cmds.RegisterParams
 import vegancheckteam.plante_server.cmds.ResolveModeratorTaskParams
+import vegancheckteam.plante_server.cmds.ShopsDataParams
+import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
 import vegancheckteam.plante_server.cmds.SignOutAllParams
 import vegancheckteam.plante_server.cmds.UnresolveModeratorTaskParams
 import vegancheckteam.plante_server.cmds.UpdateUserDataParams
@@ -76,6 +80,7 @@ import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.putProductToShop
 import vegancheckteam.plante_server.cmds.registerUser
 import vegancheckteam.plante_server.cmds.resolveModeratorTask
+import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.signOutAll
 import vegancheckteam.plante_server.cmds.unresolveModeratorTask
 import vegancheckteam.plante_server.cmds.updateUserData
@@ -227,6 +232,10 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<CreateShopParams> { params, user ->
                 call.respond(createShop(params, user, testing, client))
+            }
+            getAuthed<ShopsDataParams> { params, user ->
+                val body = call.receive<ShopsDataRequestBody>()
+                call.respond(shopsData(params, body, user))
             }
         }
     }

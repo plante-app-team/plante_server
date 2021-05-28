@@ -9,10 +9,13 @@ data class Shop(
     @JsonProperty("id")
     val id: Int,
     @JsonProperty("osm_id")
-    val osmId: String) {
+    val osmId: String,
+    @JsonProperty("products_count")
+    val productsCount: Int) {
     companion object {
         fun from(tableRow: ResultRow) = Shop(
             id = tableRow[ShopTable.id],
-            osmId = tableRow[ShopTable.osmId])
+            osmId = tableRow[ShopTable.osmId],
+            productsCount = tableRow[ShopTable.productsCount])
     }
 }

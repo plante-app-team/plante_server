@@ -1,11 +1,15 @@
 package vegancheckteam.plante_server.test_utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.request.contentType
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationResponse
 import io.ktor.server.testing.handleRequest
+import io.ktor.server.testing.setBody
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import org.jetbrains.exposed.sql.insert
@@ -21,7 +25,8 @@ import kotlin.test.assertEquals
 fun TestApplicationEngine.get(
         url: String,
         clientToken: String? = null,
-        queryParams: Map<String, String> = emptyMap()): TestApplicationCall {
+        queryParams: Map<String, String> = emptyMap(),
+        body: String? = null): TestApplicationCall {
     val queryParamsStr = queryParams
         .map {
             val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8)
@@ -38,13 +43,18 @@ fun TestApplicationEngine.get(
         clientToken?.let {
             addHeader("Authorization", "Bearer $it")
         }
+        body?.let {
+            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            setBody(it)
+        }
     }
 }
 
 fun TestApplicationEngine.authedGet(
     token: String,
     url: String,
-    queryParams: Map<String, String> = emptyMap()) = get(url, token, queryParams)
+    queryParams: Map<String, String> = emptyMap(),
+    body: String? = null) = get(url, token, queryParams, body)
 
 fun TestApplicationResponse.jsonMap(): Map<*, *> {
     return ObjectMapper().readValue(content, MutableMap::class.java)

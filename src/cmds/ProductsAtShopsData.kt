@@ -2,7 +2,6 @@ package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.db.ProductAtShopTable

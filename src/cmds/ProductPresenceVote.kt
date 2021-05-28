@@ -2,11 +2,15 @@ package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
@@ -89,6 +93,11 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         }
         ProductPresenceVoteTable.deleteWhere {
             (ProductPresenceVoteTable.shopId eq shop.id) and (ProductPresenceVoteTable.productId eq product.id)
+        }
+        ShopTable.update( { ShopTable.id eq shop.id } ) {
+            with(SqlExpressionBuilder) {
+                it.update(productsCount, productsCount - 1)
+            }
         }
     } else {
         // Delete extra IDs

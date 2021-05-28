@@ -6,7 +6,6 @@ import java.util.Base64
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.select
@@ -976,6 +975,106 @@ class ShopRequestsTest {
                 !ShopTable.select { ShopTable.osmId eq osmId }.empty()
             }
             assertTrue(newShopExists)
+        }
+    }
+
+    @Test
+    fun `shops data after shop creation`() {
+        withTestApplication({ module(testing = true) }) {
+            val fakeOsmResponses = String(
+                Base64.getEncoder().encode(
+                    CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
+            val user = register()
+            var map = authedGet(user, "/create_shop/", mapOf(
+                "lat" to "-24",
+                "lon" to "44",
+                "name" to "myshop",
+                "type" to "general",
+                "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
+            assertEquals("654321", map["osm_id"])
+
+            val shopsDataRequestBody = """ { "osm_ids": [ "654321", "654322" ] } """
+            map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            val results = map["results"] as Map<*, *>
+            assertEquals(1, results.size)
+
+            val shopData = results["654321"]!! as Map<*, *>
+            assertEquals("654321", shopData["osm_id"])
+            assertEquals(0, shopData["products_count"])
+        }
+    }
+
+    @Test
+    fun `shops data after adding products to shops and then voting one out`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
+
+            // Create products
+            var map = authedGet(user, "/create_update_product/?barcode=${barcode1}").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/create_update_product/?barcode=${barcode2}" +
+                    "&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+            assertEquals("ok", map["result"])
+
+            var now = 123;
+
+            // Add products
+            map = authedGet(user, "/put_product_to_shop/", mapOf(
+                "barcode" to barcode1,
+                "shopOsmId" to shop1,
+                "testingNow" to "${++now}")).jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/put_product_to_shop/", mapOf(
+                "barcode" to barcode2,
+                "shopOsmId" to shop1,
+                "testingNow" to "${++now}")).jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user, "/put_product_to_shop/", mapOf(
+                "barcode" to barcode2,
+                "shopOsmId" to shop2,
+                "testingNow" to "${++now}")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify products are added
+            val shopsDataRequestBody = """ { "osm_ids": [ "$shop1", "$shop2" ] } """
+            map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            var results = map["results"] as Map<*, *>
+            assertEquals(2, results.size)
+
+            var shop1Data = results[shop1]!! as Map<*, *>
+            assertEquals(shop1, shop1Data["osm_id"])
+            assertEquals(2, shop1Data["products_count"])
+
+            var shop2Data = results[shop2]!! as Map<*, *>
+            assertEquals(shop2, shop2Data["osm_id"])
+            assertEquals(1, shop2Data["products_count"])
+
+            // Vote one out
+            repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
+                map = authedGet(user, "/product_presence_vote/", mapOf(
+                    "barcode" to barcode1,
+                    "shopOsmId" to shop1,
+                    "voteVal" to "0",
+                    "testingNow" to "${++now}")).jsonMap()
+                assertEquals("ok", map["result"])
+            }
+
+            // Verify one product is removed from one of the shops
+            map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            results = map["results"] as Map<*, *>
+            assertEquals(2, results.size)
+
+            shop1Data = results[shop1]!! as Map<*, *>
+            assertEquals(shop1, shop1Data["osm_id"])
+            assertEquals(1, shop1Data["products_count"])
+
+            shop2Data = results[shop2]!! as Map<*, *>
+            assertEquals(shop2, shop2Data["osm_id"])
+            assertEquals(1, shop2Data["products_count"])
         }
     }
 }
