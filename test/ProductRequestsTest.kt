@@ -337,4 +337,41 @@ class ProductRequestsTest {
             }
         }
     }
+
+    @Test
+    fun `creation and update of a product doesn't mess with other products`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+
+            // Create product 1
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown"
+            ).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Create product 2
+            map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode2}&vegetarianStatus=positive&veganStatus=positive"
+            ).jsonMap()
+            assertEquals("ok", map["result"])
+            // Update product 2
+            map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode2}&vegetarianStatus=negative&veganStatus=negative"
+            ).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Ensure product 1 has same data as during creation
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
+            assertEquals("unknown", map["vegetarian_status"])
+            assertEquals("community", map["vegetarian_status_source"])
+            assertEquals("unknown", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+        }
+    }
 }
