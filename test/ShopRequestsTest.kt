@@ -281,7 +281,8 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
 
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT - 2) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -290,7 +291,8 @@ class ShopRequestsTest {
             var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+            val anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to be removed from the shop
@@ -312,13 +314,15 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
             // Voting for the product! Go product, u da best!
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // Voting out!
             repeat(MIN_NEGATIVES_VOTES_FOR_DELETION - 1) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -328,7 +332,8 @@ class ShopRequestsTest {
             assertEquals(1, productsAtShop.size)
 
             // One last vote
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+            val anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to be removed from the shop
@@ -351,17 +356,20 @@ class ShopRequestsTest {
 
             // So many negative votes wow!
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT - 2) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // One positive vote ftw!
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+            var anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
             // Another bunch of negative votes!
             repeat(MIN_NEGATIVES_VOTES_FOR_DELETION - 1) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+                anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -396,7 +404,8 @@ class ShopRequestsTest {
 
             // Voting out of the first shop
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -421,7 +430,8 @@ class ShopRequestsTest {
             var map = authedGet(user, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
             repeat(2) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -433,7 +443,8 @@ class ShopRequestsTest {
 
             // Voting out!
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -469,7 +480,8 @@ class ShopRequestsTest {
 
             // Voting out of the first shop
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -495,7 +507,8 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
             // Voting twice as many times as the max
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT * 2) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -523,12 +536,14 @@ class ShopRequestsTest {
 
             // Vote for shop 1
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT * 3) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
             // Vote for shop 2
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT * 3) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -556,12 +571,14 @@ class ShopRequestsTest {
 
             // Vote for product 1
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT * 3) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
             // Vote for product 2
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT * 3) {
-                map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop&voteVal=1&testingNow=${++now}").jsonMap()
                 assertEquals("ok", map["result"])
             }
 
@@ -733,17 +750,21 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
 
             // Vote for product 2 presence a couple of times
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            var anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
             val product2ExpectedLastSeenTime = now
 
             // Vote for product 3 presence and then against of it
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
             val product3ExpectedLastSeenTime = now
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop1&voteVal=0&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
             // Try to mess with all times by adding the products into another shop and voting for them
@@ -753,11 +774,14 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/?barcode=$barcode3&shopOsmId=$shop2&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(user, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
+            anotherUser = register()
+            map = authedGet(anotherUser, "/product_presence_vote/?barcode=$barcode3&shopOsmId=$shop2&voteVal=1&testingNow=${++now}").jsonMap()
             assertEquals("ok", map["result"])
 
             // Now verify proper times
@@ -1055,7 +1079,8 @@ class ShopRequestsTest {
 
             // Vote one out
             repeat(MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-                map = authedGet(user, "/product_presence_vote/", mapOf(
+                val anotherUser = register()
+                map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                     "barcode" to barcode1,
                     "shopOsmId" to shop1,
                     "voteVal" to "0",
@@ -1075,6 +1100,146 @@ class ShopRequestsTest {
             shop2Data = results[shop2]!! as Map<*, *>
             assertEquals(shop2, shop2Data["osm_id"])
             assertEquals(1, shop2Data["products_count"])
+        }
+    }
+
+    @Test
+    fun `a user cannot add more than 1 vote`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = UUID.randomUUID().toString()
+
+            var map = authedGet(user, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderator = registerModerator()
+            // 1 vote expected
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode").jsonMap()
+            var votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=1").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 1 vote expected still
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+        }
+    }
+
+    @Test
+    fun `a user can change their vote`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = UUID.randomUUID().toString()
+
+            var now = 123
+            var map = authedGet(user, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderator = registerModerator()
+            // Positive vote expected
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode").jsonMap()
+            var votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+            var aVote = votes[0] as Map<*, *>
+            assertEquals(1, aVote["vote_val"])
+            val voteTime1 = aVote["vote_time"] as Int
+
+            map = authedGet(user, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop&voteVal=0&testingNow=${++now}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Negative vote expected
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+            aVote = votes[0] as Map<*, *>
+            assertEquals(0, aVote["vote_val"])
+
+            // Time of the vote is expected to be greater
+            val voteTime2 = aVote["vote_time"] as Int
+            assertTrue(voteTime1 < voteTime2);
+        }
+    }
+
+    @Test
+    fun `a user CAN add more than 1 vote when votes for different products`() {
+        withTestApplication({ module(testing = true) }) {
+            val user1 = register()
+            val user2 = register()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val shop = UUID.randomUUID().toString()
+
+            var map = authedGet(user1, "/put_product_to_shop/?barcode=$barcode1&shopOsmId=$shop").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user1, "/put_product_to_shop/?barcode=$barcode2&shopOsmId=$shop").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderator = registerModerator()
+            // 1 vote expected everywhere
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode1").jsonMap()
+            var votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode2").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+
+            // Vote!
+            map = authedGet(user2, "/product_presence_vote/?barcode=$barcode1&shopOsmId=$shop&voteVal=1").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user2, "/product_presence_vote/?barcode=$barcode2&shopOsmId=$shop&voteVal=1").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 2 votes expected everywhere
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode1").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(2, votes.size)
+            map = authedGet(moderator, "/product_presence_votes_data/?barcode=$barcode2").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(2, votes.size)
+        }
+    }
+
+    @Test
+    fun `a user CAN add more than 1 vote when votes for same product in different shops`() {
+        withTestApplication({ module(testing = true) }) {
+            val user1 = register()
+            val user2 = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
+
+            var map = authedGet(user1, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop1").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user1, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop2").jsonMap()
+            assertEquals("ok", map["result"])
+
+            val moderator = registerModerator()
+            // 1 vote expected everywhere
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
+            var votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(1, votes.size)
+
+            // Vote!
+            map = authedGet(user2, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop1&voteVal=1").jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(user2, "/product_presence_vote/?barcode=$barcode&shopOsmId=$shop2&voteVal=1").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 2 votes expected everywhere
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(2, votes.size)
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
+            votes = map["votes"] as List<*>
+            assertEquals(2, votes.size)
         }
     }
 }

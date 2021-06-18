@@ -70,6 +70,14 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         }
     }
 
+    // Delete all existing votes of this user for/against this product in this shop
+    ProductPresenceVoteTable.deleteWhere {
+        (ProductPresenceVoteTable.productId eq product.id) and
+                (ProductPresenceVoteTable.shopId eq shop.id) and
+                (ProductPresenceVoteTable.votedUserId eq user.id)
+    }
+
+    // Vote!
     ProductPresenceVoteTable.insert {
         it[productId] = product.id
         it[shopId] = shop.id
