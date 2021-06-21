@@ -20,7 +20,7 @@ object GoogleAuthorizer {
      */
     fun auth(idTokenString: String, httpTransport: HttpTransport): AuthResult {
         // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("GoogleAuthorizer.auth, id token: $idTokenString")
+        print("GoogleAuthorizer.auth, id token: $idTokenString\n")
         val verifier = GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
             .setAudience(listOf(
                 "84481772151-aisj7p71ovque8tbsi8ribpc5iv7bpjd.apps.googleusercontent.com",
@@ -31,9 +31,9 @@ object GoogleAuthorizer {
 
         val payload = idToken?.payload
         // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("GoogleAuthorizer.auth, payload: $payload")
-        print("GoogleAuthorizer.auth, payload.subject: ${payload?.subject}")
-        print("GoogleAuthorizer.auth, payload.emailVerified: ${payload?.emailVerified}")
+        print("GoogleAuthorizer.auth, payload: $payload\n")
+        print("GoogleAuthorizer.auth, payload.subject: ${payload?.subject}\n")
+        print("GoogleAuthorizer.auth, payload.emailVerified: ${payload?.emailVerified}\n")
         if (payload == null || payload.subject == null) {
             return AuthResult.Failure
         }
