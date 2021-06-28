@@ -26,11 +26,27 @@ const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
 const val SHOPS_CREATION_SEQUENCE_LENGTH_SECS = 60 * 60 * 24 // a day
 
 enum class ShopTypes(val typeName: String) {
-    SUPERMARKET("supermarket"),
+    BAKERY("bakery"),
+    BEVERAGES("beverages"),
+    CHEESE("cheese"),
+    CHOCOLATE("chocolate"),
+    COFFEE("coffee"),
+    CONFECTIONERY("confectionery"),
     CONVENIENCE("convenience"),
-    GROCERY("grocery"),
+    DELI("deli"),
+    DAIRY("dairy"),
+    FARM("farm"),
+    FROZEN_FOOD("frozen_food"),
     GREENGROCER("greengrocer"),
-    GENERAL("general");
+    HEALTH_FOOD("health_food"),
+    ICE_CREAM("ice_cream"),
+    ORGANIC("organic"),
+    PASTA("pasta"),
+    PASTRY("pastry"),
+    SPICES("spices"),
+    GENERAL("general"),
+    SUPERMARKET("supermarket"),
+    GROCERY("grocery");
     companion object {
         fun fromStringType(str: String) = values().find { it.typeName == str.toLowerCase() }
     }
