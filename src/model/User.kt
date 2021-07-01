@@ -7,7 +7,8 @@ import vegancheckteam.plante_server.db.UserTable
 data class User(
     val id: UUID,
     val loginGeneration: Int,
-    val googleId: String?,
+    val googleId: String? = null,
+    val appleId: String? = null,
     val banned: Boolean = false,
     val name: String = "",
     val gender: Gender? = null,
@@ -24,6 +25,7 @@ data class User(
                 loginGeneration = tableRow[UserTable.loginGeneration],
                 name = tableRow[UserTable.name],
                 googleId = tableRow[UserTable.googleId],
+                appleId = tableRow[UserTable.appleId],
                 gender = tableRow[UserTable.gender]?.let { Gender.fromPersistentCode(it) },
                 birthday = tableRow[UserTable.birthday],
                 eatsMilk = tableRow[UserTable.eatsMilk],

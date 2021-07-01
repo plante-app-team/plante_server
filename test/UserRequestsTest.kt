@@ -1,5 +1,6 @@
 package vegancheckteam.plante_server
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.withTestApplication
 import vegancheckteam.plante_server.cmds.MAX_QUIZ_ANSWERS_COUNT
 import java.util.*
@@ -16,7 +17,7 @@ import kotlin.test.assertNull
 
 class UserRequestsTest {
     @Test
-    fun registerUpdateGetUser() {
+    fun googleRegisterUpdateGetUser() {
         withTestApplication({ module(testing = true) }) {
             val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
@@ -37,7 +38,7 @@ class UserRequestsTest {
     }
 
     @Test
-    fun registerFailGoogleAuthFail() {
+    fun googleRegisterFailGoogleAuthFail() {
         withTestApplication({ module(testing = true) }) {
             val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_FAIL_FOR_TESTING").jsonMap()
             assertEquals("google_auth_failed", map["error"])
@@ -45,7 +46,7 @@ class UserRequestsTest {
     }
 
     @Test
-    fun registerFailEmailNotVerified() {
+    fun googleRegisterFailEmailNotVerified() {
         withTestApplication({ module(testing = true) }) {
             val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_EMAIL_NOT_VERIFIED").jsonMap()
             assertEquals("google_email_not_verified", map["error"])
@@ -53,20 +54,7 @@ class UserRequestsTest {
     }
 
     @Test
-    fun unauthorizedUpdate() {
-        withTestApplication({ module(testing = true) }) {
-            var response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
-            assertEquals(200, response.status()?.value)
-
-            // NOTE: token is not passed
-            response = get("/update_user_data/?name=Bob", clientToken = null).response
-            assertNull(response.content)
-            assertEquals(401, response.status()?.value)
-        }
-    }
-
-    @Test
-    fun canLoginSecondTime() {
+    fun googleCanLoginSecondTime() {
         withTestApplication({ module(testing = true) }) {
             val googleId = UUID.randomUUID()
             var map = get("/register_user/?deviceId=1&googleIdToken=$googleId").jsonMap()
@@ -86,6 +74,64 @@ class UserRequestsTest {
             val map2 = authedGet(clientToken2, "/user_data/").jsonMap()
             assertEquals(map1, map2)
             assertEquals(id1, map1["user_id"])
+        }
+    }
+
+    @Test
+    fun appleRegisterUpdateGetUser() {
+        withTestApplication({ module(testing = true) }) {
+            val response = get("/register_user/?deviceId=123&appleAuthorizationCode=${UUID.randomUUID()}").response
+            assertEquals(200, response.status()?.value)
+
+            var map = response.jsonMap()
+            val id = map["user_id"] as String
+            val clientToken = map["client_token"] as String
+            assertFalse(id.isEmpty())
+            assertFalse(clientToken.isEmpty())
+
+            map = authedGet(clientToken, "/update_user_data/?name=Bob").jsonMap()
+            assertEquals(map["result"], "ok")
+
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals(map["user_id"], id)
+            assertEquals(map["name"], "Bob")
+        }
+    }
+
+    @Test
+    fun appleCanLoginSecondTime() {
+        withTestApplication({ module(testing = true) }) {
+            val appleId = UUID.randomUUID()
+            var map = get("/register_user/?deviceId=1&appleAuthorizationCode=$appleId").jsonMap()
+            val id1 = map["user_id"] as String
+            val clientToken1 = map["client_token"] as String
+
+            map = get("/login_user/?deviceId=2&appleAuthorizationCode=$appleId").jsonMap()
+            val id2 = map["user_id"] as String
+            val clientToken2 = map["client_token"] as String
+
+            assertEquals(id1, id2)
+            assertNotEquals(clientToken1, clientToken2)
+
+            // Both token expected to be valid
+
+            val map1 = authedGet(clientToken1, "/user_data/").jsonMap()
+            val map2 = authedGet(clientToken2, "/user_data/").jsonMap()
+            assertEquals(map1, map2)
+            assertEquals(id1, map1["user_id"])
+        }
+    }
+
+    @Test
+    fun unauthorizedUpdate() {
+        withTestApplication({ module(testing = true) }) {
+            var response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            assertEquals(200, response.status()?.value)
+
+            // NOTE: token is not passed
+            response = get("/update_user_data/?name=Bob", clientToken = null).response
+            assertNull(response.content)
+            assertEquals(401, response.status()?.value)
         }
     }
 

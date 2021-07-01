@@ -157,8 +157,8 @@ fun Application.module(testing: Boolean = false) {
 
 
     routing {
-        get<RegisterParams> { call.respond(registerUser(it, testing)) }
-        get<LoginParams> { call.respond(loginUser(it, testing)) }
+        get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
+        get<LoginParams> { call.respond(loginUser(it, client, testing)) }
 
         authenticate {
             getAuthed<BanMeParams> { _, user ->

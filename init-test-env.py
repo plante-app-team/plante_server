@@ -35,6 +35,7 @@ def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--osm-testing-user', required=True, help='User at https://master.apis.dev.openstreetmap.org')
   parser.add_argument('--osm-testing-password', required=True, help='Password of user at https://master.apis.dev.openstreetmap.org')
+  parser.add_argument('--ios-server-private-key-path', default='/not/existing/path', help='Optional path to the backend iOS private key')
   args = parser.parse_args()
   step('Args: {}'.format(args))
   step('std out log file: {}'.format(stdout_log_file))
@@ -82,6 +83,7 @@ def main(args):
    "psql_pass": "{}",
    "db_connection_attempts_timeout_seconds": 10,
    "jwt_secret": "not so secret secret",
+   "ios_backend_private_key_file_path": "{}",
    "osm_testing_user": "{}",
    "osm_testing_password": "{}",
    "osm_prod_user": "intentionally invalid so that tests wouldn't screw with prod osm db",
@@ -95,6 +97,7 @@ def main(args):
     postgres_url,
     'main_user',
     users_password,
+    args.ios_server_private_key_path,
     args.osm_testing_user,
     args.osm_testing_password)
 

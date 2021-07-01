@@ -15,6 +15,8 @@ data class Config(
     val dbConnectionAttemptsTimeoutSeconds: Int,
     @JsonProperty("jwt_secret")
     val jwtSecret: String,
+    @JsonProperty("ios_backend_private_key_file_path")
+    val iOSBackendPrivateKeyFilePath: String,
     @JsonProperty("osm_prod_user")
     val osmProdUser: String,
     @JsonProperty("osm_prod_password")

@@ -53,6 +53,7 @@ dependencies {
     implementation "io.ktor:ktor-auth-jwt:$ktor_version"
 
     implementation "com.auth0:java-jwt:3.13.0"
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.68'
 
     implementation 'org.postgresql:postgresql:42.2.19'
     implementation "org.jetbrains.exposed:exposed-core:$exposed_version"
