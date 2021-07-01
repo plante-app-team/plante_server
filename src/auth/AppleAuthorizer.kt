@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import java.security.interfaces.ECPrivateKey
+import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.model.GenericResponse
 
@@ -27,7 +28,7 @@ object AppleAuthorizer {
         val privateKey = PemUtils.readPrivateKeyFromFile(privateKeyFilePath, "EC") as ECPrivateKey
         val jwt = JWT.create()
             .withHeader(mapOf("kid" to "2DLM7T56TB")) // TODO: make sure it's the proper key
-            .withClaim("iss", "TODO:past a proper team ID")
+            .withClaim("iss", "67WVPA59ZH")
             .withClaim("iat", now())
             .withClaim("exp", now() + 60 * 5)
             .withClaim("aud", "https://appleid.apple.com")
@@ -42,7 +43,11 @@ object AppleAuthorizer {
         // TODO(https://trello.com/c/XgGFE05M/): log info
         print("AppleAuthorizer.auth, apple response: $response\n")
 
-        val responseJwt = JWT.decode(response)
+        @Suppress("BlockingMethodInNonBlockingContext")
+        val json = GlobalStorage.jsonMapper.readValue(response, MutableMap::class.java)
+
+        val responseJwt = JWT.decode(json["id_token"] as String)
+        print("AppleAuthorizer.auth, responseJwt: $responseJwt\n")
         val userId = responseJwt.subject
         return AuthResult.Ok(userId)
     }
