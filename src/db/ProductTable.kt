@@ -9,5 +9,6 @@ object ProductTable : Table("product") {
     val veganStatus = short("vegan_status")
     val vegetarianStatusSource = short("vegetarian_status_source")
     val veganStatusSource = short("vegan_status_source")
+    val creatorUserId = uuid("creator_user_id").references(UserTable.id).nullable().index()
     override val primaryKey = PrimaryKey(id)
 }

@@ -165,7 +165,7 @@ class ProductRequestsTest {
             val timeStart = ZonedDateTime.now().toEpochSecond()
             Thread.sleep(1001) // To make changes times different
 
-            var map = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").jsonMap()
+            var map = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").jsonMap()
             val userClientToken = map["client_token"] as String
             val userId = map["user_id"] as String
 

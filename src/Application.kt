@@ -1,5 +1,9 @@
 package vegancheckteam.plante_server
 
+import cmds.deprecated.LoginParams
+import cmds.deprecated.RegisterParams
+import cmds.deprecated.loginUser
+import cmds.deprecated.registerUser
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -41,7 +45,7 @@ import vegancheckteam.plante_server.cmds.BanMeParams
 import vegancheckteam.plante_server.cmds.CreateShopParams
 import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
 import vegancheckteam.plante_server.cmds.DeleteUserParams
-import vegancheckteam.plante_server.cmds.LoginParams
+import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
 import vegancheckteam.plante_server.cmds.ModerateProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.ProductChangesDataParams
@@ -51,7 +55,6 @@ import vegancheckteam.plante_server.cmds.ProductPresenceVotesDataParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
-import vegancheckteam.plante_server.cmds.RegisterParams
 import vegancheckteam.plante_server.cmds.ResolveModeratorTaskParams
 import vegancheckteam.plante_server.cmds.ShopsDataParams
 import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
@@ -68,7 +71,7 @@ import vegancheckteam.plante_server.cmds.banMe
 import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.deleteUser
-import vegancheckteam.plante_server.cmds.loginUser
+import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
 import vegancheckteam.plante_server.cmds.moderateProductVegStatuses
 import vegancheckteam.plante_server.cmds.productChangesData
@@ -78,7 +81,6 @@ import vegancheckteam.plante_server.cmds.productPresenceVotesData
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.putProductToShop
-import vegancheckteam.plante_server.cmds.registerUser
 import vegancheckteam.plante_server.cmds.resolveModeratorTask
 import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.signOutAll
@@ -159,6 +161,7 @@ fun Application.module(testing: Boolean = false) {
     routing {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
+        get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
 
         authenticate {
             getAuthed<BanMeParams> { _, user ->

@@ -2,32 +2,30 @@ package vegancheckteam.plante_server.cmds
 
 import io.ktor.client.HttpClient
 import io.ktor.locations.Location
+import java.util.UUID
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.Config
+import vegancheckteam.plante_server.auth.AppleAuthorizer
 import vegancheckteam.plante_server.auth.GoogleAuthorizer
 import vegancheckteam.plante_server.auth.GoogleIdOrServerError
 import vegancheckteam.plante_server.auth.JwtController
 import vegancheckteam.plante_server.auth.authOrServerError
-import vegancheckteam.plante_server.db.UserTable
-import vegancheckteam.plante_server.model.GenericResponse
-import vegancheckteam.plante_server.model.User
-import vegancheckteam.plante_server.model.UserRightsGroup
-import vegancheckteam.plante_server.model.UserDataResponse
-import java.util.*
-import vegancheckteam.plante_server.auth.AppleAuthorizer
-import vegancheckteam.plante_server.auth.AppleIdOrServerError
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserDataResponse
+import vegancheckteam.plante_server.model.UserRightsGroup
 
-@Location("/register_user/")
-data class RegisterParams(
+@Location("/login_or_register_user/")
+data class LoginOrRegisterUserParams(
     val googleIdToken: String? = null,
     val appleAuthorizationCode: String? = null,
     val deviceId: String,
     val userName: String? = null)
 
-suspend fun registerUser(params: RegisterParams, client: HttpClient, testing: Boolean): Any {
+suspend fun loginOrRegisterUser(params: LoginOrRegisterUserParams, client: HttpClient, testing: Boolean): Any {
     if (params.googleIdToken != null) {
         return googleAuth(testing, params, params.googleIdToken)
     } else if (params.appleAuthorizationCode != null) {
@@ -36,7 +34,7 @@ suspend fun registerUser(params: RegisterParams, client: HttpClient, testing: Bo
     throw IllegalArgumentException("Both Google ID and Apple ID are nulls")
 }
 
-private fun googleAuth(testing: Boolean, params: RegisterParams, googleIdToken: String): Any {
+private fun googleAuth(testing: Boolean, params: LoginOrRegisterUserParams, googleIdToken: String): Any {
     val idOrError = GoogleAuthorizer.authOrServerError(googleIdToken, testing)
     val googleId = when (idOrError) {
         is GoogleIdOrServerError.Error -> return idOrError.error
@@ -48,16 +46,17 @@ private fun googleAuth(testing: Boolean, params: RegisterParams, googleIdToken: 
             UserTable.googleId eq googleId
         }.firstOrNull()
     }
-    if (existingUser != null) {
-        return GenericResponse.failure("already_registered")
+    return if (existingUser == null) {
+        registerUserImpl(googleId, null, params)
+    } else {
+        loginUserImpl(User.from(existingUser), params)
     }
-    return registerUserImpl(googleId, null, params)
 }
 
 private fun registerUserImpl(
     googleId: String?,
     appleId: String?,
-    params: RegisterParams
+    params: LoginOrRegisterUserParams
 ): UserDataResponse {
     if (googleId == null && appleId == null) {
         throw IllegalArgumentException("Both Google ID and Apple ID are nulls");
@@ -92,10 +91,17 @@ private fun registerUserImpl(
     return UserDataResponse.from(user).copy(clientToken = jwtToken)
 }
 
-suspend fun appleAuth(testing: Boolean,
-                      params: RegisterParams,
-                      appleAuthorizationCode: String,
-                      client: HttpClient): Any {
+fun loginUserImpl(user: User, params: LoginOrRegisterUserParams): UserDataResponse {
+    val jwtToken = JwtController.makeToken(user, params.deviceId)
+    return UserDataResponse.from(user).copy(clientToken = jwtToken)
+}
+
+suspend fun appleAuth(
+    testing: Boolean,
+    params: LoginOrRegisterUserParams,
+    appleAuthorizationCode: String,
+    client: HttpClient
+): Any {
     val idOrError = AppleAuthorizer.auth(
         testing,
         appleAuthorizationCode,
@@ -110,8 +116,9 @@ suspend fun appleAuth(testing: Boolean,
             UserTable.appleId eq appleId
         }.firstOrNull()
     }
-    if (existingUser != null) {
-        return GenericResponse.failure("already_registered")
+    return if (existingUser == null) {
+        registerUserImpl(null, appleId, params)
+    } else {
+        loginUserImpl(User.from(existingUser), params)
     }
-    return registerUserImpl(null, appleId, params)
 }

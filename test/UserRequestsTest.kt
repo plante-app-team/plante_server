@@ -19,7 +19,9 @@ class UserRequestsTest {
     @Test
     fun googleRegisterUpdateGetUser() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/", queryParams = mapOf(
+                "deviceId" to "123",
+                "googleIdToken" to "${UUID.randomUUID()}")).response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -40,7 +42,9 @@ class UserRequestsTest {
     @Test
     fun googleRegisterFailGoogleAuthFail() {
         withTestApplication({ module(testing = true) }) {
-            val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_FAIL_FOR_TESTING").jsonMap()
+            val map = get("/login_or_register_user/", queryParams = mapOf(
+                "deviceId" to "123",
+                "googleIdToken" to "GOOGLE_AUTH_FAIL_FOR_TESTING")).jsonMap()
             assertEquals("google_auth_failed", map["error"])
         }
     }
@@ -48,7 +52,7 @@ class UserRequestsTest {
     @Test
     fun googleRegisterFailEmailNotVerified() {
         withTestApplication({ module(testing = true) }) {
-            val map = get("/register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_EMAIL_NOT_VERIFIED").jsonMap()
+            val map = get("/login_or_register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_EMAIL_NOT_VERIFIED").jsonMap()
             assertEquals("google_email_not_verified", map["error"])
         }
     }
@@ -57,11 +61,11 @@ class UserRequestsTest {
     fun googleCanLoginSecondTime() {
         withTestApplication({ module(testing = true) }) {
             val googleId = UUID.randomUUID()
-            var map = get("/register_user/?deviceId=1&googleIdToken=$googleId").jsonMap()
+            var map = get("/login_or_register_user/?deviceId=1&googleIdToken=$googleId").jsonMap()
             val id1 = map["user_id"] as String
             val clientToken1 = map["client_token"] as String
 
-            map = get("/login_user/?deviceId=2&googleIdToken=$googleId").jsonMap()
+            map = get("/login_or_register_user/?deviceId=2&googleIdToken=$googleId").jsonMap()
             val id2 = map["user_id"] as String
             val clientToken2 = map["client_token"] as String
 
@@ -80,7 +84,7 @@ class UserRequestsTest {
     @Test
     fun appleRegisterUpdateGetUser() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&appleAuthorizationCode=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/?deviceId=123&appleAuthorizationCode=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -102,11 +106,11 @@ class UserRequestsTest {
     fun appleCanLoginSecondTime() {
         withTestApplication({ module(testing = true) }) {
             val appleId = UUID.randomUUID()
-            var map = get("/register_user/?deviceId=1&appleAuthorizationCode=$appleId").jsonMap()
+            var map = get("/login_or_register_user/?deviceId=1&appleAuthorizationCode=$appleId").jsonMap()
             val id1 = map["user_id"] as String
             val clientToken1 = map["client_token"] as String
 
-            map = get("/login_user/?deviceId=2&appleAuthorizationCode=$appleId").jsonMap()
+            map = get("/login_or_register_user/?deviceId=2&appleAuthorizationCode=$appleId").jsonMap()
             val id2 = map["user_id"] as String
             val clientToken2 = map["client_token"] as String
 
@@ -125,7 +129,7 @@ class UserRequestsTest {
     @Test
     fun unauthorizedUpdate() {
         withTestApplication({ module(testing = true) }) {
-            var response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            var response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             // NOTE: token is not passed
@@ -139,7 +143,7 @@ class UserRequestsTest {
     fun signOutAll() {
         withTestApplication({ module(testing = true) }) {
             val googleId = UUID.randomUUID()
-            var response = get("/register_user/?deviceId=123&googleIdToken=$googleId").response
+            var response = get("/login_or_register_user/?deviceId=123&googleIdToken=$googleId").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -154,7 +158,7 @@ class UserRequestsTest {
             assertEquals(401, response.status()?.value)
 
             // Login again
-            map = get("/login_user/?deviceId=2&googleIdToken=$googleId").jsonMap()
+            map = get("/login_or_register_user/?deviceId=2&googleIdToken=$googleId").jsonMap()
             val clientToken2 = map["client_token"] as String
 
             response = authedGet(clientToken2, "/update_user_data/?name=Bob").response
@@ -165,7 +169,7 @@ class UserRequestsTest {
     @Test
     fun allFieldsUpdates() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -221,7 +225,7 @@ class UserRequestsTest {
     @Test
     fun invalidGenderUpdate() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -237,7 +241,7 @@ class UserRequestsTest {
     @Test
     fun invalidBirthday() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()
@@ -253,7 +257,7 @@ class UserRequestsTest {
     @Test
     fun ban() {
         withTestApplication({ module(testing = true) }) {
-            val response = get("/register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
             var map = response.jsonMap()

@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.cmds
+package cmds.deprecated
 
 import io.ktor.client.HttpClient
 import io.ktor.locations.Location
