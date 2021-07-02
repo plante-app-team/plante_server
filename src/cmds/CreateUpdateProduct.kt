@@ -49,6 +49,7 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
                 row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                 row[ProductTable.veganStatus] = (veganStatus ?: VegStatus.UNKNOWN).persistentCode
                 row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
+                row[creatorUserId] = user.id
             }.resultedValues!![0]
         } else {
             ProductTable.update({ barcode eq params.barcode }) { row ->
