@@ -17,7 +17,7 @@ data class ModerateProductVegStatusesParams(
     val veganStatus: String)
 
 fun moderateProductVegStatuses(params: ModerateProductVegStatusesParams, user: User): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
 

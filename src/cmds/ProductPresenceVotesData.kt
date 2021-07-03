@@ -24,7 +24,7 @@ data class ProductPresenceVotesDataParams(
     val shopOsmId: String? = null)
 
 fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User) = transaction {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return@transaction GenericResponse.failure("denied")
     }
 

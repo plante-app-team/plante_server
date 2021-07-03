@@ -72,7 +72,7 @@ private fun registerUserImpl(
 
     val alwaysModeratorName = Config.instance.alwaysModeratorName
     val userGroup = if (alwaysModeratorName != null && params.userName == alwaysModeratorName) {
-        UserRightsGroup.MODERATOR
+        UserRightsGroup.ADMINISTRATOR
     } else {
         UserRightsGroup.NORMAL
     }

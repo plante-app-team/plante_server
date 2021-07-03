@@ -13,7 +13,7 @@ import java.util.*
 data class DeleteUserParams(val userId: String)
 
 fun deleteUser(params: DeleteUserParams, user: User): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.EVERYTHING_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
     val updated = transaction {

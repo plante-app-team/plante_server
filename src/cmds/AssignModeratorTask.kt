@@ -22,7 +22,7 @@ data class AssignModeratorTaskParams(
     val testingNow: Long? = null)
 
 fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: Boolean): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
 
@@ -60,7 +60,7 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
             val assignee = UserTable.select {
                 UserTable.id eq UUID.fromString(params.assignee)
             }.map { User.from(it) }.first()
-            if (assignee.userRightsGroup != UserRightsGroup.MODERATOR) {
+            if (assignee.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
                 return@transaction GenericResponse.failure("assignee_not_moderator")
             }
             assignee.id

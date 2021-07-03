@@ -18,7 +18,7 @@ data class AllModeratorTasksDataParams(
     val testingNow: Long? = null)
 
 fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testing: Boolean): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
 

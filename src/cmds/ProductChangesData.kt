@@ -15,7 +15,7 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 data class ProductChangesDataParams(val barcode: String)
 
 fun productChangesData(params: ProductChangesDataParams, user: User): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
     val changes = transaction {

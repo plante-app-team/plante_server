@@ -13,7 +13,7 @@ data class UnresolveModeratorTaskParams(
     val taskId: Int)
 
 fun unresolveModeratorTask(params: UnresolveModeratorTaskParams, user: User, testing: Boolean): Any {
-    if (user.userRightsGroup != UserRightsGroup.MODERATOR) {
+    if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
 

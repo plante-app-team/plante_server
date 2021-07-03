@@ -29,6 +29,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vegancheckteam.plante_server.test_utils.registerModeratorOfEverything
 
 class ModerationRequestsTest {
     @Before
@@ -1038,10 +1039,31 @@ class ModerationRequestsTest {
     }
 
     @Test
-    fun `user deletion by moderator`() {
+    fun `user deletion by content moderator`() {
         withTestApplication({ module(testing = true) }) {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
+            val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
+
+            // At first can send a request by the user
+            var map = authedGet(simpleUserClientToken, "/make_report/?barcode=123&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Try to delete user
+            map = authedGet(moderatorClientToken, "/delete_user/?userId=$simpleUserId").jsonMap()
+            assertEquals("denied", map["error"])
+
+            // The user still can do stuff
+            map = authedGet(simpleUserClientToken, "/make_report/?barcode=123&text=someText").jsonMap()
+            assertEquals("ok", map["result"])
+        }
+    }
+
+    @Test
+    fun `user deletion by everything-moderator`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId = UUID.randomUUID()
+            val moderatorClientToken = registerModeratorOfEverything(id = moderatorId)
             val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
 
             // At first can send a request by the user
@@ -1063,7 +1085,7 @@ class ModerationRequestsTest {
     fun `deletion of not existing user`() {
         withTestApplication({ module(testing = true) }) {
             val moderatorId = UUID.randomUUID()
-            val moderatorClientToken = registerModerator(id = moderatorId)
+            val moderatorClientToken = registerModeratorOfEverything(id = moderatorId)
             val simpleUserId = UUID.randomUUID()
 
             val map = authedGet(moderatorClientToken, "/delete_user/?userId=$simpleUserId").jsonMap()

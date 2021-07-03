@@ -86,7 +86,25 @@ fun registerModerator(id: UUID = UUID.randomUUID()): String {
             it[creationTime] = ZonedDateTime.now().toEpochSecond()
             it[name] = moderator.name
             it[googleId] = moderator.googleId
-            it[userRightsGroup] = UserRightsGroup.MODERATOR.persistentCode
+            it[userRightsGroup] = UserRightsGroup.CONTENT_MODERATOR.persistentCode
+        }
+    }
+    return JwtController.makeToken(moderator, "device id")
+}
+
+fun registerModeratorOfEverything(id: UUID = UUID.randomUUID()): String {
+    val moderator = User(
+        id = id,
+        loginGeneration = 1,
+        googleId = null)
+    transaction {
+        UserTable.insert {
+            it[UserTable.id] = moderator.id
+            it[loginGeneration] = moderator.loginGeneration
+            it[creationTime] = ZonedDateTime.now().toEpochSecond()
+            it[name] = moderator.name
+            it[googleId] = moderator.googleId
+            it[userRightsGroup] = UserRightsGroup.EVERYTHING_MODERATOR.persistentCode
         }
     }
     return JwtController.makeToken(moderator, "device id")
