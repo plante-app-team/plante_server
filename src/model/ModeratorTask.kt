@@ -2,6 +2,7 @@ package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.util.UUID
 import org.jetbrains.exposed.sql.ResultRow
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.db.ModeratorTaskTable
@@ -27,7 +28,9 @@ data class ModeratorTask(
     @JsonProperty("assign_time")
     val assignTime: Long?,
     @JsonProperty("resolution_time")
-    val resolutionTime: Long?) {
+    val resolutionTime: Long?,
+    @JsonProperty("rejected_assignees_list")
+    val rejectedAssigneesList: List<UUID>) {
     companion object {
         fun from(tableRow: ResultRow) = ModeratorTask(
             id = tableRow[ModeratorTaskTable.id],
@@ -39,8 +42,20 @@ data class ModeratorTask(
             creationTime = tableRow[ModeratorTaskTable.creationTime],
             assignee = tableRow[ModeratorTaskTable.assignee]?.toString(),
             assignTime = tableRow[ModeratorTaskTable.assignTime],
-            resolutionTime = tableRow[ModeratorTaskTable.resolutionTime])
+            resolutionTime = tableRow[ModeratorTaskTable.resolutionTime],
+            rejectedAssigneesList = (tableRow[ModeratorTaskTable.rejectedAssigneesList] ?: "")
+                .split(",")
+                .filter { it.isNotEmpty() }
+                .map { UUID.fromString(it) })
         private fun taskTypeFrom(code: Short) = ModeratorTaskType.fromPersistentCode(code)
     }
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
+    fun joinRejectedAssignees(): String = rejectedAssigneesList.joinToString(",")
+    fun addRejectedAssignee(assignee: UUID): ModeratorTask {
+        val updatedRejectedAssigneesList = rejectedAssigneesList.toMutableList()
+        if (!rejectedAssigneesList.contains(assignee)) {
+            updatedRejectedAssigneesList += assignee
+        }
+        return copy(rejectedAssigneesList = updatedRejectedAssigneesList)
+    }
 }

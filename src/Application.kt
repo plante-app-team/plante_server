@@ -55,6 +55,7 @@ import vegancheckteam.plante_server.cmds.ProductPresenceVotesDataParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
+import vegancheckteam.plante_server.cmds.RejectModeratorTaskParams
 import vegancheckteam.plante_server.cmds.ResolveModeratorTaskParams
 import vegancheckteam.plante_server.cmds.ShopsDataParams
 import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
@@ -81,6 +82,7 @@ import vegancheckteam.plante_server.cmds.productPresenceVotesData
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.putProductToShop
+import vegancheckteam.plante_server.cmds.rejectModeratorTask
 import vegancheckteam.plante_server.cmds.resolveModeratorTask
 import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.signOutAll
@@ -205,6 +207,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<AssignedModeratorTasksDataParams> { params, user ->
                 call.respond(assignedModeratorTasksData(params, user, testing))
+            }
+            getAuthed<RejectModeratorTaskParams> { params, user ->
+                call.respond(rejectModeratorTask(params, user, testing))
             }
             getAuthed<AllModeratorTasksDataParams> { params, user ->
                 call.respond(allModeratorTasksData(params, user, testing))

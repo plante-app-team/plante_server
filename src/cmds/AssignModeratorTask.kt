@@ -27,35 +27,9 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
     }
 
     val now = now(params.testingNow, testing)
-
     val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
 
     return transaction {
-        val taskId = if (params.taskId != null) {
-            val row = ModeratorTaskTable.select {
-                ModeratorTaskTable.id eq params.taskId
-            }.firstOrNull()
-            if (row == null) {
-                return@transaction GenericResponse.failure("task_not_found", "Task for id ${params.taskId} not found")
-            }
-            params.taskId
-        } else {
-            val task = ModeratorTaskTable.select {
-                (ModeratorTaskTable.resolutionTime eq null) and
-                        ((ModeratorTaskTable.assignTime eq null) or
-                        (ModeratorTaskTable.assignTime less oldestAcceptable))
-            }.orderBy(ModeratorTaskTable.creationTime)
-                .map { ModeratorTask.from(it) }
-                .sortedBy { it.taskType.priority }
-                .firstOrNull()
-
-            if (task == null) {
-                return@transaction GenericResponse.failure("no_unresolved_moderator_tasks")
-            } else {
-                task.id
-            }
-        }
-
         val assignee = if (params.assignee != null) {
             val assignee = UserTable.select {
                 UserTable.id eq UUID.fromString(params.assignee)
@@ -67,6 +41,36 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
         } else {
             user.id
         }
+
+        val taskId = if (params.taskId != null) {
+            val row = ModeratorTaskTable.select {
+                ModeratorTaskTable.id eq params.taskId
+            }.firstOrNull()
+            if (row == null) {
+                return@transaction GenericResponse.failure(
+                    "task_not_found",
+                    "Task for id ${params.taskId} not found")
+            }
+            params.taskId
+        } else {
+            val task = ModeratorTaskTable.select {
+                (ModeratorTaskTable.resolutionTime eq null) and
+                        ((ModeratorTaskTable.assignTime eq null) or
+                        (ModeratorTaskTable.assignTime less oldestAcceptable))
+            }.orderBy(ModeratorTaskTable.creationTime)
+                .map { ModeratorTask.from(it) }
+                .filter { !it.rejectedAssigneesList.contains(assignee) }
+                .sortedBy { it.taskType.priority }
+                .firstOrNull()
+
+            if (task == null) {
+                return@transaction GenericResponse.failure(
+                    "no_unresolved_moderator_tasks")
+            } else {
+                task.id
+            }
+        }
+
         ModeratorTaskTable.update({ ModeratorTaskTable.id eq taskId }) {
             it[ModeratorTaskTable.assignee] = assignee
             it[assignTime] = now

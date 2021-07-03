@@ -1106,4 +1106,123 @@ class ModerationRequestsTest {
             assertEquals("denied", map["error"])
         }
     }
+
+    @Test
+    fun `moderator can reject a task`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId1 = UUID.randomUUID()
+            val moderatorId2 = UUID.randomUUID()
+            val moderatorClientToken1 = registerModerator(id = moderatorId1)
+            val moderatorClientToken2 = registerModerator(id = moderatorId2)
+
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/", mapOf(
+                "barcode" to "123",
+                "text" to "someText",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Moderator 1
+
+            // Moderator 1 Assign
+            map = authedGet(moderatorClientToken1, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+            // Moderator 1 Check
+            map = authedGet(moderatorClientToken1, "/assigned_moderator_tasks_data/").jsonMap()
+            var tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+            // Moderator 1 Reject
+            val task = tasks[0] as Map<*, *>
+            val taskId = task["id"].toString()
+            map = authedGet(moderatorClientToken1, "/reject_moderator_task/", mapOf(
+                "taskId" to taskId,
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+            // Moderator 1 Check
+            map = authedGet(moderatorClientToken1, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(0, tasks.size, map.toString())
+            // Moderator 1 Assign attempt 2
+            map = authedGet(moderatorClientToken1, "/assign_moderator_task/").jsonMap()
+            assertEquals("no_unresolved_moderator_tasks", map["error"])
+
+            // Moderator 2
+
+            // Moderator 2 Assign
+            map = authedGet(moderatorClientToken2, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+            // Moderator 2 Check
+            map = authedGet(moderatorClientToken2, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+            // Moderator 2 Reject
+            map = authedGet(moderatorClientToken2, "/reject_moderator_task/", mapOf(
+                "taskId" to taskId,
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+            // Moderator 2 Check
+            map = authedGet(moderatorClientToken2, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(0, tasks.size, map.toString())
+            // Moderator 2 Assign attempt 2
+            map = authedGet(moderatorClientToken2, "/assign_moderator_task/").jsonMap()
+            assertEquals("no_unresolved_moderator_tasks", map["error"])
+        }
+    }
+
+    @Test
+    fun `rejected task can be manually assigned`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId = UUID.randomUUID()
+            val moderatorClientToken = registerModerator(id = moderatorId)
+
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/", mapOf(
+                "barcode" to "123",
+                "text" to "someText",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Assign
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Check
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            var tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+
+            // Reject
+            val task = tasks[0] as Map<*, *>
+            val taskId = task["id"].toString()
+            map = authedGet(moderatorClientToken, "/reject_moderator_task/", mapOf(
+                "taskId" to taskId,
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Check
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(0, tasks.size, map.toString())
+
+            // Assign attempt 2
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("no_unresolved_moderator_tasks", map["error"])
+
+            // Manual assign!
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/", mapOf(
+                "taskId" to taskId
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Check
+            map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+            tasks = map["tasks"] as List<*>
+            assertEquals(1, tasks.size, map.toString())
+        }
+    }
 }

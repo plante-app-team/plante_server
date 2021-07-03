@@ -17,5 +17,7 @@ object ModeratorTaskTable : Table("moderator_task") {
     val assignTime = long("assign_time").nullable().index()
     val resolutionTime = long("resolution_time").nullable().index()
 
+    val rejectedAssigneesList = text("rejected_assignees_list").nullable()
+
     override val primaryKey = PrimaryKey(id)
 }
