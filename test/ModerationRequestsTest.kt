@@ -1,5 +1,7 @@
 package vegancheckteam.plante_server
 
+import cmds.moderation.ASSIGNATION_TIME_LIMIT_MINUTES
+import cmds.moderation.DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS
 import io.ktor.server.testing.withTestApplication
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteAll
@@ -11,8 +13,6 @@ import org.junit.Before
 import org.junit.Test
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.model.ModeratorTaskType
-import vegancheckteam.plante_server.cmds.ASSIGNATION_TIME_LIMIT_MINUTES
-import vegancheckteam.plante_server.cmds.DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS
 import vegancheckteam.plante_server.cmds.MAX_REPORTS_FOR_PRODUCT_TESTING
 import vegancheckteam.plante_server.cmds.MAX_REPORTS_FOR_USER_TESTING
 import vegancheckteam.plante_server.cmds.REPORT_TEXT_MAX_LENGTH
