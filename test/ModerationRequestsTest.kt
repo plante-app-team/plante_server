@@ -1225,4 +1225,43 @@ class ModerationRequestsTest {
             assertEquals(1, tasks.size, map.toString())
         }
     }
+
+    @Test
+    fun `moderator_task_data cmd`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorId = UUID.randomUUID()
+            val moderatorClientToken = registerModerator(id = moderatorId)
+            val simpleUserClientToken = register()
+
+            // Make a report
+            var map = authedGet(simpleUserClientToken, "/make_report/", mapOf(
+                "barcode" to "123",
+                "text" to "someText",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            val taskId = transaction {
+                val row = ModeratorTaskTable.selectAll().first()
+                row[ModeratorTaskTable.id]
+            }
+
+            // Check 1
+            map = authedGet(moderatorClientToken, "/moderator_task_data/", mapOf(
+                "taskId" to taskId.toString()
+            )).jsonMap()
+            assertEquals(taskId, map["id"])
+
+            // Resolve
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                "taskId" to taskId.toString()
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Check 2
+            map = authedGet(moderatorClientToken, "/moderator_task_data/", mapOf(
+                "taskId" to taskId.toString()
+            )).jsonMap()
+            assertEquals("task_not_found", map["error"])
+        }
+    }
 }

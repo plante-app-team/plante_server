@@ -15,6 +15,7 @@ import vegancheckteam.plante_server.base.now
 @Location("/all_moderator_tasks_data/")
 data class AllModeratorTasksDataParams(
     val includeResolved: Boolean = false,
+    val page: Long = 0,
     val testingNow: Long? = null)
 
 fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testing: Boolean): Any {
@@ -38,6 +39,7 @@ fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testi
         }
         val tasks = query
             .orderBy(ModeratorTaskTable.creationTime)
+            .limit(10, 10 * params.page)
             .map { ModeratorTask.from(it) }
             .map {
                 when {
