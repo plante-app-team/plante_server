@@ -76,7 +76,9 @@ import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
+import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
+import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
@@ -224,6 +226,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ModerateProductVegStatusesParams> { params, user ->
                 call.respond(moderateProductVegStatuses(params, user))
+            }
+            getAuthed<ClearProductVegStatusesParams> { params, user ->
+                call.respond(clearProductVegStatuses(params, user))
             }
             getAuthed<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))

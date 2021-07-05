@@ -1039,6 +1039,60 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `clear product veg statuses`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals("positive", map["vegetarian_status"])
+            assertEquals("community", map["vegetarian_status_source"])
+            assertEquals("negative", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+
+            val moderatorClientToken = registerModerator()
+            map = authedGet(moderatorClientToken, "/clear_product_veg_statuses/?barcode=${barcode}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals(null, map["vegetarian_status"])
+            assertEquals(null, map["vegetarian_status_source"])
+            assertEquals(null, map["vegan_status"])
+            assertEquals(null, map["vegan_status_source"])
+        }
+    }
+
+    @Test
+    fun `clear product veg statuses by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/clear_product_veg_statuses/?barcode=${barcode}").jsonMap()
+            assertEquals("denied", map["error"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals("positive", map["vegetarian_status"])
+            assertEquals("community", map["vegetarian_status_source"])
+            assertEquals("negative", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+        }
+    }
+
+    @Test
     fun `user deletion by content moderator`() {
         withTestApplication({ module(testing = true) }) {
             val moderatorId = UUID.randomUUID()
