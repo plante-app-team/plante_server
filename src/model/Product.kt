@@ -19,7 +19,15 @@ data class Product(
     @JsonProperty("vegetarian_status_source")
     val vegetarianStatusSource: VegStatusSource?,
     @JsonProperty("vegan_status_source")
-    val veganStatusSource: VegStatusSource?) {
+    val veganStatusSource: VegStatusSource?,
+    @JsonProperty("moderator_vegetarian_choice_reason")
+    val moderatorVegetarianChoiceReason: Short?,
+    @JsonProperty("moderator_vegetarian_sources_text")
+    val moderatorVegetarianSourcesText: String?,
+    @JsonProperty("moderator_vegan_choice_reason")
+    val moderatorVeganChoiceReason: Short?,
+    @JsonProperty("moderator_vegan_sources_text")
+    val moderatorVeganSourcesText: String?) {
 
     companion object {
         fun from(tableRow: ResultRow) = Product(
@@ -28,7 +36,11 @@ data class Product(
             vegetarianStatus = vegStatusFrom(tableRow[ProductTable.vegetarianStatus]),
             veganStatus = vegStatusFrom(tableRow[ProductTable.veganStatus]),
             vegetarianStatusSource = vegStatusSourceFrom(tableRow[ProductTable.vegetarianStatusSource]),
-            veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]))
+            veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]),
+            moderatorVegetarianChoiceReason = tableRow[ProductTable.moderatorVegetarianChoiceReason],
+            moderatorVegetarianSourcesText = tableRow[ProductTable.moderatorVegetarianSourcesText],
+            moderatorVeganChoiceReason = tableRow[ProductTable.moderatorVeganChoiceReason],
+            moderatorVeganSourcesText = tableRow[ProductTable.moderatorVeganSourcesText])
         private fun vegStatusFrom(code: Short?) = code?.let { VegStatus.fromPersistentCode(it) }
         private fun vegStatusSourceFrom(code: Short?) = code?.let { VegStatusSource.fromPersistentCode(it) }
     }

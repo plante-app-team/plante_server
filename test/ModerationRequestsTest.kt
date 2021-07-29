@@ -1093,6 +1093,159 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `specify product moderator choice reason`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/", mapOf(
+                    "barcode" to barcode,
+                    "vegetarianStatus" to "positive",
+                    "veganStatus" to "negative",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals(null, map["moderator_vegetarian_choice_reason"])
+            assertEquals(null, map["moderator_vegetarian_sources_text"])
+            assertEquals(null, map["moderator_vegan_choice_reason"])
+            assertEquals(null, map["moderator_vegan_sources_text"])
+
+            // Specify reason without text
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode,
+                "vegetarianChoiceReason" to "1",
+                "veganChoiceReason" to "2",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals(1, map["moderator_vegetarian_choice_reason"])
+            assertEquals(null, map["moderator_vegetarian_sources_text"])
+            assertEquals(2, map["moderator_vegan_choice_reason"])
+            assertEquals(null, map["moderator_vegan_sources_text"])
+
+            // Specify reason with text
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode,
+                "vegetarianChoiceReason" to "3",
+                "vegetarianSourcesText" to "Hello there!",
+                "veganChoiceReason" to "4",
+                "veganSourcesText" to "General Kenobi!",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals(3, map["moderator_vegetarian_choice_reason"])
+            assertEquals("Hello there!", map["moderator_vegetarian_sources_text"])
+            assertEquals(4, map["moderator_vegan_choice_reason"])
+            assertEquals("General Kenobi!", map["moderator_vegan_sources_text"])
+
+            // Clear reason
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode,
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(barcode, map["barcode"])
+            assertEquals(null, map["moderator_vegetarian_choice_reason"])
+            assertEquals(null, map["moderator_vegetarian_sources_text"])
+            assertEquals(null, map["moderator_vegan_choice_reason"])
+            assertEquals(null, map["moderator_vegan_sources_text"])
+        }
+    }
+
+    @Test
+    fun `new product moderator choice reason does not erase reasons of other products`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/", mapOf(
+                    "barcode" to barcode1,
+                    "vegetarianStatus" to "positive",
+                    "veganStatus" to "negative",
+                )).jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(
+                clientToken, "/create_update_product/", mapOf(
+                    "barcode" to barcode2,
+                    "vegetarianStatus" to "positive",
+                    "veganStatus" to "negative",
+                )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Product 1 reason
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode1,
+                "vegetarianChoiceReason" to "1",
+                "vegetarianSourcesText" to "Hello",
+                "veganChoiceReason" to "2",
+                "veganSourcesText" to "there!",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Product 2 reason
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode2,
+                "vegetarianChoiceReason" to "3",
+                "vegetarianSourcesText" to "General Kenobi!",
+                "veganChoiceReason" to "4",
+                "veganSourcesText" to "You're a bold one!",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify product 1 reason
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
+            assertEquals(barcode1, map["barcode"])
+            assertEquals(1, map["moderator_vegetarian_choice_reason"])
+            assertEquals("Hello", map["moderator_vegetarian_sources_text"])
+            assertEquals(2, map["moderator_vegan_choice_reason"])
+            assertEquals("there!", map["moderator_vegan_sources_text"])
+
+            // Verify product 2 reason
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode2}").jsonMap()
+            assertEquals(barcode2, map["barcode"])
+            assertEquals(3, map["moderator_vegetarian_choice_reason"])
+            assertEquals("General Kenobi!", map["moderator_vegetarian_sources_text"])
+            assertEquals(4, map["moderator_vegan_choice_reason"])
+            assertEquals("You're a bold one!", map["moderator_vegan_sources_text"])
+        }
+    }
+
+    @Test
+    fun `specify product moderator choice reason by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(
+                clientToken, "/create_update_product/", mapOf(
+                    "barcode" to barcode,
+                    "vegetarianStatus" to "positive",
+                    "veganStatus" to "negative",
+                )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/specify_moderator_choice_reason/", mapOf(
+                "barcode" to barcode,
+                "vegetarianChoiceReason" to "1",
+                "veganChoiceReason" to "2",
+            )).jsonMap()
+            assertEquals("denied", map["error"])
+        }
+    }
+
+    @Test
     fun `user deletion by content moderator`() {
         withTestApplication({ module(testing = true) }) {
             val moderatorId = UUID.randomUUID()

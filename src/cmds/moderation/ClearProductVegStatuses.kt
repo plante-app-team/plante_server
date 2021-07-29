@@ -8,7 +8,6 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 
-
 @Location("/clear_product_veg_statuses/")
 data class ClearProductVegStatusesParams(
     val barcode: String)
