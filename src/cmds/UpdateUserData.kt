@@ -6,6 +6,7 @@ import java.time.format.DateTimeParseException
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.db.joinLangs
 import vegancheckteam.plante_server.model.Gender
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
@@ -17,7 +18,8 @@ data class UpdateUserDataParams(
     val birthday: String? = null,
     val eatsMilk: Boolean? = null,
     val eatsEggs: Boolean? = null,
-    val eatsHoney: Boolean? = null)
+    val eatsHoney: Boolean? = null,
+    val langsPrioritized: List<String>? = null)
 
 fun updateUserData(params: UpdateUserDataParams, user: User): Any {
     val gender: Gender? = if (params.gender != null) {
@@ -47,6 +49,7 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
             params.eatsMilk?.let { row[eatsMilk] = it }
             params.eatsEggs?.let { row[eatsEggs] = it }
             params.eatsHoney?.let { row[eatsHoney] = it }
+            params.langsPrioritized?.let { row[langsPrioritized] = UserTable.joinLangs(it) }
         }
     }
     return GenericResponse.success()

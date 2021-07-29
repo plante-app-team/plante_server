@@ -183,6 +183,7 @@ class UserRequestsTest {
             assertEquals(null, map["eats_milk"])
             assertEquals(null, map["eats_eggs"])
             assertEquals(null, map["eats_honey"])
+            assertEquals(null, map["langs_prioritized"])
 
             authedGet(clientToken, "/update_user_data/?gender=male")
             map = authedGet(clientToken, "/user_data/").jsonMap()
@@ -192,6 +193,7 @@ class UserRequestsTest {
             assertEquals(null, map["eats_milk"])
             assertEquals(null, map["eats_eggs"])
             assertEquals(null, map["eats_honey"])
+            assertEquals(null, map["langs_prioritized"])
 
             authedGet(clientToken, "/update_user_data/?birthday=20.07.1993")
             map = authedGet(clientToken, "/user_data/").jsonMap()
@@ -201,6 +203,7 @@ class UserRequestsTest {
             assertEquals(null, map["eats_milk"])
             assertEquals(null, map["eats_eggs"])
             assertEquals(null, map["eats_honey"])
+            assertEquals(null, map["langs_prioritized"])
 
             authedGet(clientToken, "/update_user_data/?eatsMilk=false&eatsEggs=false")
             map = authedGet(clientToken, "/user_data/").jsonMap()
@@ -210,6 +213,7 @@ class UserRequestsTest {
             assertEquals(false, map["eats_milk"])
             assertEquals(false, map["eats_eggs"])
             assertEquals(null, map["eats_honey"])
+            assertEquals(null, map["langs_prioritized"])
 
             authedGet(clientToken, "/update_user_data/?eatsHoney=true")
             map = authedGet(clientToken, "/user_data/").jsonMap()
@@ -219,6 +223,36 @@ class UserRequestsTest {
             assertEquals(false, map["eats_milk"])
             assertEquals(false, map["eats_eggs"])
             assertEquals(true, map["eats_honey"])
+            assertEquals(null, map["langs_prioritized"])
+
+            authedGet(clientToken, "/update_user_data/?langsPrioritized=en&langsPrioritized=ru")
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals("Bob", map["name"])
+            assertEquals("male", map["gender"])
+            assertEquals("20.07.1993", map["birthday"])
+            assertEquals(false, map["eats_milk"])
+            assertEquals(false, map["eats_eggs"])
+            assertEquals(true, map["eats_honey"])
+            assertEquals(listOf("en", "ru"), map["langs_prioritized"])
+        }
+    }
+
+    @Test
+    fun `langs_prioritized update order`() {
+        withTestApplication({ module(testing = true) }) {
+            val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+            assertEquals(200, response.status()?.value)
+
+            var map = response.jsonMap()
+            val clientToken = map["client_token"] as String
+
+            authedGet(clientToken, "/update_user_data/?langsPrioritized=en&langsPrioritized=ru")
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals(listOf("en", "ru"), map["langs_prioritized"])
+
+            authedGet(clientToken, "/update_user_data/?langsPrioritized=ru&langsPrioritized=en")
+            map = authedGet(clientToken, "/user_data/").jsonMap()
+            assertEquals(listOf("ru", "en"), map["langs_prioritized"])
         }
     }
 

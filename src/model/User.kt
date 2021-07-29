@@ -16,6 +16,7 @@ data class User(
     val eatsMilk: Boolean? = null,
     val eatsEggs: Boolean? = null,
     val eatsHoney: Boolean? = null,
+    val langsPrioritizedStr: String? = null,
     val userRightsGroup: UserRightsGroup = UserRightsGroup.NORMAL) {
 
     companion object {
@@ -31,6 +32,7 @@ data class User(
                 eatsMilk = tableRow[UserTable.eatsMilk],
                 eatsEggs = tableRow[UserTable.eatsEggs],
                 eatsHoney = tableRow[UserTable.eatsHoney],
+                langsPrioritizedStr = tableRow[UserTable.langsPrioritized],
                 userRightsGroup = extractUserRightsGroup(tableRow[UserTable.userRightsGroup]))
         private fun extractUserRightsGroup(code: Short) =
             UserRightsGroup.fromPersistentCode(code) ?: UserRightsGroup.NORMAL

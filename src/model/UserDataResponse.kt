@@ -3,6 +3,8 @@ package vegancheckteam.plante_server.model
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import vegancheckteam.plante_server.GlobalStorage.jsonMapper
+import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.db.splitLangs
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class UserDataResponse(
@@ -22,6 +24,8 @@ data class UserDataResponse(
     val eatsEggs: Boolean? = null,
     @JsonProperty("eats_honey")
     val eatsHoney: Boolean? = null,
+    @JsonProperty("langs_prioritized")
+    val langsPrioritized: List<String>? = null,
     @JsonProperty("rights_group")
     val rightsGroup: Short? = null) {
 
@@ -34,6 +38,7 @@ data class UserDataResponse(
                 eatsMilk = user.eatsMilk,
                 eatsEggs = user.eatsEggs,
                 eatsHoney = user.eatsHoney,
+                langsPrioritized = user.langsPrioritizedStr?.let { UserTable.splitLangs(it) },
                 rightsGroup = user.userRightsGroup.persistentCode)
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
