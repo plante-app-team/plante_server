@@ -1575,4 +1575,75 @@ class ModerationRequestsTest {
             assertTrue(langs.contains("nl"), map.toString())
         }
     }
+
+    @Test
+    fun `count_moderator_tasks cmd`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+
+            // Product 1
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Product 2
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode2,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "ru"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Product 1 update
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "positive",
+                "veganStatus" to "unknown")).jsonMap()
+
+            // Product 2 update
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "positive",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("de", "ru"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify
+            map = authedGet(moderatorClientToken, "/count_moderator_tasks/").jsonMap()
+            val expectedResult = mapOf(
+                "total_count" to 7,
+                "langs_counts" to mapOf(
+                    "en" to 2,
+                    "nl" to 1,
+                    "ru" to 2,
+                    "de" to 1,
+                )
+            )
+            assertEquals(expectedResult, map, map.toString())
+        }
+    }
+
+    @Test
+    fun `count_moderator_tasks cmd by simple user`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            map = authedGet(clientToken, "/count_moderator_tasks/").jsonMap()
+            assertEquals("denied", map["error"])
+        }
+    }
 }

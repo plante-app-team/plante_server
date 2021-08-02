@@ -1,12 +1,9 @@
 package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Table
-import vegancheckteam.plante_server.db.UserTable.nullable
 
 object ModeratorTaskTable : Table("moderator_task") {
     val id = integer("id").autoIncrement()
-    // NOTE: it doesn't reference a field in the Product table because
-    // user can report a product from OFF.
     val productBarcode = text("barcode").nullable().index()
     val osmId = text("osmId").nullable().index()
     val taskType = short("task_type")

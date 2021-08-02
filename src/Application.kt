@@ -77,9 +77,11 @@ import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
 import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
+import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
+import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.productData
@@ -234,6 +236,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<SpecifyModeratorChoiceReasonParams> { params, user ->
                 call.respond(specifyModeratorChoiceReasonParams(params, user))
+            }
+            getAuthed<CountModeratorTasksParams> { params, user ->
+                call.respond(countModeratorTasks(params, user))
             }
             getAuthed<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
