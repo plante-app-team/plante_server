@@ -1648,6 +1648,50 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `count_moderator_tasks cmd doesn't include resolved tasks`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+
+            // Product 1
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Product 2
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode2,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "ru"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Resolve the RU task
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            val ruTask = tasks.find { it["lang"] == "ru" }
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=${ruTask!!["id"]}").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify the resolved task is not included
+            map = authedGet(moderatorClientToken, "/count_moderator_tasks/").jsonMap()
+            val expectedResult = mapOf(
+                "total_count" to 3,
+                "langs_counts" to mapOf(
+                    "en" to 2,
+                    "nl" to 1,
+                )
+            )
+            assertEquals(expectedResult, map, map.toString())
+        }
+    }
+
+    @Test
     fun `all_moderator_tasks_data cmd with lang-related params`() {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
