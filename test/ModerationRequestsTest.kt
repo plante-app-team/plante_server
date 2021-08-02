@@ -1766,4 +1766,76 @@ class ModerationRequestsTest {
             assertEquals("invalid_params", map["error"])
         }
     }
+
+    @Test
+    fun `random task assignment when moderator has known langs specified`() {
+        withTestApplication({ module(testing = true) }) {
+            val moderatorClientToken = registerModerator()
+            val clientToken = register()
+
+            // Set langs the moderator knows
+            var map = authedGet(moderatorClientToken,
+                "/update_user_data/",
+                queryParamsLists = mapOf("langsPrioritized" to listOf("en", "ru"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            // Create moderator tasks
+            // En
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown",
+                "langs" to "en")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Ru
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode1,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown",
+                "langs" to "ru")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // De
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode2,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown",
+                "langs" to "de")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // No lang
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode2,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify
+            val tasks = mutableListOf<Map<*, *>>()
+
+            // We expect 3 tasks
+            for (index in 0 until 3) {
+                map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+                assertEquals("ok", map["result"])
+                map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
+                tasks.addAll((map["tasks"] as List<*>).map { it as Map<*, *> })
+                map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=${tasks.last()["id"]}").jsonMap()
+                assertEquals("ok", map["result"])
+            }
+            // The expected tasks are of: en, ru, and of no language
+            val langs = tasks.map { it["lang"] }
+            assertEquals(3, langs.size)
+            assertTrue(langs.contains("en"))
+            assertTrue(langs.contains("ru"))
+            assertTrue(langs.contains(null))
+
+            // The 'de' tasks is not expected to be assigned because the
+            // moderator doesn't know the lang
+            map = authedGet(moderatorClientToken, "/assign_moderator_task/").jsonMap()
+            assertEquals("no_unresolved_moderator_tasks", map["error"])
+        }
+    }
 }

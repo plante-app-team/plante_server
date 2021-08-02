@@ -13,7 +13,12 @@ import vegancheckteam.plante_server.model.ModeratorTask
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 import java.util.*
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.splitLangs
 
 @Location("/assign_moderator_task/")
 data class AssignModeratorTaskParams(
@@ -37,10 +42,13 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
             if (assignee.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
                 return@transaction GenericResponse.failure("assignee_not_moderator")
             }
-            assignee.id
+            assignee
         } else {
-            user.id
+            user
         }
+
+        val assigneeId = assignee.id
+        val assigneeLangs = assignee.langsPrioritizedStr?.let { UserTable.splitLangs(it) }
 
         val taskId = if (params.taskId != null) {
             val row = ModeratorTaskTable.select {
@@ -53,13 +61,21 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
             }
             params.taskId
         } else {
+            val langsOp = if (assigneeLangs != null) {
+                (ModeratorTaskTable.lang inList assigneeLangs) or (ModeratorTaskTable.lang eq null)
+            } else {
+                Op.TRUE
+            }
+            val mainOp = langsOp and (ModeratorTaskTable.resolutionTime eq null)
+
+            val assignTimeOp = (ModeratorTaskTable.assignTime eq null) or
+                    (ModeratorTaskTable.assignTime less oldestAcceptable)
+
             val task = ModeratorTaskTable.select {
-                (ModeratorTaskTable.resolutionTime eq null) and
-                        ((ModeratorTaskTable.assignTime eq null) or
-                        (ModeratorTaskTable.assignTime less oldestAcceptable))
+                mainOp and assignTimeOp
             }.orderBy(ModeratorTaskTable.creationTime)
                 .map { ModeratorTask.from(it) }
-                .filter { !it.rejectedAssigneesList.contains(assignee) }
+                .filter { !it.rejectedAssigneesList.contains(assigneeId) }
                 .sortedBy { it.taskType.priority }
                 .firstOrNull()
 
@@ -72,7 +88,7 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
         }
 
         ModeratorTaskTable.update({ ModeratorTaskTable.id eq taskId }) {
-            it[ModeratorTaskTable.assignee] = assignee
+            it[ModeratorTaskTable.assignee] = assigneeId
             it[assignTime] = now
         }
         GenericResponse.success()
