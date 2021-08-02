@@ -2,6 +2,7 @@ package vegancheckteam.plante_server
 
 import cmds.moderation.ASSIGNATION_TIME_LIMIT_MINUTES
 import cmds.moderation.DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS
+import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.server.testing.withTestApplication
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteAll
@@ -26,6 +27,7 @@ import java.time.ZonedDateTime
 import java.util.*
 import kotlin.math.abs
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -1469,6 +1471,108 @@ class ModerationRequestsTest {
                 "taskId" to taskId.toString()
             )).jsonMap()
             assertEquals("task_not_found", map["error"])
+        }
+    }
+
+    @Test
+    fun `product creation with multiple langs creates multiple moderation tasks with the langs`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode = UUID.randomUUID().toString()
+
+            // Create a product
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                    "barcode" to barcode,
+                    "vegetarianStatus" to "unknown",
+                    "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 2 tasks expected
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            assertEquals(2, allTasks.size, map.toString())
+
+            // Verify langs
+            val task1 = allTasks[0] as Map<*, *>
+            val task2 = allTasks[1] as Map<*, *>
+            assertTrue((task1["lang"] == "en" && task2["lang"] == "nl")
+                    || (task1["lang"] == "nl" && task2["lang"] == "en"),
+                map.toString())
+
+            // Verify tasks have different ids
+            assertNotEquals(task1["id"], task2["id"])
+
+            // Erase unique data and compare tasks
+            val task1LangErased = task1.toMutableMap()
+            task1LangErased["lang"] = null
+            task1LangErased["id"] = null
+            val task2LangErased = task2.toMutableMap()
+            task2LangErased["lang"] = null
+            task2LangErased["id"] = null
+            assertEquals(task1LangErased, task2LangErased, map.toString())
+        }
+    }
+
+    @Test
+    fun `product creation without a lang creates 1 moderation task without a lang`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode = UUID.randomUUID().toString()
+
+            // Create a product
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 1 task expected
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val allTasks = map["tasks"] as List<*>
+            assertEquals(1, allTasks.size, map.toString())
+
+            // Verify lang
+            val task = allTasks[0] as Map<*, *>
+            assertNull(task["lang"])
+        }
+    }
+
+    @Test
+    fun `product update with new langs doesn't erase moderation tasks with unrelated langs`() {
+        withTestApplication({ module(testing = true) }) {
+            val clientToken = register()
+            val moderatorClientToken = registerModerator()
+            val barcode = UUID.randomUUID().toString()
+
+            // Create a product
+            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "vegetarianStatus" to "unknown",
+                "veganStatus" to "unknown"),
+                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Update the product
+            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "vegetarianStatus" to "positive",
+                "veganStatus" to "positive"),
+                mapOf("langs" to listOf("ru", "nl"))).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // 3 tasks expected
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            val tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            assertEquals(3, tasks.size, map.toString())
+
+            // Verify langs
+            val langs = tasks.map { it["lang"] }
+            assertTrue(langs.contains("en"), map.toString())
+            assertTrue(langs.contains("ru"), map.toString())
+            assertTrue(langs.contains("nl"), map.toString())
         }
     }
 }

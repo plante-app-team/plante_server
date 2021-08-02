@@ -26,7 +26,8 @@ import vegancheckteam.plante_server.base.now
 data class CreateUpdateProductParams(
     val barcode: String,
     val vegetarianStatus: String? = null,
-    val veganStatus: String? = null)
+    val veganStatus: String? = null,
+    val langs: List<String>? = null)
 
 fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericResponse {
     val vegetarianStatus = params.vegetarianStatus?.let { VegStatus.fromStringName(it) }
@@ -67,7 +68,9 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
         val newProduct = Product.from(productRow)
         maybeInsertProductChangeInfo(oldProduct, newProduct, user)
         deleteExtraProductChanges(newProduct.barcode)
-        maybeCreateModeratorTask(newProduct.barcode, user)
+        // NOTE: we create a moderator task even if product change was not inserted into DB -
+        // that is because not all product changes happen on this server, some happen on OFF.
+        createModeratorTasks(newProduct.barcode, user, params.langs)
     }
     return GenericResponse.success()
 }
@@ -100,17 +103,29 @@ private fun deleteExtraProductChanges(barcode: String) {
     }
 }
 
-fun maybeCreateModeratorTask(barcode: String, user: User) {
-    // NOTE: we create a moderator task even if product change was not inserted -
-    // that is because not all product changes happen on this server, some happen on OFF.
+fun createModeratorTasks(barcode: String, user: User, langs: List<String>?) {
+    if (langs != null) {
+        for (lang in langs) {
+            createModeratorTask(barcode, user, lang)
+        }
+    } else {
+        createModeratorTask(barcode, user, null)
+    }
+}
+
+fun createModeratorTask(barcode: String, user: User, lang: String?) {
     ModeratorTaskTable.deleteWhere {
         (ModeratorTaskTable.productBarcode eq barcode) and
-                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentCode)
+                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentCode) and
+                (ModeratorTaskTable.lang eq lang)
     }
     ModeratorTaskTable.insert {
         it[productBarcode] = barcode
         it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentCode
         it[taskSourceUserId] = user.id
         it[creationTime] = now()
+        if (lang != null) {
+            it[ModeratorTaskTable.lang] = lang
+        }
     }
 }

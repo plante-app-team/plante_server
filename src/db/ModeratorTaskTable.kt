@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Table
+import vegancheckteam.plante_server.db.UserTable.nullable
 
 object ModeratorTaskTable : Table("moderator_task") {
     val id = integer("id").autoIncrement()
@@ -18,6 +19,8 @@ object ModeratorTaskTable : Table("moderator_task") {
     val resolutionTime = long("resolution_time").nullable().index()
 
     val rejectedAssigneesList = text("rejected_assignees_list").nullable()
+
+    val lang = text("lang").nullable().index()
 
     override val primaryKey = PrimaryKey(id)
 }

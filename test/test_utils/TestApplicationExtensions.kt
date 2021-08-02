@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.request.contentType
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationResponse
@@ -26,11 +25,21 @@ fun TestApplicationEngine.get(
         url: String,
         clientToken: String? = null,
         queryParams: Map<String, String> = emptyMap(),
+        queryParamsLists: Map<String, List<String>> = emptyMap(),
         body: String? = null): TestApplicationCall {
-    val queryParamsStr = queryParams
+    val queryParamsFinal = mutableListOf<Pair<String, String>>()
+    for (keyValue in queryParams.entries) {
+        queryParamsFinal.add(Pair(keyValue.key, keyValue.value))
+    }
+    for (keyValue in queryParamsLists) {
+        for (value in keyValue.value) {
+            queryParamsFinal.add(Pair(keyValue.key, value))
+        }
+    }
+    val queryParamsStr = queryParamsFinal
         .map {
-            val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8)
-            val value = URLEncoder.encode(it.value, StandardCharsets.UTF_8)
+            val key = URLEncoder.encode(it.first, StandardCharsets.UTF_8)
+            val value = URLEncoder.encode(it.second, StandardCharsets.UTF_8)
             "$key=$value"
         }
         .joinToString(separator = "&")
@@ -54,7 +63,8 @@ fun TestApplicationEngine.authedGet(
     token: String,
     url: String,
     queryParams: Map<String, String> = emptyMap(),
-    body: String? = null) = get(url, token, queryParams, body)
+    queryParamsLists: Map<String, List<String>> = emptyMap(),
+    body: String? = null) = get(url, token, queryParams, queryParamsLists, body)
 
 fun TestApplicationResponse.jsonMap(): Map<*, *> {
     return ObjectMapper().readValue(content, MutableMap::class.java)

@@ -30,7 +30,9 @@ data class ModeratorTask(
     @JsonProperty("resolution_time")
     val resolutionTime: Long?,
     @JsonProperty("rejected_assignees_list")
-    val rejectedAssigneesList: List<UUID>) {
+    val rejectedAssigneesList: List<UUID>,
+    @JsonProperty("lang")
+    val lang: String?) {
     companion object {
         fun from(tableRow: ResultRow) = ModeratorTask(
             id = tableRow[ModeratorTaskTable.id],
@@ -46,7 +48,8 @@ data class ModeratorTask(
             rejectedAssigneesList = (tableRow[ModeratorTaskTable.rejectedAssigneesList] ?: "")
                 .split(",")
                 .filter { it.isNotEmpty() }
-                .map { UUID.fromString(it) })
+                .map { UUID.fromString(it) },
+            lang = tableRow[ModeratorTaskTable.lang])
         private fun taskTypeFrom(code: Short) = ModeratorTaskType.fromPersistentCode(code)
     }
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
