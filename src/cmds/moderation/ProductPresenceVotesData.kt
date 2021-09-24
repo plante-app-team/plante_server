@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.cmds
+package cmds.moderation
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty

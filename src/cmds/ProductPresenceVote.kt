@@ -21,8 +21,7 @@ import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
 
-const val MAX_PRODUCT_PRESENCE_VOTES_COUNT = 10
-const val MIN_NEGATIVES_VOTES_FOR_DELETION = MAX_PRODUCT_PRESENCE_VOTES_COUNT / 2
+const val MIN_NEGATIVES_VOTES_FOR_DELETION = 3
 
 @Location("/product_presence_vote/")
 data class ProductPresenceVoteParams(
@@ -89,12 +88,14 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
     val latestProductVotesRows = ProductPresenceVoteTable.select {
         (ProductPresenceVoteTable.shopId eq shop.id) and (ProductPresenceVoteTable.productId eq product.id)
     }.orderBy(ProductPresenceVoteTable.voteTime, SortOrder.DESC)
+        .toList()
     val latestProductVotes = latestProductVotesRows.map { it[ProductPresenceVoteTable.voteVal] }
-    if (latestProductVotes.size < MAX_PRODUCT_PRESENCE_VOTES_COUNT) {
-        return@transaction GenericResponse.success()
-    }
 
-    if (latestProductVotes.take(MIN_NEGATIVES_VOTES_FOR_DELETION).all { it == 0.toShort() }) {
+    val votedOutByQuantity = MIN_NEGATIVES_VOTES_FOR_DELETION <= latestProductVotes.size
+            && latestProductVotes.take(MIN_NEGATIVES_VOTES_FOR_DELETION).all { it == 0.toShort() }
+    val votedOutByUser = params.voteVal == 0 && productAtShop[ProductAtShopTable.creatorUserId] == user.id
+
+    if (votedOutByQuantity || votedOutByUser) {
         // Oopsie doopsie! The product is voted out!
         ProductAtShopTable.deleteWhere {
             (ProductAtShopTable.shopId eq shop.id) and (ProductAtShopTable.productId eq product.id)
@@ -108,9 +109,9 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
             }
         }
     } else {
-        // Delete extra IDs
+        // Delete extra votes
         val latestIds = latestProductVotesRows.map { it[ProductPresenceVoteTable.id] }
-        val extraRowsCount = Integer.max(0, latestIds.size - MAX_PRODUCT_PRESENCE_VOTES_COUNT)
+        val extraRowsCount = Integer.max(0, latestIds.size - MIN_NEGATIVES_VOTES_FOR_DELETION)
         val idsToDelete = latestIds.reversed().take(extraRowsCount)
         ProductPresenceVoteTable.deleteWhere {
             ProductPresenceVoteTable.id inList idsToDelete

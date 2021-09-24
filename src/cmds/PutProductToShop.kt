@@ -60,6 +60,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             it[ProductAtShopTable.productId] = productId
             it[ProductAtShopTable.shopId] = shopId
             it[creationTime] = now
+            it[creatorUserId] = user.id
         }
         // Increase products count
         ShopTable.update( { ShopTable.id eq shopId } ) {

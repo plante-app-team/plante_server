@@ -13,6 +13,7 @@ object ProductAtShopTable : Table("product_at_shop") {
     val productId = integer("product_id").references(ProductTable.id).index()
     val shopId = integer("shop_id").references(ShopTable.id).index()
     val creationTime = long("creation_time").index()
+    val creatorUserId = uuid("creator_user_id").references(UserTable.id).nullable().index()
     override val primaryKey = PrimaryKey(id)
     init {
         index(true, productId, shopId)

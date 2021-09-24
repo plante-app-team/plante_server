@@ -10,6 +10,7 @@ import cmds.moderation.AssignedModeratorTasksDataParams
 import cmds.moderation.DeleteUserParams
 import cmds.moderation.ModerateProductVegStatusesParams
 import cmds.moderation.ProductChangesDataParams
+import cmds.moderation.ProductPresenceVotesDataParams
 import cmds.moderation.RejectModeratorTaskParams
 import cmds.moderation.ResolveModeratorTaskParams
 import cmds.moderation.UnresolveModeratorTaskParams
@@ -19,6 +20,7 @@ import cmds.moderation.assignedModeratorTasksData
 import cmds.moderation.deleteUser
 import cmds.moderation.moderateProductVegStatuses
 import cmds.moderation.productChangesData
+import cmds.moderation.productPresenceVotesData
 import cmds.moderation.rejectModeratorTask
 import cmds.moderation.resolveModeratorTask
 import cmds.moderation.unresolveModeratorTask
@@ -60,7 +62,6 @@ import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
-import vegancheckteam.plante_server.cmds.ProductPresenceVotesDataParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
@@ -88,7 +89,6 @@ import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
-import vegancheckteam.plante_server.cmds.productPresenceVotesData
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.putProductToShop
