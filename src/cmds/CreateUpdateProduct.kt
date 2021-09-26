@@ -104,7 +104,7 @@ private fun deleteExtraProductChanges(barcode: String) {
 }
 
 fun createModeratorTasks(barcode: String, user: User, langs: List<String>?) {
-    if (langs != null) {
+    if (langs != null && langs.isNotEmpty()) {
         for (lang in langs) {
             createModeratorTask(barcode, user, lang)
         }
