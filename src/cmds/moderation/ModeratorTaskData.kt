@@ -15,7 +15,7 @@ data class ModeratorTaskDataParams(
     val taskId: Int,
     val testingNow: Long? = null)
 
-fun moderatorTaskData(params: ModeratorTaskDataParams, user: User, testing: Boolean): Any {
+fun moderatorTaskData(params: ModeratorTaskDataParams, user: User): Any {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }

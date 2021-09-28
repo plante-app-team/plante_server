@@ -10,7 +10,7 @@ enum class VegStatusSource(
     MODERATOR("moderator", 3),
     UNKNOWN("unknown", 4);
     companion object {
-        fun fromStringName(str: String) = values().find { it.sourceName == str.toLowerCase() }
+        fun fromStringName(str: String) = values().find { it.sourceName == str.lowercase() }
         fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
     }
 }

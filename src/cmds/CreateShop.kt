@@ -20,6 +20,8 @@ import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTaskType
+import vegancheckteam.plante_server.model.OsmElementType
+import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.User
 
 const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
@@ -47,9 +49,6 @@ enum class ShopTypes(val typeName: String) {
     GENERAL("general"),
     SUPERMARKET("supermarket"),
     GROCERY("grocery");
-    companion object {
-        fun fromStringType(str: String) = values().find { it.typeName == str.toLowerCase() }
-    }
 }
 
 @Location("/create_shop/")
@@ -147,13 +146,13 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
     if (params.productionDb) {
         transaction {
             ShopTable.insert {
-                it[osmId] = osmShopId
+                it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
                 it[creationTime] = now
                 it[createdNewOsmNode] = true
                 it[creatorUserId] = user.id
             }
             ModeratorTaskTable.insert {
-                it[osmId] = osmShopId
+                it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
                 it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
                 it[taskSourceUserId] = user.id
                 it[creationTime] = now
@@ -174,7 +173,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         resp.readText()
     }
 
-    return CreateShopResponse(osmShopId);
+    return CreateShopResponse(osmShopId, OsmUID.from(OsmElementType.NODE, osmShopId))
 }
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -195,6 +194,8 @@ data class CreateShopTestingOsmResponses(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CreateShopResponse(
     @JsonProperty("osm_id")
-    val osmId: String) {
+    val osmNodeId: String,
+    @JsonProperty("osm_uid")
+    val osmUID: OsmUID) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
 }

@@ -42,7 +42,7 @@ class ProductTableTest {
                 }
             } catch (e: ExposedSQLException) {
                 if (!(e.message ?: "").contains("unique constraint")) {
-                    throw e;
+                    throw e
                 }
                 inserted2 = false
             }

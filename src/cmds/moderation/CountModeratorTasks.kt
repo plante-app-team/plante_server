@@ -14,11 +14,9 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 
 @Location("/count_moderator_tasks/")
 data class CountModeratorTasksParams(
-    val includeResolved: Boolean = false,
-    val page: Long = 0,
-    val testingNow: Long? = null)
+    val unused: Boolean? = null)
 
-fun countModeratorTasks(params: CountModeratorTasksParams, user: User): Any {
+fun countModeratorTasks(user: User): Any {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }

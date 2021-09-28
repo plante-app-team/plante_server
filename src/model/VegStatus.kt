@@ -10,7 +10,7 @@ enum class VegStatus(
     POSSIBLE("possible", 3),
     UNKNOWN("unknown", 4);
     companion object {
-        fun fromStringName(str: String) = values().find { it.statusName == str.toLowerCase() }
+        fun fromStringName(str: String) = values().find { it.statusName == str.lowercase() }
         fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
     }
 }

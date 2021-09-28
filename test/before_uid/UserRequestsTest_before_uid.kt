@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.before_uid
 
 import io.ktor.server.testing.withTestApplication
 import vegancheckteam.plante_server.cmds.MAX_QUIZ_ANSWERS_COUNT
@@ -12,8 +12,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import vegancheckteam.plante_server.module
 
-class UserRequestsTest {
+
+class UserRequestsTest_before_uid {
     @Test
     fun googleRegisterUpdateGetUser() {
         withTestApplication({ module(testing = true) }) {

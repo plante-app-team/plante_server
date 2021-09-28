@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.before_uid
 
 import cmds.moderation.ASSIGNATION_TIME_LIMIT_MINUTES
 import cmds.moderation.DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS
@@ -30,9 +30,10 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import vegancheckteam.plante_server.module
 import vegancheckteam.plante_server.test_utils.registerModeratorOfEverything
 
-class ModerationRequestsTest {
+class ModerationRequestsTest_before_uid {
     @Before
     fun setUp() {
         withTestApplication({ module(testing = true) }) {
@@ -177,9 +178,9 @@ class ModerationRequestsTest {
                 assertEquals(3, tasks.count())
 
                 val texts = tasks.map { it[ModeratorTaskTable.textFromUser] }
-                assertTrue("text1" in texts)
-                assertTrue("text2" in texts)
-                assertTrue("text3" in texts)
+                assertTrue("text1" in texts);
+                assertTrue("text2" in texts);
+                assertTrue("text3" in texts);
             }
         }
     }
@@ -1025,7 +1026,7 @@ class ModerationRequestsTest {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
-            val map = authedGet(
+            var map = authedGet(
                 clientToken, "/create_update_product/?"
                         + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
@@ -1690,103 +1691,103 @@ class ModerationRequestsTest {
             assertEquals(expectedResult, map, map.toString())
         }
     }
-
-    @Test
-    fun `all_moderator_tasks_data cmd with lang-related params`() {
-        withTestApplication({ module(testing = true) }) {
-            val clientToken = register()
-            val moderatorClientToken = registerModerator()
-            val barcode1 = UUID.randomUUID().toString()
-            val barcode2 = UUID.randomUUID().toString()
-
-            var now = 1
-
-            // Product 1
-            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
-                "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
-                "veganStatus" to "unknown",
-                "testingNow" to "${++now}"),
-                mapOf("langs" to listOf("en", "nl"))).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Product 2
-            map = authedGet(clientToken, "/create_update_product/?", mapOf(
-                "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
-                "veganStatus" to "unknown",
-                "testingNow" to "${++now}"),
-                mapOf("langs" to listOf("en", "ru"))).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Product 1 update
-            map = authedGet(clientToken, "/create_update_product/?", mapOf(
-                "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
-                "veganStatus" to "unknown",
-                "testingNow" to "${++now}")).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Product 2 update
-            map = authedGet(clientToken, "/create_update_product/?", mapOf(
-                "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
-                "veganStatus" to "unknown",
-                "testingNow" to "${++now}"),
-                mapOf("langs" to listOf("de", "ru"))).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Verify
-            // No lang
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
-                "onlyWithNoLang" to "true"
-            )).jsonMap()
-            var tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            assertEquals(1, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals(null, tasks[0]["lang"])
-
-            // En
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
-                "lang" to "en"
-            )).jsonMap()
-            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            assertEquals(2, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals(barcode2, tasks[1]["barcode"])
-            assertEquals("en", tasks[0]["lang"])
-            assertEquals("en", tasks[1]["lang"])
-
-            // Ru
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
-                "lang" to "ru"
-            )).jsonMap()
-            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            assertEquals(2, tasks.size, map.toString())
-            assertEquals(barcode2, tasks[0]["barcode"])
-            assertEquals(barcode1, tasks[1]["barcode"])
-            assertEquals("ru", tasks[0]["lang"])
-            assertEquals("ru", tasks[1]["lang"])
-
-            // Nl
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
-                "lang" to "nl"
-            )).jsonMap()
-            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            assertEquals(1, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals("nl", tasks[0]["lang"])
-
-            // De
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
-                "lang" to "de"
-            )).jsonMap()
-            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            assertEquals(1, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals("de", tasks[0]["lang"])
-        }
-    }
+//
+//    @Test
+//    fun `all_moderator_tasks_data cmd with lang-related params`() {
+//        withTestApplication({ module(testing = true) }) {
+//            val clientToken = register()
+//            val moderatorClientToken = registerModerator()
+//            val barcode1 = UUID.randomUUID().toString()
+//            val barcode2 = UUID.randomUUID().toString()
+//
+//            var now = 1
+//
+//            // Product 1
+//            var map = authedGet(clientToken, "/create_update_product/?", mapOf(
+//                "barcode" to barcode1,
+//                "vegetarianStatus" to "unknown",
+//                "veganStatus" to "unknown",
+//                "testingNow" to "${++now}"),
+//                mapOf("langs" to listOf("en", "nl"))).jsonMap()
+//            assertEquals("ok", map["result"])
+//
+//            // Product 2
+//            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+//                "barcode" to barcode2,
+//                "vegetarianStatus" to "unknown",
+//                "veganStatus" to "unknown",
+//                "testingNow" to "${++now}"),
+//                mapOf("langs" to listOf("en", "ru"))).jsonMap()
+//            assertEquals("ok", map["result"])
+//
+//            // Product 1 update
+//            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+//                "barcode" to barcode1,
+//                "vegetarianStatus" to "positive",
+//                "veganStatus" to "unknown",
+//                "testingNow" to "${++now}")).jsonMap()
+//            assertEquals("ok", map["result"])
+//
+//            // Product 2 update
+//            map = authedGet(clientToken, "/create_update_product/?", mapOf(
+//                "barcode" to barcode1,
+//                "vegetarianStatus" to "positive",
+//                "veganStatus" to "unknown",
+//                "testingNow" to "${++now}"),
+//                mapOf("langs" to listOf("de", "ru"))).jsonMap()
+//            assertEquals("ok", map["result"])
+//
+//            // Verify
+//            // No lang
+//            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
+//                "onlyWithNoLang" to "true"
+//            )).jsonMap()
+//            var tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+//            assertEquals(1, tasks.size, map.toString())
+//            assertEquals(barcode1, tasks[0]["barcode"])
+//            assertEquals(null, tasks[0]["lang"])
+//
+//            // En
+//            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
+//                "lang" to "en"
+//            )).jsonMap()
+//            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+//            assertEquals(2, tasks.size, map.toString())
+//            assertEquals(barcode1, tasks[0]["barcode"])
+//            assertEquals(barcode2, tasks[1]["barcode"])
+//            assertEquals("en", tasks[0]["lang"])
+//            assertEquals("en", tasks[1]["lang"])
+//
+//            // Ru
+//            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
+//                "lang" to "ru"
+//            )).jsonMap()
+//            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+//            assertEquals(2, tasks.size, map.toString())
+//            assertEquals(barcode2, tasks[0]["barcode"])
+//            assertEquals(barcode1, tasks[1]["barcode"])
+//            assertEquals("ru", tasks[0]["lang"])
+//            assertEquals("ru", tasks[1]["lang"])
+//
+//            // Nl
+//            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
+//                "lang" to "nl"
+//            )).jsonMap()
+//            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+//            assertEquals(1, tasks.size, map.toString())
+//            assertEquals(barcode1, tasks[0]["barcode"])
+//            assertEquals("nl", tasks[0]["lang"])
+//
+//            // De
+//            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
+//                "lang" to "de"
+//            )).jsonMap()
+//            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+//            assertEquals(1, tasks.size, map.toString())
+//            assertEquals(barcode1, tasks[0]["barcode"])
+//            assertEquals("de", tasks[0]["lang"])
+//        }
+//    }
 
     @Test
     fun `all_moderator_tasks_data cmd - provide both 'lang' and 'onlyWithNoLang'`() {

@@ -179,20 +179,20 @@ fun Application.module(testing: Boolean = false) {
                 }
                 call.respond(banMe(user))
             }
-            getAuthed<UserDataParams> { params, user ->
-                call.respond(userData(params, user))
+            getAuthed<UserDataParams> { _, user ->
+                call.respond(userData(user))
             }
             getAuthed<UpdateUserDataParams> { params, user ->
                 call.respond(updateUserData(params, user))
             }
-            getAuthed<SignOutAllParams> { params, user ->
-                call.respond(signOutAll(params, user))
+            getAuthed<SignOutAllParams> { _, user ->
+                call.respond(signOutAll(user))
             }
             getAuthed<CreateUpdateProductParams> { params, user ->
                 call.respond(createUpdateProduct(params, user))
             }
-            getAuthed<ProductDataParams> { params, user ->
-                call.respond(productData(params, user))
+            getAuthed<ProductDataParams> { params, _ ->
+                call.respond(productData(params))
             }
             getAuthed<ProductChangesDataParams> { params, user ->
                 call.respond(productChangesData(params, user))
@@ -216,19 +216,19 @@ fun Application.module(testing: Boolean = false) {
                 call.respond(assignedModeratorTasksData(params, user, testing))
             }
             getAuthed<RejectModeratorTaskParams> { params, user ->
-                call.respond(rejectModeratorTask(params, user, testing))
+                call.respond(rejectModeratorTask(params, user))
             }
             getAuthed<AllModeratorTasksDataParams> { params, user ->
                 call.respond(allModeratorTasksData(params, user, testing))
             }
             getAuthed<ModeratorTaskDataParams> { params, user ->
-                call.respond(moderatorTaskData(params, user, testing))
+                call.respond(moderatorTaskData(params, user))
             }
             getAuthed<ResolveModeratorTaskParams> { params, user ->
                 call.respond(resolveModeratorTask(params, user, testing))
             }
             getAuthed<UnresolveModeratorTaskParams> { params, user ->
-                call.respond(unresolveModeratorTask(params, user, testing))
+                call.respond(unresolveModeratorTask(params, user))
             }
             getAuthed<ModerateProductVegStatusesParams> { params, user ->
                 call.respond(moderateProductVegStatuses(params, user))
@@ -239,11 +239,11 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<SpecifyModeratorChoiceReasonParams> { params, user ->
                 call.respond(specifyModeratorChoiceReasonParams(params, user))
             }
-            getAuthed<CountModeratorTasksParams> { params, user ->
-                call.respond(countModeratorTasks(params, user))
+            getAuthed<CountModeratorTasksParams> { _, user ->
+                call.respond(countModeratorTasks(user))
             }
             getAuthed<LatestProductsAddedToShopsDataParams> { params, user ->
-                call.respond(latestProductsAddedToShopsData(params, user, testing))
+                call.respond(latestProductsAddedToShopsData(params, user))
             }
             getAuthed<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
@@ -251,8 +251,8 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<PutProductToShopParams> { params, user ->
                 call.respond(putProductToShop(params, user, testing))
             }
-            getAuthed<ProductsAtShopsDataParams> { params, user ->
-                call.respond(productsAtShopsData(params, user))
+            getAuthed<ProductsAtShopsDataParams> { params, _ ->
+                call.respond(productsAtShopsData(params))
             }
             getAuthed<ProductPresenceVoteParams> { params, user ->
                 call.respond(productPresenceVote(params, user, testing))
@@ -263,9 +263,9 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<CreateShopParams> { params, user ->
                 call.respond(createShop(params, user, testing, client))
             }
-            getAuthed<ShopsDataParams> { params, user ->
+            getAuthed<ShopsDataParams> { _, _ ->
                 val body = call.receive<ShopsDataRequestBody>()
-                call.respond(shopsData(params, body, user))
+                call.respond(shopsData(body))
             }
         }
     }

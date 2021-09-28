@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.before_uid
 
 import io.ktor.server.testing.withTestApplication
 import java.util.UUID
@@ -9,19 +9,18 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
-import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
-import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.module
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 
-class ProductsPresenceVotingTests {
+class ProductsPresenceVotingTests_before_uid {
     @Before
     fun setUp() {
         withTestApplication({ module(testing = true) }) {
@@ -48,11 +47,11 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
 
             val moderator = registerModerator()
@@ -62,8 +61,7 @@ class ProductsPresenceVotingTests {
 
             val vote = votes[0] as Map<*, *>
             assertEquals(vote["barcode"], barcode)
-            assertEquals(vote["shop_osm_id"], shop.osmId)
-            assertEquals(vote["shop_osm_uid"], shop.asStr)
+            assertEquals(vote["shop_osm_id"], shop)
             assertEquals(vote["vote_val"], 1)
         }
     }
@@ -73,21 +71,21 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val userWhoPutsProduct = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var now = 123
             var map = authedGet(userWhoPutsProduct, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
-            var anotherUser: String
+            var anotherUser = ""
             repeat(MIN_NEGATIVES_VOTES_FOR_DELETION - 1) {
                 anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                     "barcode" to barcode,
-                    "shopOsmUID" to shop.asStr,
+                    "shopOsmId" to shop,
                     "voteVal" to "0",
                     "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -95,21 +93,21 @@ class ProductsPresenceVotingTests {
 
             // The product is expected to still be in the shop
             anotherUser = register()
-            map = authedGet(anotherUser, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(anotherUser, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to be removed from the shop
-            map = authedGet(anotherUser, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(anotherUser, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(0, productsAtShop.size)
         }
     }
@@ -119,12 +117,12 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             // Voting for the product! Go product, u da best!
@@ -132,7 +130,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -143,29 +141,29 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // The product is expected still to be in the shop
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
             // One last vote
             val anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to be removed from the shop
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(0, productsAtShop.size)
         }
     }
@@ -175,12 +173,12 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -189,7 +187,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -199,7 +197,7 @@ class ProductsPresenceVotingTests {
             var anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -209,15 +207,15 @@ class ProductsPresenceVotingTests {
                 anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // The product is expected still to be in the shop because of that one positive vote
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            val productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            val productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
         }
     }
@@ -227,27 +225,27 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // Both shops expected to have the product
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop1").jsonMap()
-            var productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop1").jsonMap()
+            var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop2").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
             // Voting out of the first shop
@@ -255,18 +253,18 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // Now only the second shop is expected to have the product
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop1").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop1").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(0, productsAtShop.size)
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop2").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
         }
     }
@@ -276,19 +274,19 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             repeat(2) {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -305,7 +303,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -323,27 +321,27 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // Both shops expected to have a vote
             val moderator = registerModerator()
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             var votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop2").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop2").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
@@ -352,17 +350,17 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
             }
 
             // Only second shop is expected to have a vote
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(0, votes.size)
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop2").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop2").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
         }
@@ -373,12 +371,12 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             // Voting twice as many times as the max
@@ -386,7 +384,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -405,18 +403,18 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -425,7 +423,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -435,7 +433,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -455,17 +453,17 @@ class ProductsPresenceVotingTests {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            var now = 123
+            var now = 123;
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -474,7 +472,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -484,7 +482,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
@@ -492,7 +490,7 @@ class ProductsPresenceVotingTests {
 
             // Expecting 2 * MIN_NEGATIVES_VOTES_FOR_DELETION votes because of 2 products
             val moderator = registerModerator()
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop").jsonMap()
             val votes = map["votes"] as List<*>
             assertEquals(2 * MIN_NEGATIVES_VOTES_FOR_DELETION, votes.size)
         }
@@ -504,17 +502,17 @@ class ProductsPresenceVotingTests {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             // Put product 1
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
             // Vote for product 2
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1")).jsonMap()
             assertEquals("product_not_found", map["error"])
         }
@@ -525,18 +523,18 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // Put to shop 1
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr)).jsonMap()
+                "shopOsmId" to shop1)).jsonMap()
             assertEquals("ok", map["result"])
             // Vote for product in shop 2
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1")).jsonMap()
             assertEquals("shop_not_found", map["error"])
         }
@@ -547,17 +545,17 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             // Put product
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
             // Invalid vote
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "2")).jsonMap()
             assertEquals("invalid_vote_val", map["error"])
         }
@@ -569,45 +567,45 @@ class ProductsPresenceVotingTests {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // Put product 1 to shop 1
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop1.asStr)).jsonMap()
+                "shopOsmId" to shop1)).jsonMap()
             assertEquals("ok", map["result"])
             // Put product 2 to shop 2
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop2.asStr)).jsonMap()
+                "shopOsmId" to shop2)).jsonMap()
             assertEquals("ok", map["result"])
 
             // Vote AGAINST product 1 in shop 2
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "0")).jsonMap()
             assertEquals("ok", map["result"])
 
             // Expecting 1 votes for product 1 in shop 1
             val moderator = registerModerator()
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1&barcode=$barcode1").jsonMap()
             var votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
             // Expecting 1 votes for product 2 in shop 2
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1&barcode=$barcode1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
             // Expecting 0 votes for product 1 in shop 2
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop2&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop2&barcode=$barcode1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(0, votes.size)
             // Expecting product 1 TO NOT BE in shop 2
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop2").jsonMap()
-            val shopBarcodes = productsOfShop(map["results_v2"] as Map<*, *>, shop2).map { it["barcode"] }
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
+            val shopBarcodes = productsOfShop(map["results"] as Map<*, *>, shop2).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
             assertFalse(shopBarcodes.contains(barcode1))
             assertTrue(shopBarcodes.contains(barcode2))
@@ -620,45 +618,45 @@ class ProductsPresenceVotingTests {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // Put product 1 to shop 1
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop1.asStr)).jsonMap()
+                "shopOsmId" to shop1)).jsonMap()
             assertEquals("ok", map["result"])
             // Put product 2 to shop 2
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop2.asStr)).jsonMap()
+                "shopOsmId" to shop2)).jsonMap()
             assertEquals("ok", map["result"])
 
             // Vote FOR product 1 in shop 2
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
 
             // Expecting 1 votes for product 1 in shop 1
             val moderator = registerModerator()
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1&barcode=$barcode1").jsonMap()
             var votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
             // Expecting 1 votes for product 2 in shop 2
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1&barcode=$barcode1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
             // Expecting 1 votes for product 1 in shop 2
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop2&barcode=$barcode1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop2&barcode=$barcode1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
             // Expecting product 1 TO BE in shop 2
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop2").jsonMap()
-            val shopBarcodes = productsOfShop(map["results_v2"] as Map<*, *>, shop2).map { it["barcode"] }
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop2").jsonMap()
+            val shopBarcodes = productsOfShop(map["results"] as Map<*, *>, shop2).map { it["barcode"] }
             assertEquals(2, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
             assertTrue(shopBarcodes.contains(barcode2))
@@ -672,26 +670,26 @@ class ProductsPresenceVotingTests {
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
             val barcode3 = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             var now = 123
 
             // Put all products to shop 1
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             val product1ExpectedLastSeenTime = now
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode3,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -699,14 +697,14 @@ class ProductsPresenceVotingTests {
             var anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -716,7 +714,7 @@ class ProductsPresenceVotingTests {
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode3,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -724,7 +722,7 @@ class ProductsPresenceVotingTests {
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode3,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -732,46 +730,46 @@ class ProductsPresenceVotingTests {
             // Try to mess with all times by adding the products into another shop and voting for them
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode3,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
             anotherUser = register()
             map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                 "barcode" to barcode3,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // Now verify proper times
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop1").jsonMap()
-            val results = map["results_v2"] as Map<*, *>
+            map = authedGet(user, "/products_at_shops_data/?osmShopsIds=$shop1").jsonMap()
+            val results = map["results"] as Map<*, *>
             assertEquals(1, results.size)
-            val shop1Result = results[shop1.asStr] as Map<*, *>
+            val shop1Result = results[shop1] as Map<*, *>
 
             val productsLastSeen = shop1Result["products_last_seen_utc"] as Map<*, *>
             assertEquals(3, productsLastSeen.size)
@@ -787,8 +785,8 @@ class ProductsPresenceVotingTests {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // Create products
             var map = authedGet(user, "/create_update_product/?barcode=${barcode1}").jsonMap()
@@ -797,39 +795,37 @@ class ProductsPresenceVotingTests {
                     "&vegetarianStatus=positive&veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
-            var now = 123
+            var now = 123;
 
             // Add products
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to "${++now}")).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "testingNow" to "${++now}")).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "testingNow" to "${++now}")).jsonMap()
             assertEquals("ok", map["result"])
 
             // Verify products are added
-            val shopsDataRequestBody = """ { "osm_uids": [ "$shop1", "$shop2" ] } """
+            val shopsDataRequestBody = """ { "osm_ids": [ "$shop1", "$shop2" ] } """
             map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
-            var results = map["results_v2"] as Map<*, *>
+            var results = map["results"] as Map<*, *>
             assertEquals(2, results.size)
 
-            var shop1Data = results[shop1.asStr]!! as Map<*, *>
-            assertEquals(shop1.osmId, shop1Data["osm_id"])
-            assertEquals(shop1.asStr, shop1Data["osm_uid"])
+            var shop1Data = results[shop1]!! as Map<*, *>
+            assertEquals(shop1, shop1Data["osm_id"])
             assertEquals(2, shop1Data["products_count"])
 
-            var shop2Data = results[shop2.asStr]!! as Map<*, *>
-            assertEquals(shop2.osmId, shop2Data["osm_id"])
-            assertEquals(shop2.asStr, shop2Data["osm_uid"])
+            var shop2Data = results[shop2]!! as Map<*, *>
+            assertEquals(shop2, shop2Data["osm_id"])
             assertEquals(1, shop2Data["products_count"])
 
             // Vote one out
@@ -837,7 +833,7 @@ class ProductsPresenceVotingTests {
                 val anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
                     "barcode" to barcode1,
-                    "shopOsmUID" to shop1.asStr,
+                    "shopOsmId" to shop1,
                     "voteVal" to "0",
                     "testingNow" to "${++now}")).jsonMap()
                 assertEquals("ok", map["result"])
@@ -845,17 +841,15 @@ class ProductsPresenceVotingTests {
 
             // Verify one product is removed from one of the shops
             map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
-            results = map["results_v2"] as Map<*, *>
+            results = map["results"] as Map<*, *>
             assertEquals(2, results.size)
 
-            shop1Data = results[shop1.asStr]!! as Map<*, *>
-            assertEquals(shop1.osmId, shop1Data["osm_id"])
-            assertEquals(shop1.asStr, shop1Data["osm_uid"])
+            shop1Data = results[shop1]!! as Map<*, *>
+            assertEquals(shop1, shop1Data["osm_id"])
             assertEquals(1, shop1Data["products_count"])
 
-            shop2Data = results[shop2.asStr]!! as Map<*, *>
-            assertEquals(shop2.osmId, shop2Data["osm_id"])
-            assertEquals(shop2.asStr, shop2Data["osm_uid"])
+            shop2Data = results[shop2]!! as Map<*, *>
+            assertEquals(shop2, shop2Data["osm_id"])
             assertEquals(1, shop2Data["products_count"])
         }
     }
@@ -865,11 +859,11 @@ class ProductsPresenceVotingTests {
         withTestApplication({ module(testing = true) }) {
             val user = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
 
             val moderator = registerModerator()
@@ -880,7 +874,7 @@ class ProductsPresenceVotingTests {
 
             map = authedGet(user, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -897,18 +891,18 @@ class ProductsPresenceVotingTests {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var now = 123
             var map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -924,7 +918,7 @@ class ProductsPresenceVotingTests {
 
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
@@ -938,7 +932,7 @@ class ProductsPresenceVotingTests {
 
             // Time of the vote is expected to be greater
             val voteTime2 = aVote["vote_time"] as Int
-            assertTrue(voteTime1 < voteTime2)
+            assertTrue(voteTime1 < voteTime2);
         }
     }
 
@@ -949,15 +943,15 @@ class ProductsPresenceVotingTests {
             val user2 = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop.asStr)).jsonMap()
+                "shopOsmId" to shop)).jsonMap()
             assertEquals("ok", map["result"])
 
             val moderator = registerModerator()
@@ -972,12 +966,12 @@ class ProductsPresenceVotingTests {
             // Vote!
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode1,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode2,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -997,44 +991,44 @@ class ProductsPresenceVotingTests {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             var map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr)).jsonMap()
+                "shopOsmId" to shop1)).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr)).jsonMap()
+                "shopOsmId" to shop2)).jsonMap()
             assertEquals("ok", map["result"])
 
             val moderator = registerModerator()
             // 1 vote expected everywhere
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             var votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(1, votes.size)
 
             // Vote!
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop1.asStr,
+                "shopOsmId" to shop1,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop2.asStr,
+                "shopOsmId" to shop2,
                 "voteVal" to "1")).jsonMap()
             assertEquals("ok", map["result"])
 
             // 2 votes expected everywhere
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(2, votes.size)
-            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmUID=$shop1").jsonMap()
+            map = authedGet(moderator, "/product_presence_votes_data/?shopOsmId=$shop1").jsonMap()
             votes = map["votes"] as List<*>
             assertEquals(2, votes.size)
         }
@@ -1046,39 +1040,39 @@ class ProductsPresenceVotingTests {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var now = 123
             var map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
-            // Let's have another user vote for its presence
+            // Let's have another user vote for its precense
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "1",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to still be in the shop
-            map = authedGet(user1, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user1, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
             // And then the original user votes
             map = authedGet(user1, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to be removed from the shop
-            map = authedGet(user1, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user1, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(0, productsAtShop.size)
         }
     }
@@ -1089,37 +1083,37 @@ class ProductsPresenceVotingTests {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var now = 123
             var map = authedGet(user1, "/put_product_to_shop/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to still be in the shop
-            map = authedGet(user2, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user2, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
 
             map = authedGet(user2, "/product_presence_vote/", mapOf(
                 "barcode" to barcode,
-                "shopOsmUID" to shop.asStr,
+                "shopOsmId" to shop,
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
             // The product is expected to still be in the shop
-            map = authedGet(user2, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            productsAtShop = map["results_v2"] as Map<*, *>
+            map = authedGet(user2, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            productsAtShop = map["results"] as Map<*, *>
             assertEquals(1, productsAtShop.size)
         }
     }
 }
 
-private fun productsOfShop(shops: Map<*, *>, shopOsmUID: OsmUID): List<Map<*, *>> {
-    val shop = shops[shopOsmUID.asStr] as Map<*, *>
+private fun productsOfShop(shops: Map<*, *>, shopOsmId: String): List<Map<*, *>> {
+    val shop = shops[shopOsmId] as Map<*, *>
     val products = shop["products"] as List<*>
     return products.map { it as Map<*, *> }
 }

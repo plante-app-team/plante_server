@@ -2,9 +2,11 @@ package cmds.moderation
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.ktor.client.HttpClient
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -13,6 +15,7 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
@@ -21,7 +24,8 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 @Location("/product_presence_votes_data/")
 data class ProductPresenceVotesDataParams(
     val barcode: String? = null,
-    val shopOsmId: String? = null)
+    val shopOsmId: String? = null,
+    val shopOsmUID: String? = null)
 
 fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User) = transaction {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
@@ -38,8 +42,12 @@ fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User)
     } else {
         null
     }
-    val shop = if (params.shopOsmId != null) {
-        val row = ShopTable.select { ShopTable.osmId eq params.shopOsmId }.firstOrNull()
+    val shop = if (params.shopOsmUID != null || params.shopOsmId != null) {
+        val uid = OsmUID.fromEitherOf(params.shopOsmUID, params.shopOsmId)
+        if (uid == null) {
+            return@transaction GenericResponse.failure("wtf")
+        }
+        val row = ShopTable.select { ShopTable.osmUID eq uid.asStr }.firstOrNull()
         if (row == null) {
             return@transaction ProductPresenceVotesDataResponse(votes = emptyList())
         } else {
@@ -65,7 +73,8 @@ fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User)
             Op.TRUE
         }
         productQuery and shopQuery
-    }.map { ProductPresenceVote.from(it) }
+    }.orderBy(ProductPresenceVoteTable.voteTime, SortOrder.DESC)
+        .map { ProductPresenceVote.from(it) }
     return@transaction ProductPresenceVotesDataResponse(votes)
 }
 
@@ -73,8 +82,11 @@ fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User)
 private data class ProductPresenceVote(
     @JsonProperty("barcode")
     val barcode: String,
+    @Deprecated("use shopOsmUID")
     @JsonProperty("shop_osm_id")
     val shopOsmId: String,
+    @JsonProperty("shop_osm_uid")
+    val shopOsmUID: OsmUID,
     @JsonProperty("voted_user_id")
     val votedUserId: String,
     @JsonProperty("vote_time")
@@ -83,12 +95,16 @@ private data class ProductPresenceVote(
     val voteVal: Short) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
     companion object {
-        fun from(tableRow: ResultRow) = ProductPresenceVote(
-            barcode = tableRow[ProductTable.barcode],
-            shopOsmId = tableRow[ShopTable.osmId],
-            votedUserId = tableRow[ProductPresenceVoteTable.votedUserId].toString(),
-            voteTime = tableRow[ProductPresenceVoteTable.voteTime],
-            voteVal = tableRow[ProductPresenceVoteTable.voteVal])
+        fun from(tableRow: ResultRow): ProductPresenceVote {
+            val uid = OsmUID.from(tableRow[ShopTable.osmUID])
+            return ProductPresenceVote(
+                barcode = tableRow[ProductTable.barcode],
+                shopOsmId = uid.osmId,
+                shopOsmUID = uid,
+                votedUserId = tableRow[ProductPresenceVoteTable.votedUserId].toString(),
+                voteTime = tableRow[ProductPresenceVoteTable.voteTime],
+                voteVal = tableRow[ProductPresenceVoteTable.voteVal])
+        }
     }
 }
 

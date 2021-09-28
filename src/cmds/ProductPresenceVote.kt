@@ -3,8 +3,6 @@ package vegancheckteam.plante_server.cmds
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -17,6 +15,7 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
@@ -26,11 +25,17 @@ const val MIN_NEGATIVES_VOTES_FOR_DELETION = 3
 @Location("/product_presence_vote/")
 data class ProductPresenceVoteParams(
     val barcode: String,
-    val shopOsmId: String,
+    val shopOsmId: String? = null,
+    val shopOsmUID: String? = null,
     val voteVal: Int,
     val testingNow: Long? = null)
 
-fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: Boolean) = transaction {
+fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: Boolean): Any = transaction {
+    val osmUID = OsmUID.fromEitherOf(params.shopOsmUID, params.shopOsmId)
+    if (osmUID == null) {
+        return@transaction GenericResponse.failure("wtf")
+    }
+
     if (!arrayOf(0, 1).contains(params.voteVal)) {
         return@transaction GenericResponse.failure("invalid_vote_val", "Barcode: ${params.barcode}")
     }
@@ -40,9 +45,9 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         return@transaction GenericResponse.failure("product_not_found", "Barcode: ${params.barcode}")
     }
 
-    val shopRow = ShopTable.select { ShopTable.osmId eq params.shopOsmId }.firstOrNull()
+    val shopRow = ShopTable.select { ShopTable.osmUID eq osmUID.asStr }.firstOrNull()
     if (shopRow == null) {
-        return@transaction GenericResponse.failure("shop_not_found", "OSM ID: ${params.shopOsmId}")
+        return@transaction GenericResponse.failure("shop_not_found", "OSM UID: $osmUID")
     }
 
     val now = now(params.testingNow, testing)
@@ -58,12 +63,12 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
             return@transaction putProductToShop(
                 PutProductToShopParams(
                     barcode = params.barcode,
-                    shopOsmId = params.shopOsmId,
+                    shopOsmUID = osmUID.asStr,
                     testingNow = params.testingNow
                 ),
                 user,
                 testing
-            );
+            )
         } else {
             return@transaction GenericResponse.success()
         }

@@ -10,7 +10,7 @@ import vegancheckteam.plante_server.model.User
 @Location("/sign_out_all/")
 data class SignOutAllParams(val unused: Int = 123)
 
-fun signOutAll(unused: SignOutAllParams, user: User): Any {
+fun signOutAll(user: User): Any {
     transaction {
         UserTable.update({ UserTable.id eq user.id }) { row ->
             row[loginGeneration] = user.loginGeneration + 1

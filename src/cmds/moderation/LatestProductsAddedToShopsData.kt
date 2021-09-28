@@ -22,7 +22,7 @@ data class LatestProductsAddedToShopsDataParams(
     val limit: Int = 100,
     val page: Long = 0)
 
-fun latestProductsAddedToShopsData(params: LatestProductsAddedToShopsDataParams, user: User, testing: Boolean) = transaction {
+fun latestProductsAddedToShopsData(params: LatestProductsAddedToShopsDataParams, user: User) = transaction {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return@transaction GenericResponse.failure("denied")
     }

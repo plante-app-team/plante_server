@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.before_uid
 
 import io.ktor.server.testing.withTestApplication
 import java.time.ZonedDateTime
@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
-import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.cmds.MAX_CREATED_SHOPS_IN_SEQUENCE
 import vegancheckteam.plante_server.cmds.SHOPS_CREATION_SEQUENCE_LENGTH_SECS
@@ -20,14 +19,13 @@ import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
-import vegancheckteam.plante_server.model.OsmElementType
-import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.module
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 
-class ShopRequestsTest {
+class ShopRequestsTest_before_uid {
     @Before
     fun setUp() {
         withTestApplication({ module(testing = true) }) {
@@ -46,8 +44,8 @@ class ShopRequestsTest {
             val clientToken = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             var map = authedGet(clientToken, "/create_update_product/?barcode=${barcode1}").jsonMap()
             assertEquals("ok", map["result"])
@@ -55,15 +53,15 @@ class ShopRequestsTest {
                     "&vegetarianStatus=positive&veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode1}&shopOsmUID=$shop1").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode1}&shopOsmId=$shop1").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmUID=$shop1").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmId=$shop1").jsonMap()
             assertEquals("ok", map["result"])
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmUID=$shop2").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmId=$shop2").jsonMap()
             assertEquals("ok", map["result"])
 
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop1&osmShopsUIDs=$shop2").jsonMap()
-            val results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop1&osmShopsIds=$shop2").jsonMap()
+            val results = map["results"] as Map<*, *>
             assertEquals(2, results.size)
 
             val shop1Barcodes = productsOfShop(results, shop1).map { it["barcode"] }
@@ -89,12 +87,12 @@ class ShopRequestsTest {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             var map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals("product_not_found", map["error"])
 
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode}&shopOsmUID=$shop").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode}&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
@@ -103,8 +101,8 @@ class ShopRequestsTest {
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            val results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            val results = map["results"] as Map<*, *>
             assertEquals(1, results.size)
 
             val shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
@@ -119,37 +117,37 @@ class ShopRequestsTest {
             val clientToken = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             // 0 shops
             transaction {
-                assertEquals(0, ShopTable.select { ShopTable.osmUID eq shop.asStr }.count())
+                assertEquals(0, ShopTable.select { ShopTable.osmUID eq "1:$shop" }.count())
             }
 
-            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode1}&shopOsmUID=$shop").jsonMap()
+            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode1}&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             // 1 shop now
             transaction {
-                assertEquals(1, ShopTable.select { ShopTable.osmUID eq shop.asStr }.count())
+                assertEquals(1, ShopTable.select { ShopTable.osmUID eq "1:$shop" }.count())
             }
             // 1 product at the shop
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var results = map["results"] as Map<*, *>
             var shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
 
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmUID=$shop").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode2}&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             // 1 shop still
             transaction {
-                assertEquals(1, ShopTable.select { ShopTable.osmUID eq shop.asStr }.count())
+                assertEquals(1, ShopTable.select { ShopTable.osmUID eq "1:$shop" }.count())
             }
             // 2 products at the shop
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            results = map["results"] as Map<*, *>
             shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(2, shopBarcodes.size)
             assertTrue(shopBarcodes.contains(barcode1))
@@ -162,25 +160,25 @@ class ShopRequestsTest {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
             // Let's put the product
-            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmUID=$shop").jsonMap()
+            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             // 1 product at the shop
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            var results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            var results = map["results"] as Map<*, *>
             var shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
 
             // Oops, I did it again!
-            map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmUID=$shop").jsonMap()
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             // 1 product at the shop still!
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
-            results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
+            results = map["results"] as Map<*, *>
             shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(1, shopBarcodes.size)
         }
@@ -191,16 +189,16 @@ class ShopRequestsTest {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // Let's put a product
-            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmUID=$shop1").jsonMap()
+            var map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop1").jsonMap()
             assertEquals("ok", map["result"])
 
             // 1 item in the map expected since only 1 of the shops exist in DB
-            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop1&osmShopsUIDs=$shop2").jsonMap()
-            val results = map["results_v2"] as Map<*, *>
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop1&osmShopsIds=$shop2").jsonMap()
+            val results = map["results"] as Map<*, *>
             assertEquals(1, results.size)
         }
     }
@@ -209,12 +207,12 @@ class ShopRequestsTest {
     fun `retrieve shops data when none of the shops exist`() {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
-            val shop1 = generateFakeOsmUID()
-            val shop2 = generateFakeOsmUID()
+            val shop1 = UUID.randomUUID().toString()
+            val shop2 = UUID.randomUUID().toString()
 
             // 0 item in the map expected since none of the shops exist in DB
-            val map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop1&osmShopsUIDs=$shop2").jsonMap()
-            val results = map["results_v2"] as Map<*, *> // But still there's a map!
+            val map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop1&osmShopsIds=$shop2").jsonMap()
+            val results = map["results"] as Map<*, *> // But still there's a map!
             assertEquals(0, results.size)
         }
     }
@@ -224,13 +222,13 @@ class ShopRequestsTest {
         withTestApplication({ module(testing = true) }) {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
-            val shop = generateFakeOsmUID()
+            val shop = UUID.randomUUID().toString()
 
-            val map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmUID=$shop").jsonMap()
+            val map = authedGet(clientToken, "/put_product_to_shop/?barcode=$barcode&shopOsmId=$shop").jsonMap()
             assertEquals("ok", map["result"])
 
             transaction {
-                val shopId = ShopTable.select { ShopTable.osmUID eq shop.asStr }.first()[ShopTable.id]
+                val shopId = ShopTable.select { ShopTable.osmUID eq "1:$shop" }.first()[ShopTable.id]
                 val row = ProductAtShopTable.select { ProductAtShopTable.shopId eq shopId }.first()
                 val creationTime = row[ProductAtShopTable.creationTime]
                 val now = ZonedDateTime.now().toEpochSecond()
@@ -269,11 +267,7 @@ class ShopRequestsTest {
             val user = register()
             val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&productionDb=false").jsonMap()
             val osmId = map["osm_id"] as String
-            val osmUIDStr = map["osm_uid"] as String
-            val osmUID = OsmUID.from(osmUIDStr)
             assertTrue(0 < osmId.toLong() && osmId.toLong() < Long.MAX_VALUE)
-            assertEquals(osmId, osmUID.osmId)
-            assertEquals(OsmElementType.NODE, osmUID.elementType)
         }
     }
 
@@ -353,10 +347,10 @@ class ShopRequestsTest {
 
             var now = 123
             for (index in 0 until MAX_CREATED_SHOPS_IN_SEQUENCE) {
-                val osmUID = generateFakeOsmUID(index)
+                val osmId = "65434$index"
                 val fakeOsmResponses = String(
                     Base64.getEncoder().encode(
-                        CreateShopTestingOsmResponses("123456", osmUID.osmId, "").toString().toByteArray()))
+                        CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
                 val map = authedGet(
                     user, "/create_shop/", mapOf(
                         "testingNow" to "$now",
@@ -365,7 +359,7 @@ class ShopRequestsTest {
                         "name" to "myshop",
                         "type" to "general",
                         "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
-                assertEquals(osmUID.osmId, map["osm_id"])
+                assertEquals(osmId, map["osm_id"])
             }
             // Trying to create another shop over the sequence max
             var fakeOsmResponses = String(
@@ -406,10 +400,10 @@ class ShopRequestsTest {
             // Create too many shops
             val now = 123
             for (index in 0 until MAX_CREATED_SHOPS_IN_SEQUENCE * 2) {
-                val osmUID = generateFakeOsmUID(index)
+                val osmId = "65436$index"
                 val fakeOsmResponses = String(
                     Base64.getEncoder().encode(
-                        CreateShopTestingOsmResponses("123456", osmUID.osmId, "").toString().toByteArray()))
+                        CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
                 val map = authedGet(
                     user, "/create_shop/", mapOf(
                         "testingNow" to "$now",
@@ -419,7 +413,7 @@ class ShopRequestsTest {
                         "type" to "general",
                         "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
                 if (index < MAX_CREATED_SHOPS_IN_SEQUENCE) {
-                    assertEquals(osmUID.osmId, map["osm_id"])
+                    assertEquals(osmId, map["osm_id"])
                 } else {
                     assertEquals("max_shops_created_for_now", map["error"])
                 }
@@ -427,21 +421,21 @@ class ShopRequestsTest {
 
             // But another shop still can be created when a request to osm is not needed
             val barcode = UUID.randomUUID()
-            val osmUID = generateFakeOsmUID()
+            val osmId = "65437"
 
             var newShopExists = transaction {
-                !ShopTable.select { ShopTable.osmUID eq osmUID.asStr }.empty()
+                !ShopTable.select { ShopTable.osmUID eq "1:$osmId" }.empty()
             }
             assertFalse(newShopExists)
 
             val map = authedGet(user, "/put_product_to_shop/", mapOf(
                 "testingNow" to "$now",
                 "barcode" to "$barcode",
-                "shopOsmUID" to osmUID.asStr)).jsonMap()
+                "shopOsmId" to osmId)).jsonMap()
             assertEquals("ok", map["result"])
 
             newShopExists = transaction {
-                !ShopTable.select { ShopTable.osmUID eq osmUID.asStr }.empty()
+                !ShopTable.select { ShopTable.osmUID eq "1:$osmId" }.empty()
             }
             assertTrue(newShopExists)
         }
@@ -474,8 +468,8 @@ class ShopRequestsTest {
     }
 }
 
-private fun productsOfShop(shops: Map<*, *>, shopOsmUID: OsmUID): List<Map<*, *>> {
-    val shop = shops[shopOsmUID.asStr] as Map<*, *>
+private fun productsOfShop(shops: Map<*, *>, shopOsmId: String): List<Map<*, *>> {
+    val shop = shops[shopOsmId] as Map<*, *>
     val products = shop["products"] as List<*>
     return products.map { it as Map<*, *> }
 }
