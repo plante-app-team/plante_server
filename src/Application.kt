@@ -41,6 +41,7 @@ import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.encodeURLPath
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
@@ -48,13 +49,16 @@ import io.ktor.locations.get
 import io.ktor.request.path
 import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.routing.route
 import io.ktor.routing.routing
+import io.ktor.util.url
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.event.Level
 import vegancheckteam.plante_server.auth.CioHttpTransport
 import vegancheckteam.plante_server.auth.JwtController
+import vegancheckteam.plante_server.auth.userPrincipal
 import vegancheckteam.plante_server.cmds.BanMeParams
 import vegancheckteam.plante_server.cmds.CreateShopParams
 import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
@@ -81,11 +85,13 @@ import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParam
 import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
+import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
+import vegancheckteam.plante_server.cmds.moderation.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
@@ -266,6 +272,17 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<ShopsDataParams> { _, _ ->
                 val body = call.receive<ShopsDataRequestBody>()
                 call.respond(shopsData(body))
+            }
+
+            route("$OFF_PROXY_PATH/{...}", HttpMethod.Get) {
+                handle {
+                    val user = call.userPrincipal?.user
+                    validateUser(user)?.let { error ->
+                        call.respond(error)
+                        return@handle
+                    }
+                    call.respond(offProxyGet(call, user!!, client))
+                }
             }
         }
     }
