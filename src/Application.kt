@@ -68,6 +68,7 @@ import vegancheckteam.plante_server.cmds.ProductDataParams
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
+import vegancheckteam.plante_server.cmds.ProductsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
 import vegancheckteam.plante_server.cmds.ShopsDataParams
 import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
@@ -97,6 +98,7 @@ import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
+import vegancheckteam.plante_server.cmds.productsData
 import vegancheckteam.plante_server.cmds.putProductToShop
 import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.signOutAll
@@ -199,6 +201,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ProductDataParams> { params, _ ->
                 call.respond(productData(params))
+            }
+            getAuthed<ProductsDataParams> { params, _ ->
+                call.respond(productsData(params))
             }
             getAuthed<ProductChangesDataParams> { params, user ->
                 call.respond(productChangesData(params, user))
