@@ -69,10 +69,9 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         it[creatorUserId] = user.id
     }
     // Increase products count
+    val productsCountValue = ProductAtShopTable.select { ProductAtShopTable.shopId eq shopId }.count()
     ShopTable.update( { ShopTable.id eq shopId } ) {
-        with(SqlExpressionBuilder) {
-            it.update(productsCount, productsCount + 1)
-        }
+        it[productsCount] = productsCountValue.toInt()
     }
 
     productPresenceVote(

@@ -108,10 +108,9 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         ProductPresenceVoteTable.deleteWhere {
             (ProductPresenceVoteTable.shopId eq shop.id) and (ProductPresenceVoteTable.productId eq product.id)
         }
+        val productsCountValue = ProductAtShopTable.select { ProductAtShopTable.shopId eq shop.id }.count()
         ShopTable.update( { ShopTable.id eq shop.id } ) {
-            with(SqlExpressionBuilder) {
-                it.update(productsCount, productsCount - 1)
-            }
+            it[productsCount] = productsCountValue.toInt()
         }
     } else {
         // Delete extra votes
