@@ -31,6 +31,7 @@ class ProductsDataTest {
             var map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "0")).jsonMap()
+            assertEquals(false, map["last_page"])
             var productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             var newBarcodes = productsJson.map { it["barcode"].toString() }
             assertEquals(PRODUCTS_DATA_PARAMS_PAGE_SIZE, newBarcodes.size)
@@ -41,6 +42,7 @@ class ProductsDataTest {
             map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "1")).jsonMap()
+            assertEquals(false, map["last_page"])
             productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             newBarcodes = productsJson.map { it["barcode"].toString() }
             assertEquals(PRODUCTS_DATA_PARAMS_PAGE_SIZE, newBarcodes.size)
@@ -52,6 +54,7 @@ class ProductsDataTest {
             map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "2")).jsonMap()
+            assertEquals(true, map["last_page"])
             productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             newBarcodes = productsJson.map { it["barcode"].toString() }
             // Not full page
@@ -65,6 +68,7 @@ class ProductsDataTest {
             map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "3")).jsonMap()
+            assertEquals(true, map["last_page"])
             productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             newBarcodes = productsJson.map { it["barcode"].toString() }
             assertEquals(emptyList(), newBarcodes)
@@ -84,6 +88,7 @@ class ProductsDataTest {
             val map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "0")).jsonMap()
+            assertEquals(true, map["last_page"])
             val productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             val obtainedBarcodes = productsJson.map { it["barcode"].toString() }
             assertEquals(emptyList(), obtainedBarcodes)
@@ -109,6 +114,7 @@ class ProductsDataTest {
             map = authedGet(user, "/products_data/",
                 queryParamsLists = mapOf("barcodes" to barcodes),
                 queryParams = mapOf("page" to "0")).jsonMap()
+            assertEquals(true, map["last_page"])
             val productsJson = (map["products"] as List<*>).map { it as Map<*, *> }
             val obtainedBarcodes = productsJson.map { it["barcode"].toString() }
             assertEquals(listOf(barcodes[0], barcodes[2]).sorted(), obtainedBarcodes.sorted())
