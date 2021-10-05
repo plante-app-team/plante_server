@@ -28,15 +28,19 @@ data class Config(
     @JsonProperty("always_moderator_name")
     val alwaysModeratorName: String?,
     @JsonProperty("allow_cors")
-    val allowCors: Boolean = false) {
+    val allowCors: Boolean = false,
+    @JsonProperty("nominatim_enabled")
+    val nominatimEnabled: Boolean = true) {
 
     companion object {
         lateinit var instance: Config
         var instanceInited = false
 
         fun initFromFile(path: String) {
-            instance = jsonMapper.readValue(File(path).readText(), Config::class.java)
+            instance = fromStr(File(path).readText())
             instanceInited = true
         }
+
+        fun fromStr(str: String): Config = jsonMapper.readValue(str, Config::class.java)
     }
 }

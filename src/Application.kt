@@ -41,7 +41,6 @@ import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.encodeURLPath
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
@@ -51,7 +50,6 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import io.ktor.util.url
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -64,6 +62,7 @@ import vegancheckteam.plante_server.cmds.CreateShopParams
 import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
 import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
+import vegancheckteam.plante_server.cmds.MobileAppConfigDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
@@ -82,6 +81,7 @@ import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
+import vegancheckteam.plante_server.cmds.mobileAppConfigData
 import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
@@ -189,6 +189,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<UserDataParams> { _, user ->
                 call.respond(userData(user))
+            }
+            getAuthed<MobileAppConfigDataParams> { params, user ->
+                call.respond(mobileAppConfigData(params, user, testing))
             }
             getAuthed<UpdateUserDataParams> { params, user ->
                 call.respond(updateUserData(params, user))
