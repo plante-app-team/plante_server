@@ -1,6 +1,9 @@
 package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import vegancheckteam.plante_server.model.VegStatus
 
 /**
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -17,5 +20,15 @@ object ProductAtShopTable : Table("product_at_shop") {
     override val primaryKey = PrimaryKey(id)
     init {
         index(true, productId, shopId)
+    }
+
+    /**
+     * All products except for ones with negative vegan status.
+     */
+    fun countAcceptableProducts(shopId: Int): Long {
+        return innerJoin(ProductTable).select {
+            (ProductAtShopTable.shopId eq shopId) and
+                    (ProductTable.veganStatus neq VegStatus.NEGATIVE.persistentCode)
+        }.count()
     }
 }

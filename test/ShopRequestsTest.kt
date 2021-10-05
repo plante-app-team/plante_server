@@ -15,6 +15,7 @@ import org.junit.Test
 import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.cmds.MAX_CREATED_SHOPS_IN_SEQUENCE
+import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
 import vegancheckteam.plante_server.cmds.SHOPS_CREATION_SEQUENCE_LENGTH_SECS
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
@@ -22,6 +23,7 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.model.VegStatus
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
@@ -470,6 +472,49 @@ class ShopRequestsTest {
             val shopData = results["654321"]!! as Map<*, *>
             assertEquals("654321", shopData["osm_id"])
             assertEquals(0, shopData["products_count"])
+        }
+    }
+
+    @Test
+    fun `shops data does not include non-vegan products count`() {
+        withTestApplication({ module(testing = true) }) {
+            val user = register()
+            val shop = generateFakeOsmUID()
+
+            val putProductAndCheckShopsCount = { barcode: String, vegStatus: VegStatus, expectedCount: Int ->
+                var map = authedGet(user, "/create_update_product/?barcode=${barcode}&veganStatus=${vegStatus.statusName}").jsonMap()
+                assertEquals("ok", map["result"])
+                map = authedGet(user, "/put_product_to_shop/", mapOf(
+                    "barcode" to barcode,
+                    "shopOsmUID" to shop.asStr)).jsonMap()
+                assertEquals("ok", map["result"])
+                val shopsDataRequestBody = """ { "osm_uids": [ "$shop" ] } """
+                map = authedGet(user, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+                val results = map["results_v2"] as Map<*, *>
+                val shopData = results[shop.asStr]!! as Map<*, *>
+                assertEquals(expectedCount, shopData["products_count"], "$vegStatus $expectedCount")
+            }
+
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val barcode3 = UUID.randomUUID().toString()
+            val barcode4 = UUID.randomUUID().toString()
+
+            // 1
+            putProductAndCheckShopsCount(barcode1, VegStatus.POSITIVE, 1)
+            // Still 1
+            putProductAndCheckShopsCount(barcode2, VegStatus.NEGATIVE, 1)
+            // 2
+            putProductAndCheckShopsCount(barcode3, VegStatus.POSSIBLE, 2)
+            // 3
+            putProductAndCheckShopsCount(barcode4, VegStatus.UNKNOWN, 3)
+
+            // All 4 products are in the shop, even though the product
+            // with negative status is not counted
+            val map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
+            val results = map["results_v2"] as Map<*, *>
+            val shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
+            assertEquals(setOf(barcode1, barcode2, barcode3, barcode4), shopBarcodes.toSet())
         }
     }
 }

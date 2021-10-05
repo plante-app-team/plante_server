@@ -69,7 +69,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         it[creatorUserId] = user.id
     }
     // Increase products count
-    val productsCountValue = ProductAtShopTable.select { ProductAtShopTable.shopId eq shopId }.count()
+    val productsCountValue = ProductAtShopTable.countAcceptableProducts(shopId)
     ShopTable.update( { ShopTable.id eq shopId } ) {
         it[productsCount] = productsCountValue.toInt()
     }
