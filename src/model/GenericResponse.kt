@@ -11,12 +11,14 @@ data class GenericResponse(
     val error: String?,
     @JsonProperty("error_description")
     val errorDescription: String?,
-    @JsonProperty("result")
+    @JsonProperty(RESULT_FIELD_NAME)
     val result: String?) {
 
     companion object {
+        const val RESULT_FIELD_NAME = "result"
+        const val RESULT_FIELD_OK_VAL = "ok"
         fun fromString(str: String): GenericResponse? = jsonMapper.readOrNull(str)
-        fun success() = GenericResponse(null, null, "ok")
+        fun success() = GenericResponse(null, null, RESULT_FIELD_OK_VAL)
         fun failure(error: String, errorDescription: String? = null) = GenericResponse(error, errorDescription, null)
     }
 

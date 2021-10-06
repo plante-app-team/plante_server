@@ -91,6 +91,7 @@ class ProductsPresenceVotingTests {
                     "voteVal" to "0",
                     "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
+                assertEquals(false, map["deleted"])
             }
 
             // The product is expected to still be in the shop
@@ -106,6 +107,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
+            assertEquals(true, map["deleted"])
 
             // The product is expected to be removed from the shop
             map = authedGet(anotherUser, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
@@ -147,6 +149,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
+                assertEquals(false, map["deleted"])
             }
 
             // The product is expected still to be in the shop
@@ -162,6 +165,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
+            assertEquals(true, map["deleted"])
 
             // The product is expected to be removed from the shop
             map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
@@ -193,6 +197,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
+                assertEquals(false, map["deleted"])
             }
 
             // One positive vote ftw!
@@ -213,6 +218,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
                 assertEquals("ok", map["result"])
+                assertEquals(false, map["deleted"])
             }
 
             // The product is expected still to be in the shop because of that one positive vote
@@ -589,6 +595,9 @@ class ProductsPresenceVotingTests {
                 "shopOsmUID" to shop2.asStr,
                 "voteVal" to "0")).jsonMap()
             assertEquals("ok", map["result"])
+            // It's kind of "deleted" since it was never present
+            // in the shop anyway
+            assertEquals(true, map["deleted"])
 
             // Expecting 1 votes for product 1 in shop 1
             val moderator = registerModerator()
@@ -1075,6 +1084,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
+            assertEquals(true, map["deleted"])
 
             // The product is expected to be removed from the shop
             map = authedGet(user1, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
@@ -1109,6 +1119,7 @@ class ProductsPresenceVotingTests {
                 "voteVal" to "0",
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
+            assertEquals(false, map["deleted"])
 
             // The product is expected to still be in the shop
             map = authedGet(user2, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()

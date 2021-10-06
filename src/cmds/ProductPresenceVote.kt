@@ -1,5 +1,7 @@
 package vegancheckteam.plante_server.cmds
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
@@ -9,6 +11,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
@@ -30,6 +33,10 @@ data class ProductPresenceVoteParams(
     val voteVal: Int,
     val testingNow: Long? = null)
 
+/**
+ * Response might include a boolean "deleted" field.
+ * The field is guaranteed to be present only if the product is voted out.
+ */
 fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: Boolean): Any = transaction {
     val osmUID = OsmUID.fromEitherOf(params.shopOsmUID, params.shopOsmId)
     if (osmUID == null) {
@@ -70,7 +77,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
                 testing
             )
         } else {
-            return@transaction GenericResponse.success()
+            return@transaction ProductPresenceVoteResponse(deleted = true)
         }
     }
 
@@ -100,6 +107,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
             && latestProductVotes.take(MIN_NEGATIVES_VOTES_FOR_DELETION).all { it == 0.toShort() }
     val votedOutByUser = params.voteVal == 0 && productAtShop[ProductAtShopTable.creatorUserId] == user.id
 
+    val deleted: Boolean
     if (votedOutByQuantity || votedOutByUser) {
         // Oopsie doopsie! The product is voted out!
         ProductAtShopTable.deleteWhere {
@@ -112,6 +120,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         ShopTable.update( { ShopTable.id eq shop.id } ) {
             it[productsCount] = productsCountValue.toInt()
         }
+        deleted = true
     } else {
         // Delete extra votes
         val latestIds = latestProductVotesRows.map { it[ProductPresenceVoteTable.id] }
@@ -120,6 +129,16 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         ProductPresenceVoteTable.deleteWhere {
             ProductPresenceVoteTable.id inList idsToDelete
         }
+        deleted = false
     }
-    return@transaction GenericResponse.success()
+    return@transaction ProductPresenceVoteResponse(deleted)
+}
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class ProductPresenceVoteResponse(
+    @JsonProperty("deleted")
+    val deleted: Boolean,
+    @JsonProperty(GenericResponse.RESULT_FIELD_NAME)
+    val result: String = GenericResponse.RESULT_FIELD_OK_VAL) {
+    override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
 }
