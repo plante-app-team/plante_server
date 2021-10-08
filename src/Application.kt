@@ -82,12 +82,14 @@ import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
 import vegancheckteam.plante_server.cmds.mobileAppConfigData
+import vegancheckteam.plante_server.cmds.moderation.ChangeModeratorTaskLangParams
 import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
+import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
@@ -243,6 +245,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<UnresolveModeratorTaskParams> { params, user ->
                 call.respond(unresolveModeratorTask(params, user))
+            }
+            getAuthed<ChangeModeratorTaskLangParams> { params, user ->
+                call.respond(changeModeratorTaskLang(params, user))
             }
             getAuthed<ModerateProductVegStatusesParams> { params, user ->
                 call.respond(moderateProductVegStatuses(params, user))

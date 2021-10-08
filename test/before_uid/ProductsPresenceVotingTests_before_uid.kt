@@ -80,7 +80,7 @@ class ProductsPresenceVotingTests_before_uid {
                 "testingNow" to (++now).toString())).jsonMap()
             assertEquals("ok", map["result"])
 
-            var anotherUser = ""
+            var anotherUser: String
             repeat(MIN_NEGATIVES_VOTES_FOR_DELETION - 1) {
                 anotherUser = register()
                 map = authedGet(anotherUser, "/product_presence_vote/", mapOf(
