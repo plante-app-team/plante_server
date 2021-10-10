@@ -1,6 +1,5 @@
 package vegancheckteam.plante_server.before_uid
 
-import io.ktor.server.testing.withTestApplication
 import vegancheckteam.plante_server.cmds.MAX_QUIZ_ANSWERS_COUNT
 import java.util.*
 import vegancheckteam.plante_server.test_utils.authedGet
@@ -12,13 +11,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
-import vegancheckteam.plante_server.module
-
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class UserRequestsTest_before_uid {
     @Test
     fun googleRegisterUpdateGetUser() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/", queryParams = mapOf(
                 "deviceId" to "123",
                 "googleIdToken" to "${UUID.randomUUID()}")).response
@@ -41,7 +39,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun googleRegisterFailGoogleAuthFail() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val map = get("/login_or_register_user/", queryParams = mapOf(
                 "deviceId" to "123",
                 "googleIdToken" to "GOOGLE_AUTH_FAIL_FOR_TESTING")).jsonMap()
@@ -51,7 +49,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun googleRegisterFailEmailNotVerified() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val map = get("/login_or_register_user/?deviceId=123&googleIdToken=GOOGLE_AUTH_EMAIL_NOT_VERIFIED").jsonMap()
             assertEquals("google_email_not_verified", map["error"])
         }
@@ -59,7 +57,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun googleCanLoginSecondTime() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val googleId = UUID.randomUUID()
             var map = get("/login_or_register_user/?deviceId=1&googleIdToken=$googleId").jsonMap()
             val id1 = map["user_id"] as String
@@ -83,7 +81,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun appleRegisterUpdateGetUser() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&appleAuthorizationCode=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -104,7 +102,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun appleCanLoginSecondTime() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val appleId = UUID.randomUUID()
             var map = get("/login_or_register_user/?deviceId=1&appleAuthorizationCode=$appleId").jsonMap()
             val id1 = map["user_id"] as String
@@ -128,7 +126,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun unauthorizedUpdate() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             var response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -141,7 +139,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun signOutAll() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val googleId = UUID.randomUUID()
             var response = get("/login_or_register_user/?deviceId=123&googleIdToken=$googleId").response
             assertEquals(200, response.status()?.value)
@@ -168,7 +166,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun allFieldsUpdates() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -239,7 +237,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun `langs_prioritized update order`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -258,7 +256,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun invalidGenderUpdate() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -274,7 +272,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun invalidBirthday() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -290,7 +288,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun ban() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
             assertEquals(200, response.status()?.value)
 
@@ -310,7 +308,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun quiz() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             var map = authedGet(clientToken, "/user_quiz/?question=what&answer=nothing").jsonMap()
@@ -332,7 +330,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun `quiz answer overriding`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             authedGet(clientToken, "/user_quiz/?question=what&answer=nothing").jsonMap()
@@ -357,7 +355,7 @@ class UserRequestsTest_before_uid {
 
     @Test
     fun `quiz too many answers`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             for (index in 0..(MAX_QUIZ_ANSWERS_COUNT*2)) {

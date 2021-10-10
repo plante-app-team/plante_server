@@ -7,11 +7,12 @@ import org.junit.Test
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class MobileAppConfigDataTest {
     @Test
     fun `user data included`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
 
             var map = authedGet(user, "/update_user_data/",
@@ -35,7 +36,7 @@ class MobileAppConfigDataTest {
 
     @Test
     fun `with nominatim enabled`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val map = authedGet(user, "/mobile_app_config/", mapOf(
                 "globalConfigOverride" to createGlobalConfigWithNominatimEnabled(true)
@@ -46,7 +47,7 @@ class MobileAppConfigDataTest {
 
     @Test
     fun `with nominatim disabled`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val map = authedGet(user, "/mobile_app_config/", mapOf(
                 "globalConfigOverride" to createGlobalConfigWithNominatimEnabled(false)

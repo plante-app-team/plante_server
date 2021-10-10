@@ -1,6 +1,5 @@
 package vegancheckteam.plante_server
 
-import io.ktor.server.testing.withTestApplication
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,20 +14,23 @@ import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ProductsPresenceVotingTests {
     @Before
     fun setUp() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             transaction {
                 ModeratorTaskTable.deleteAll()
                 ProductPresenceVoteTable.deleteAll()
                 ProductAtShopTable.deleteAll()
+                ShopsValidationQueueTable.deleteAll()
                 ShopTable.deleteAll()
             }
         }
@@ -36,7 +38,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `normal user cannot get product presence votes`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val map = authedGet(clientToken, "/product_presence_votes_data/").jsonMap()
             assertEquals("denied", map["error"])
@@ -45,7 +47,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `adding product to shop creates a vote for its presence`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -70,7 +72,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product out of a shop when all votes are negative`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val userWhoPutsProduct = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -118,7 +120,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product out of a shop when all initial votes are positive`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -176,7 +178,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product out of a shop does not work when sequence of negative votes is broken`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -230,7 +232,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product out of a shop does not remove it from other shops`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -279,7 +281,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product out deletes its votes`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -326,7 +328,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting a product does not delete its votes for other shops`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -376,7 +378,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `extra product presence votes are deleted`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -408,7 +410,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a product can have lots of votes in different shops`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -457,7 +459,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a shop can have lots of votes for different products`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -506,7 +508,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting for a not existing product`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -528,7 +530,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting for a product in not existing shop`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -550,7 +552,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `invalid vote`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -571,7 +573,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting against a product does nothing if it is not in a shop`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -625,7 +627,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `voting for a product when it is not in a shop puts it into the shop`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -676,7 +678,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `products at shop latest seen time`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -792,7 +794,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `shops data after adding products to shops and then voting one out`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -871,7 +873,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a user cannot add more than 1 vote`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -902,7 +904,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a user can change their vote`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
@@ -953,7 +955,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a user CAN add more than 1 vote when votes for different products`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user1 = register()
             val user2 = register()
             val barcode1 = UUID.randomUUID().toString()
@@ -1002,7 +1004,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `a user CAN add more than 1 vote when votes for same product in different shops`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
@@ -1051,7 +1053,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `user who added a product to a shop can then remove it by a single vote`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()
@@ -1095,7 +1097,7 @@ class ProductsPresenceVotingTests {
 
     @Test
     fun `user who DID NOT add a product to a shop CANNOT remove it by a single vote`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user1 = register()
             val user2 = register()
             val barcode = UUID.randomUUID().toString()

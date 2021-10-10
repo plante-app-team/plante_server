@@ -13,11 +13,12 @@ import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class LatestProductsAddedToShopsDataTest {
     @Before
     fun setUp() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             transaction {
                 ProductAtShopTable.deleteAll()
             }
@@ -26,7 +27,7 @@ class LatestProductsAddedToShopsDataTest {
 
     @Test
     fun `latest products added to shops`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val clientToken = register()
 
@@ -118,7 +119,7 @@ class LatestProductsAddedToShopsDataTest {
 
     @Test
     fun `latest products added to shops without params`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val clientToken = register()
 
@@ -187,7 +188,7 @@ class LatestProductsAddedToShopsDataTest {
 
     @Test
     fun `latest products added to shops request by a normal user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val map = authedGet(clientToken, "/latest_products_added_to_shops_data/?").jsonMap()
             assertEquals("denied", map["error"])

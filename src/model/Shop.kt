@@ -16,7 +16,11 @@ data class Shop(
     @JsonProperty("osm_id")
     val osmId: String,
     @JsonProperty("products_count")
-    val productsCount: Int) {
+    val productsCount: Int,
+    @JsonProperty("lat")
+    val lat: Double?,
+    @JsonProperty("lon")
+    val lon: Double?) {
     companion object {
         fun from(tableRow: ResultRow): Shop {
             val osmUID = OsmUID.from(tableRow[ShopTable.osmUID])
@@ -24,7 +28,9 @@ data class Shop(
                 id = tableRow[ShopTable.id],
                 osmUID = osmUID,
                 osmId = osmUID.osmId,
-                productsCount = tableRow[ShopTable.productsCount])
+                productsCount = tableRow[ShopTable.productsCount],
+                lat = tableRow[ShopTable.lat],
+                lon = tableRow[ShopTable.lon])
         }
     }
 }

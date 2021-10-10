@@ -12,11 +12,12 @@ import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 import java.util.*
 import kotlin.test.assertEquals
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ChangeModeratorTaskLangTest {
     @Before
     fun setUp() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             transaction {
                 ModeratorTaskTable.deleteAll()
             }
@@ -25,7 +26,7 @@ class ChangeModeratorTaskLangTest {
 
     @Test
     fun `can change task lang`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
             val barcode = UUID.randomUUID().toString()
@@ -77,7 +78,7 @@ class ChangeModeratorTaskLangTest {
 
     @Test
     fun `cannot change task lang by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
             val barcode = UUID.randomUUID().toString()

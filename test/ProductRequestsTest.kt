@@ -1,6 +1,5 @@
 package vegancheckteam.plante_server
 
-import io.ktor.server.testing.withTestApplication
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
@@ -18,11 +17,12 @@ import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ProductRequestsTest {
     @Test
     fun `create, get and update product`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -57,7 +57,7 @@ class ProductRequestsTest {
 
     @Test
     fun `create product without veg statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -77,7 +77,7 @@ class ProductRequestsTest {
 
     @Test
     fun `all possible veg statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -102,7 +102,7 @@ class ProductRequestsTest {
 
     @Test
     fun `invalid vegetarian statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -116,7 +116,7 @@ class ProductRequestsTest {
 
     @Test
     fun `invalid vegan statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -130,7 +130,7 @@ class ProductRequestsTest {
 
     @Test
     fun `when veg status is not provided then it is not updated`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -161,7 +161,7 @@ class ProductRequestsTest {
 
     @Test
     fun `get product changes history`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val timeStart = ZonedDateTime.now().toEpochSecond()
             Thread.sleep(1001) // To make changes times different
 
@@ -218,7 +218,7 @@ class ProductRequestsTest {
 
     @Test
     fun `cannot get product changes history by normal user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -235,7 +235,7 @@ class ProductRequestsTest {
 
     @Test
     fun `duplicating product changes are not stored in product changes history`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             // Save it twice
@@ -260,7 +260,7 @@ class ProductRequestsTest {
 
     @Test
     fun `product changes history is limited`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -303,7 +303,7 @@ class ProductRequestsTest {
 
     @Test
     fun `product scan logic`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             // NOTE: the product is not registered
@@ -340,7 +340,7 @@ class ProductRequestsTest {
 
     @Test
     fun `creation and update of a product doesn't mess with other products`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()

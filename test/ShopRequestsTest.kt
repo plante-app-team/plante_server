@@ -1,6 +1,5 @@
 package vegancheckteam.plante_server
 
-import io.ktor.server.testing.withTestApplication
 import java.time.ZonedDateTime
 import java.util.Base64
 import java.util.UUID
@@ -15,12 +14,12 @@ import org.junit.Test
 import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.cmds.MAX_CREATED_SHOPS_IN_SEQUENCE
-import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
 import vegancheckteam.plante_server.cmds.SHOPS_CREATION_SEQUENCE_LENGTH_SECS
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.VegStatus
@@ -28,15 +27,17 @@ import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ShopRequestsTest {
     @Before
     fun setUp() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             transaction {
                 ModeratorTaskTable.deleteAll()
                 ProductPresenceVoteTable.deleteAll()
                 ProductAtShopTable.deleteAll()
+                ShopsValidationQueueTable.deleteAll()
                 ShopTable.deleteAll()
             }
         }
@@ -44,7 +45,7 @@ class ShopRequestsTest {
 
     @Test
     fun `put products to a shop normal scenario`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -88,7 +89,7 @@ class ShopRequestsTest {
 
     @Test
     fun `putting not existing product to shop creates the product`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -117,7 +118,7 @@ class ShopRequestsTest {
 
     @Test
     fun `2 consequent putting products into a shop`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
@@ -161,7 +162,7 @@ class ShopRequestsTest {
 
     @Test
     fun `putting same product into a shop twice`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -190,7 +191,7 @@ class ShopRequestsTest {
 
     @Test
     fun `retrieve shops data when not all shops exist`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -209,7 +210,7 @@ class ShopRequestsTest {
 
     @Test
     fun `retrieve shops data when none of the shops exist`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val shop1 = generateFakeOsmUID()
             val shop2 = generateFakeOsmUID()
@@ -223,7 +224,7 @@ class ShopRequestsTest {
 
     @Test
     fun `product to shop creation time`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
@@ -243,7 +244,7 @@ class ShopRequestsTest {
 
     @Test
     fun `create shop with fake osm responses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
                     CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
@@ -255,7 +256,7 @@ class ShopRequestsTest {
 
     @Test
     fun `create shop with invalid shop type`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
                     CreateShopTestingOsmResponses("you", "are", "boldone").toString().toByteArray()))
@@ -267,7 +268,7 @@ class ShopRequestsTest {
 
     @Test
     fun `a very fragile test of create_shop with REAL osm responses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&productionDb=false").jsonMap()
             val osmId = map["osm_id"] as String
@@ -281,7 +282,7 @@ class ShopRequestsTest {
 
     @Test
     fun `shop creation creates a moderator task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val moderatorId = UUID.randomUUID()
             val moderator = registerModerator(moderatorId)
@@ -317,7 +318,7 @@ class ShopRequestsTest {
 
     @Test
     fun `shop creation DOES NOT create a moderator task when not-prod osm db is used`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val moderatorId = UUID.randomUUID()
             val moderator = registerModerator(moderatorId)
@@ -350,7 +351,7 @@ class ShopRequestsTest {
 
     @Test
     fun `shops creation sequence max`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
 
             var now = 123
@@ -402,7 +403,7 @@ class ShopRequestsTest {
 
     @Test
     fun `when shop creation sequence max is reached existing osm shops can be added to db anyways`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
 
             // Create too many shops
@@ -451,7 +452,7 @@ class ShopRequestsTest {
 
     @Test
     fun `shops data after shop creation`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
                     CreateShopTestingOsmResponses("123456", "654321", "").toString().toByteArray()))
@@ -477,7 +478,7 @@ class ShopRequestsTest {
 
     @Test
     fun `shops data does not include non-vegan products count`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val shop = generateFakeOsmUID()
 

@@ -31,11 +31,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import vegancheckteam.plante_server.test_utils.registerModeratorOfEverything
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ModerationRequestsTest {
     @Before
     fun setUp() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             transaction {
                 ModeratorTaskTable.deleteAll()
             }
@@ -44,7 +45,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product creation and change create moderator tasks`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -96,7 +97,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `there's always no more than 1 moderator task of PRODUCT_CHANGE type`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -123,7 +124,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `several different products can have their own PRODUCT_CHANGE moderator tasks`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode1 = UUID.randomUUID().toString()
@@ -154,7 +155,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `make_reports command`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -186,7 +187,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `make_reports max reports for user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             // Set up
             transaction {
                 ModeratorTaskTable.deleteAll()
@@ -239,7 +240,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `make_reports max reports for product`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             // Set up
             transaction {
                 ModeratorTaskTable.deleteAll()
@@ -288,7 +289,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `make_reports command min and max text lengths`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
@@ -317,7 +318,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `assign random task to requester`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
@@ -359,7 +360,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `assign certain task to requester`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val (simpleUserClientToken, _) = registerAndGetTokenWithID()
@@ -408,7 +409,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `assign random task to certain moderator`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId1 = UUID.randomUUID()
             val moderatorClientToken1 = registerModerator(moderatorId1)
             val moderatorId2 = UUID.randomUUID()
@@ -438,7 +439,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `tasks assigned too long ago are not considered assigned`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val (simpleUserClientToken, _) = registerAndGetTokenWithID()
@@ -482,7 +483,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `no_unresolved_moderator_tasks error when there are no tasks to assign`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
 
@@ -507,7 +508,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot assign task by a simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val (simpleUserClientToken, _) = registerAndGetTokenWithID()
 
             // Make a report
@@ -522,7 +523,7 @@ class ModerationRequestsTest {
     
     @Test
     fun `cannot assign task to a simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
 
@@ -538,7 +539,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot give list of assigned tasks to a simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val simpleUserClientToken = register()
             val map = authedGet(simpleUserClientToken, "/assigned_moderator_tasks_data/").jsonMap()
             assertEquals("denied", map["error"])
@@ -547,7 +548,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot give list of all tasks to a simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val simpleUserClientToken = register()
             val map = authedGet(simpleUserClientToken, "/all_moderator_tasks_data/").jsonMap()
             assertEquals("denied", map["error"])
@@ -556,7 +557,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `reports tasks have higher priority when assigning a random task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val (simpleUserClientToken, _) = registerAndGetTokenWithID()
@@ -598,7 +599,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `can resolve task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -635,7 +636,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `can get resolved tasks if want to`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -676,7 +677,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot resolve not existing task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=100").jsonMap()
             assertEquals("task_not_found", map["error"])
@@ -685,7 +686,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `resolved tasks are deleted after some time`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -722,7 +723,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `resolved tasks cannot be randomly assigned`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -750,7 +751,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot resolve task by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -772,7 +773,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `max reports for user consider only unresolved tasks`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             // Set up
             transaction {
                 ModeratorTaskTable.deleteAll()
@@ -825,7 +826,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `max reports for product consider only unresolved tasks`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             // Set up
             transaction {
                 ModeratorTaskTable.deleteAll()
@@ -879,7 +880,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `can unresolve task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -915,7 +916,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `cannot unresolve task by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val simpleUserClientToken = register()
 
@@ -946,7 +947,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product veg statuses moderation`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -976,7 +977,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product veg statuses moderation by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -999,7 +1000,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product veg statuses moderation with invalid veg statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1021,7 +1022,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product veg statuses moderation does not work with 1 param only`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1041,7 +1042,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `clear product veg statuses`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1072,7 +1073,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `clear product veg statuses by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1095,7 +1096,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `specify product moderator choice reason`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode = UUID.randomUUID().toString()
@@ -1164,7 +1165,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `new product moderator choice reason does not erase reasons of other products`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode1 = UUID.randomUUID().toString()
@@ -1225,7 +1226,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `specify product moderator choice reason by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1248,7 +1249,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `user deletion by content moderator`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
@@ -1269,7 +1270,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `user deletion by everything-moderator`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModeratorOfEverything(id = moderatorId)
             val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
@@ -1291,7 +1292,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `deletion of not existing user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModeratorOfEverything(id = moderatorId)
             val simpleUserId = UUID.randomUUID()
@@ -1303,7 +1304,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `user deletion by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val (simpleUserClientToken1, simpleUserId1) = registerAndGetTokenWithID()
             val (simpleUserClientToken2, _) = registerAndGetTokenWithID()
 
@@ -1317,7 +1318,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `moderator can reject a task`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId1 = UUID.randomUUID()
             val moderatorId2 = UUID.randomUUID()
             val moderatorClientToken1 = registerModerator(id = moderatorId1)
@@ -1382,7 +1383,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `rejected task can be manually assigned`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
 
@@ -1436,7 +1437,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `moderator_task_data cmd`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorId = UUID.randomUUID()
             val moderatorClientToken = registerModerator(id = moderatorId)
             val simpleUserClientToken = register()
@@ -1475,7 +1476,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product creation with multiple langs creates multiple moderation tasks with the langs`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode = UUID.randomUUID().toString()
@@ -1516,7 +1517,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product creation without a lang creates 1 moderation task without a lang`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode = UUID.randomUUID().toString()
@@ -1541,7 +1542,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `product update with new langs doesn't erase moderation tasks with unrelated langs`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode = UUID.randomUUID().toString()
@@ -1577,7 +1578,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `count_moderator_tasks cmd`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode1 = UUID.randomUUID().toString()
@@ -1631,7 +1632,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `count_moderator_tasks cmd by simple user`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val barcode = UUID.randomUUID().toString()
 
@@ -1649,7 +1650,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `count_moderator_tasks cmd doesn't include resolved tasks`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode1 = UUID.randomUUID().toString()
@@ -1693,7 +1694,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `all_moderator_tasks_data cmd with lang-related params`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode1 = UUID.randomUUID().toString()
@@ -1790,7 +1791,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `all_moderator_tasks_data cmd - provide both 'lang' and 'onlyWithNoLang'`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
             val barcode = UUID.randomUUID().toString()
@@ -1813,7 +1814,7 @@ class ModerationRequestsTest {
 
     @Test
     fun `random task assignment when moderator has known langs specified`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
             val clientToken = register()
 

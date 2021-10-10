@@ -115,8 +115,10 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductScanTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.db.UserQuizTable
 import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.workers.ShopsValidationWorker
 
 object Main {
     @JvmStatic
@@ -126,6 +128,7 @@ object Main {
             Config.initFromFile(args[configIndx+1])
         }
         io.ktor.server.cio.EngineMain.main(args)
+        ShopsValidationWorker.stop()
     }
 }
 
@@ -174,8 +177,10 @@ fun Application.module(testing: Boolean = false) {
         }
         install(HttpTimeout)
     }
+    GlobalStorage.httpClient = client
     GlobalStorage.httpTransport = CioHttpTransport(client)
 
+    ShopsValidationWorker.start(client, testing)
 
     routing {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
@@ -327,6 +332,7 @@ private fun mainServerInit() {
             ShopTable,
             ProductAtShopTable,
             ProductPresenceVoteTable,
+            ShopsValidationQueueTable,
         )
     }
 }

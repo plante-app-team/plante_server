@@ -22,6 +22,7 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
 
 const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
@@ -145,12 +146,14 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
     // Create a moderator task
     if (params.productionDb) {
         transaction {
-            ShopTable.insert {
-                it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
-                it[creationTime] = now
-                it[createdNewOsmNode] = true
-                it[creatorUserId] = user.id
-            }
+            ShopTable.insertWithoutValidation(
+                user.id,
+                OsmUID.from(OsmElementType.NODE, osmShopId),
+                now,
+                params.lat,
+                params.lon,
+                createdNewOsmNode = true
+            )
             ModeratorTaskTable.insert {
                 it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
                 it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode

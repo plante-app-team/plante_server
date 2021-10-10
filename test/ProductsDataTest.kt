@@ -1,7 +1,6 @@
 package vegancheckteam.plante_server
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.testing.withTestApplication
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,11 +10,12 @@ import vegancheckteam.plante_server.cmds.PRODUCTS_DATA_PARAMS_PAGE_SIZE
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
+import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ProductsDataTest {
     @Test
     fun `good scenario`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcodes = mutableListOf<String>()
             for (i in 1..(PRODUCTS_DATA_PARAMS_PAGE_SIZE*2.5).toInt()) {
@@ -75,7 +75,7 @@ class ProductsDataTest {
 
     @Test
     fun `no barcodes found`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcodes = listOf(
                 UUID.randomUUID().toString(),
@@ -95,7 +95,7 @@ class ProductsDataTest {
 
     @Test
     fun `some barcodes are not found`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcodes = listOf(
                 UUID.randomUUID().toString(),
@@ -121,7 +121,7 @@ class ProductsDataTest {
 
     @Test
     fun `no page parameter provided`() {
-        withTestApplication({ module(testing = true) }) {
+        withPlanteTestApplication {
             val user = register()
             val barcodes = listOf(
                 UUID.randomUUID().toString(),

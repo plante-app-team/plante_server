@@ -1,7 +1,6 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -13,6 +12,8 @@ import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.model.Shop
+import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
 
 @Location("/put_product_to_shop/")
@@ -20,7 +21,9 @@ data class PutProductToShopParams(
     val barcode: String,
     val shopOsmId: String? = null,
     val shopOsmUID: String? = null,
-    val testingNow: Long? = null)
+    val testingNow: Long? = null,
+    val lat: Double? = null,
+    val lon: Double? = null)
 
 fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolean) = transaction {
     val osmUID = OsmUID.fromEitherOf(params.shopOsmUID, params.shopOsmId)
@@ -43,13 +46,22 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
     val now = now(params.testingNow, testing)
     val existingShop = ShopTable.select { ShopTable.osmUID eq osmUID.asStr }.firstOrNull()
     val shopId = if (existingShop != null) {
+        ShopTable.maybeValidate(
+            Shop.from(existingShop),
+            user,
+            now,
+            freshLat = params.lat,
+            freshLon = params.lon)
         existingShop[ShopTable.id]
     } else {
-        val inserted = ShopTable.insert {
-            it[ShopTable.osmUID] = osmUID.asStr
-            it[creationTime] = now
-            it[creatorUserId] = user.id
-        }.resultedValues!![0]
+        val inserted = ShopTable.insertWithValidation(
+            ShopValidationReason.NEVER_VALIDATED_BEFORE,
+            user.id,
+            osmUID,
+            now,
+            params.lat,
+            params.lon,
+        )
         inserted[ShopTable.id]
     }
 
