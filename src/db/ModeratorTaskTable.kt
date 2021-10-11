@@ -5,9 +5,6 @@ import org.jetbrains.exposed.sql.Table
 object ModeratorTaskTable : Table("moderator_task") {
     val id = integer("id").autoIncrement()
     val productBarcode = text("barcode").nullable().index()
-    /**
-     * See [ShopTable.osmUID]
-     */
     val osmUID = text("osmId").nullable().index()
     val taskType = short("task_type")
     val taskSourceUserId = uuid("task_source_user_id").references(UserTable.id).index()

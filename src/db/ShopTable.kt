@@ -50,7 +50,7 @@ object ShopTable : Table("shop") {
             it[ShopTable.createdNewOsmNode] = createdNewOsmNode
         }
         ShopsValidationWorker.scheduleValidation(
-            result[id], creator, reason, creationTime
+            result[id], creator, reason
         )
         return result
     }
@@ -80,7 +80,7 @@ object ShopTable : Table("shop") {
             if (MIN_ALLOWED_SHOP_MOVE_DISTANCE <= abs(freshLat - shop.lat)
                     || MIN_ALLOWED_SHOP_MOVE_DISTANCE <= abs(freshLon - shop.lon)) {
                 ShopsValidationWorker.scheduleValidation(
-                    shop.id, user.id, ShopValidationReason.SHOP_MOVED, now
+                    shop.id, user.id, ShopValidationReason.SHOP_MOVED
                 )
             }
         }

@@ -4,15 +4,17 @@ import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import test_utils.generateFakeOsmUID
-import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
@@ -270,6 +272,34 @@ class ShopsValidationWorkerTest {
     }
 
     @Test
+    fun `shop validation sets last validation time`() {
+        val (_, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
+        val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
+        transaction {
+            ShopTable.insert {
+                it[osmUID] = shopOsmUid.asStr
+                it[creationTime] = 100
+                it[creatorUserId] = UUID.fromString(userId)
+                it[lat] = 10.0
+                it[lon] = 10.0
+                it[lastValidationTime] = null
+            }
+            val validationTimes = transaction {
+                ShopTable.selectAll().map { it[ShopTable.lastValidationTime] }
+            }
+            assertTrue(validationTimes.any { it == null })
+        }
+
+        withPlanteTestApplication {
+            ShopsValidationWorker.waitUntilIdle()
+            val validationTimes = transaction {
+                ShopTable.selectAll().map { it[ShopTable.lastValidationTime] }
+            }
+            assertFalse(validationTimes.any { it == null })
+        }
+    }
+
+    @Test
     fun `on startup DOES NOT validate valid shops`() {
         val (userToken, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
         val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
@@ -367,7 +397,6 @@ class ShopsValidationWorkerTest {
                     shopIds[index],
                     UUID.fromString(userId),
                     ShopValidationReason.SHOP_MOVED,
-                    now()
                 )
             }
             // Now schedule tasks for null coords
@@ -376,7 +405,6 @@ class ShopsValidationWorkerTest {
                     shopIds[index],
                     UUID.fromString(userId),
                     reason,
-                    now()
                 )
             }
             ShopsValidationWorker.scheduleValidation(tasks)

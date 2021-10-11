@@ -76,9 +76,9 @@ object ShopsValidationWorker : BackgroundWorkerBase(
     /**
      * Schedules validation to the worker thread
      */
-    fun scheduleValidation(shopId: Int, sourceUserId: UUID, reason: ShopValidationReason, now: Long) {
+    fun scheduleValidation(shopId: Int, sourceUserId: UUID, reason: ShopValidationReason) {
         scheduleValidation(listOf(ShopsValidationWorkerTask(
-            shopId, sourceUserId, reason, now
+            shopId, sourceUserId, reason
         )))
     }
 
@@ -90,7 +90,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
             for (task in tasks) {
                 ShopsValidationQueueTable.insert {
                     it[shopId] = task.shopId
-                    it[enqueuingTime] = task.now
+                    it[enqueuingTime] = now(testing = testing)
                     it[sourceUserId] = task.sourceUserId
                     it[reason] = task.reason.persistentCode
                 }
@@ -157,6 +157,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
             ShopTable.update( { ShopTable.id eq shopId } ) {
                 it[lat] = osmShop.lat
                 it[lon] = osmShop.lon
+                it[lastValidationTime] = now(testing = testing)
             }
             ShopsValidationQueueTable.deleteWhere {
                 ShopsValidationQueueTable.id eq task.id
@@ -170,7 +171,6 @@ data class ShopsValidationWorkerTask(
     val shopId: Int,
     val sourceUserId: UUID,
     val reason: ShopValidationReason,
-    val now: Long,
 )
 
 private data class ShopValidationTask(
