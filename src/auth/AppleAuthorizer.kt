@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import java.security.interfaces.ECPrivateKey
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.model.GenericResponse
 
@@ -22,12 +23,11 @@ object AppleAuthorizer {
             return AuthResult.Ok(idTokenString)
         }
 
-        // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("AppleAuthorizer.auth, id token: $idTokenString\n")
+        Log.i("AppleAuthorizer", "auth, id token: $idTokenString")
 
         val privateKey = PemUtils.readPrivateKeyFromFile(privateKeyFilePath, "EC") as ECPrivateKey
         val jwt = JWT.create()
-            .withHeader(mapOf("kid" to "2DLM7T56TB")) // TODO: make sure it's the proper key
+            .withHeader(mapOf("kid" to "2DLM7T56TB"))
             .withClaim("iss", "67WVPA59ZH")
             .withClaim("iat", now())
             .withClaim("exp", now() + 60 * 5)
@@ -40,8 +40,7 @@ object AppleAuthorizer {
                 "code=$idTokenString&" +
                 "client_secret=$jwt&" +
                 "grant_type=authorization_code")
-        // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("AppleAuthorizer.auth, apple response: $response\n")
+        Log.i("AppleAuthorizer", "auth, apple response: $response")
 
         @Suppress("BlockingMethodInNonBlockingContext")
         val json = GlobalStorage.jsonMapper.readValue(response, MutableMap::class.java)
@@ -51,9 +50,4 @@ object AppleAuthorizer {
         val userId = responseJwt.subject
         return AuthResult.Ok(userId)
     }
-}
-
-sealed class AppleIdOrServerError {
-    data class Ok(val appleId: String) : AppleIdOrServerError()
-    data class Error(val error: GenericResponse) : AppleIdOrServerError()
 }

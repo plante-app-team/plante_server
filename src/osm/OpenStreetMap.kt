@@ -3,6 +3,9 @@ package vegancheckteam.plante_server.osm
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.readText
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
 
@@ -13,6 +16,7 @@ object OpenStreetMap {
     }
 
     private suspend fun requestsShopsJsonFor(uids: List<OsmUID>, httpClient: HttpClient): Map<*, *> {
+        Log.i("OpenStreetMap", "requestsShopsJsonFor uids: $uids")
         val nodesIds = uids.filter { it.elementType == OsmElementType.NODE }.map { it.osmId }
         val waysIds = uids.filter { it.elementType == OsmElementType.WAY }.map { it.osmId }
         val relationsIds = uids.filter { it.elementType == OsmElementType.RELATION }.map { it.osmId }
@@ -32,11 +36,13 @@ object OpenStreetMap {
             ""
         }
         val cmd = "[out:json];($nodeCmdPiece$wayCmdPiece$relationCmdPiece);out center;"
-        // TODO(https://trello.com/c/XgGFE05M/): log info (response)
-        val response = httpClient.get<String>(
+        val response = httpClient.get<HttpResponse>(
                 urlString = "https://lz4.overpass-api.de/api/interpreter?data=$cmd")
+
+        Log.i("OpenStreetMap", "requestsShopsJsonFor response: $response")
+
         @Suppress("BlockingMethodInNonBlockingContext")
-        return ObjectMapper().readValue(response, MutableMap::class.java)
+        return ObjectMapper().readValue(response.readText(), MutableMap::class.java)
     }
 
     private fun shopsJsonToShops(json: Map<*, *>): Set<OsmShop> {
@@ -47,7 +53,7 @@ object OpenStreetMap {
         val result = mutableSetOf<OsmShop>()
         for (element in elements) {
             if (element !is Map<*, *>) {
-                // TODO(https://trello.com/c/XgGFE05M/): log error
+                Log.w("OpenStreetMap", "shopsJsonToShops, element is not a map: $element")
                 continue
             }
             val typeStr = element["type"]?.toString()
@@ -60,7 +66,7 @@ object OpenStreetMap {
                 Pair(element["lat"] as Double?, element["lon"] as Double?)
             }
             if (type == null || id == null || lat == null || lon == null) {
-                // TODO(https://trello.com/c/XgGFE05M/): log error
+                Log.w("OpenStreetMap", "shopsJsonToShops, element lacks data: $type $id $lat $lon")
                 continue
             }
             result += OsmShop(

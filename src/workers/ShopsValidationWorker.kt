@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
@@ -62,7 +63,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
             } else {
                 throw Error("Proper ShopValidationReason could not be chosen")
             }
-            // TODO(https://trello.com/c/XgGFE05M/): log error - it's an error for a shop to not be ever validated
+            Log.w("ShopsValidationWorker", "forgotten not-validated shop found: ${Shop.from(row)}")
             ShopsValidationQueueTable.insert {
                 it[shopId] = row[ShopTable.id]
                 it[enqueuingTime] = now(testing = testing)
@@ -103,9 +104,10 @@ object ShopsValidationWorker : BackgroundWorkerBase(
     }
 
     override fun doWork() {
-        print("ShopsValidationWorker.doWork") // TODO(https://trello.com/c/XgGFE05M/): log info
+        Log.i("ShopsValidationWorker", "doWork start")
         val tasks = selectTasks()
         if (tasks.isEmpty()) {
+            Log.i("ShopsValidationWorker", "doWork end - no work")
             return
         }
         val shops = tasks.map { it.shop }
@@ -116,7 +118,9 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         } else {
             shops.map { OsmShop(it.osmUID, it.lat ?: 1.0, it.lon ?: 2.0) }.toSet()
         }
+        Log.i("ShopsValidationWorker", "doWork tasks: $tasks, shops: $shops")
         validate(tasks, osmShops)
+        Log.i("ShopsValidationWorker", "doWork end")
     }
 
     private fun selectTasks(): List<ShopValidationTask> = transaction {
@@ -146,7 +150,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         for (task in tasks) {
             val osmShop = osmShopsMap[task.shop.osmUID]
             if (osmShop == null) {
-                // TODO(https://trello.com/c/XgGFE05M/): log error
+                Log.w("ShopsValidationWorker", "shop for task is not found: $task")
                 continue
             }
             val shopId = task.shop.id

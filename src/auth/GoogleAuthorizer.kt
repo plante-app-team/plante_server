@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.model.GenericResponse
 
 object GoogleAuthorizer {
@@ -19,8 +20,8 @@ object GoogleAuthorizer {
      * @return User's Google ID or null if not authed.
      */
     fun auth(idTokenString: String, httpTransport: HttpTransport): AuthResult {
-        // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("GoogleAuthorizer.auth, id token: $idTokenString\n")
+        Log.i("GoogleAuthorizer", "auth, id token: $idTokenString")
+
         val verifier = GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
             .setAudience(listOf(
                 "84481772151-aisj7p71ovque8tbsi8ribpc5iv7bpjd.apps.googleusercontent.com",
@@ -30,10 +31,9 @@ object GoogleAuthorizer {
         val idToken = verifier.verify(idTokenString)
 
         val payload = idToken?.payload
-        // TODO(https://trello.com/c/XgGFE05M/): log info
-        print("GoogleAuthorizer.auth, payload: $payload\n")
-        print("GoogleAuthorizer.auth, payload.subject: ${payload?.subject}\n")
-        print("GoogleAuthorizer.auth, payload.emailVerified: ${payload?.emailVerified}\n")
+        Log.i("GoogleAuthorizer", "payload: $payload")
+        Log.i("GoogleAuthorizer", "payload.subject: ${payload?.subject}")
+        Log.i("GoogleAuthorizer", "payload.emailVerified: ${payload?.emailVerified}")
         if (payload == null || payload.subject == null) {
             return AuthResult.Failure
         }
@@ -65,11 +65,11 @@ fun GoogleAuthorizer.authOrServerError(googleIdToken: String, testing: Boolean):
             GoogleIdOrServerError.Ok(googleAuthResult.googleId)
         }
         is GoogleAuthorizer.AuthResult.EmailNotVerified -> {
-            // TODO(https://trello.com/c/XgGFE05M/): log warning
+            Log.w("GoogleAuthorizer", "google_email_not_verified, token: $googleIdToken")
             GoogleIdOrServerError.Error(GenericResponse.failure("google_email_not_verified"))
         }
         is GoogleAuthorizer.AuthResult.Failure -> {
-            // TODO(https://trello.com/c/XgGFE05M/): log warning
+            Log.w("GoogleAuthorizer", "google_auth_failed, token: $googleIdToken")
             GoogleIdOrServerError.Error(GenericResponse.failure("google_auth_failed"))
         }
     }

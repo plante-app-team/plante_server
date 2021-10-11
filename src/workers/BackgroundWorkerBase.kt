@@ -2,6 +2,7 @@ package vegancheckteam.plante_server.workers
 
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
+import vegancheckteam.plante_server.base.Log
 
 abstract class BackgroundWorkerBase(
         private val name: String,
@@ -96,14 +97,14 @@ abstract class BackgroundWorkerBase(
                             try {
                                 syncObjet.wait()
                             } catch (e: InterruptedException) {
-                                // TODO(https://trello.com/c/XgGFE05M/): log warning
+                                Log.w("BackgroundWorkerBase ($name)", "interruption", e)
                                 // The 'started' field is used to stop
                             }
                         }
                     }
                 }
             } catch (e: Throwable) {
-                // TODO(https://trello.com/c/XgGFE05M/): log error
+                Log.e("BackgroundWorkerBase ($name)", "work threw", e)
                 if (lastBackoffDelay == null) {
                     lastBackoffDelay = backoffDelays.first()
                 } else {
@@ -124,8 +125,7 @@ abstract class BackgroundWorkerBase(
             try {
                 it.run()
             } catch (e: Throwable) {
-                // TODO(https://trello.com/c/XgGFE05M/): log error
-                // Nothing to do
+                Log.e("BackgroundWorkerBase ($name)", "idle callback threw", e)
             }
         }
     }

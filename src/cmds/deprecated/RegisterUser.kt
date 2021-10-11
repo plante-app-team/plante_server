@@ -17,7 +17,6 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.model.UserDataResponse
 import java.util.*
 import vegancheckteam.plante_server.auth.AppleAuthorizer
-import vegancheckteam.plante_server.auth.AppleIdOrServerError
 import vegancheckteam.plante_server.base.now
 
 @Location("/register_user/")

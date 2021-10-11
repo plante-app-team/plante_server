@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.base64.Base64
 import vegancheckteam.plante_server.Config
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -115,7 +116,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         """.trimIndent()
         }
         if (resp.status.value != 200) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.w("/create_shop/", "osm_error: $resp")
             return GenericResponse.failure("osm_error")
         }
         resp.readText()
@@ -137,7 +138,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         """.trimIndent()
         }
         if (resp.status.value != 200) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.w("/create_shop/", "osm_error: $resp")
             return GenericResponse.failure("osm_error")
         }
         resp.readText()
@@ -170,7 +171,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
             header("Authorization", "Basic  $osmCredentials")
         }
         if (resp.status.value != 200) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.w("/create_shop/", "osm_error: $resp")
             return GenericResponse.failure("osm_error")
         }
         resp.readText()

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.application.log
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.auth.jwt.jwt
@@ -45,11 +46,11 @@ import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
-import io.ktor.request.path
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.route
 import io.ktor.routing.routing
+import java.io.File
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -127,6 +128,22 @@ object Main {
         if (configIndx >= 0) {
             Config.initFromFile(args[configIndx+1])
         }
+
+        val logsDirPath = System.getenv("LOG_DEST")
+        if (logsDirPath != null) {
+            val logsDir = File(logsDirPath)
+            if (!logsDir.exists()) {
+                val created = logsDir.mkdirs()
+                if (!created) {
+                    throw Error("Couldn't create logs dir: $logsDirPath")
+                }
+            } else if (!logsDir.isDirectory) {
+                throw Error("Provided logs dir is not a dir: $logsDirPath")
+            }
+        } else {
+            throw Error("Must provide a value to evn var LOG_DEST - directory for logs")
+        }
+
         io.ktor.server.cio.EngineMain.main(args)
         ShopsValidationWorker.stop()
     }
@@ -142,7 +159,6 @@ fun Application.module(testing: Boolean = false) {
 
     install(CallLogging) {
         level = Level.INFO
-        filter { call -> call.request.path().startsWith("/") }
     }
 
     install(ContentNegotiation) {
@@ -173,12 +189,13 @@ fun Application.module(testing: Boolean = false) {
 
     val client = HttpClient(CIO) {
         install(Logging) {
-            level = LogLevel.HEADERS
+            level = LogLevel.INFO
         }
         install(HttpTimeout)
     }
     GlobalStorage.httpClient = client
     GlobalStorage.httpTransport = CioHttpTransport(client)
+    GlobalStorage.logger = log
 
     ShopsValidationWorker.start(client, testing)
 

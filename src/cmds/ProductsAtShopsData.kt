@@ -5,6 +5,7 @@ import kotlin.collections.Map.Entry
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
@@ -71,11 +72,11 @@ fun productsAtShopsData(params: ProductsAtShopsDataParams) = transaction {
         val barcode = barcodesMap[productId]
         val voteTime = row[ProductPresenceVoteTable.voteTime]
         if (shopOsmUID == null || barcode == null) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.e("/products_at_shops_data/", "code error 1 ($shopOsmUID $barcode)")
             continue
         }
         if (shopOsmUID !in result) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.e("/products_at_shops_data/", "code error 2 ($result)")
             continue
         }
         if (shopOsmUID !in voteTimeAtShopAtProduct) {

@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonValue
+import vegancheckteam.plante_server.base.Log
 
 class OsmUID private constructor(val asStr: String) {
     companion object {
@@ -21,12 +22,12 @@ class OsmUID private constructor(val asStr: String) {
     val elementType by lazy {
         var code = asStr.substring(0, 1).toShortOrNull()
         if (code == null) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.e("OsmUID", "Invalid Osm UID string: $asStr")
             code = OsmElementType.NODE.persistentCode
         }
         var type = OsmElementType.fromPersistentCode(code as Short)
         if (type == null) {
-            // TODO(https://trello.com/c/XgGFE05M/): log error
+            Log.e("OsmUID", "Invalid Osm UID string: $asStr")
             type = OsmElementType.NODE
         }
         type

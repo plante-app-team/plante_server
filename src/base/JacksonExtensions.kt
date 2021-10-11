@@ -8,10 +8,10 @@ inline fun <reified T> ObjectMapper.readOrNull(content: String): T? {
     return try {
         readValue(content, T::class.java)
     } catch (e: JsonParseException) {
-        // TODO(https://trello.com/c/XgGFE05M/): log warning
+        Log.w("ObjectMapper.readOrNull", "JsonParseException", e)
         null
     } catch (e: JsonMappingException) {
-        // TODO(https://trello.com/c/XgGFE05M/): log warning
+        Log.w("ObjectMapper.readOrNull", "JsonMappingException", e)
         null
     }
 }

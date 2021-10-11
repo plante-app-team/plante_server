@@ -7,6 +7,7 @@ import java.util.*
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.Config
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.User
 
@@ -51,13 +52,14 @@ object JwtController {
             }.firstOrNull()
         }
         if (userRow == null) {
-            // TODO(https://trello.com/c/XgGFE05M/): log warning
+            Log.w("JwtController", "user not found with $userIdStr")
             return null
         }
 
         val user = User.from(userRow)
         if (loginGeneration != user.loginGeneration) {
-            // TODO(https://trello.com/c/XgGFE05M/): log warning
+            Log.w("JwtController",
+                "user found but generation differs: $userIdStr, $loginGeneration vs ${user.loginGeneration}")
             return null
         }
 
