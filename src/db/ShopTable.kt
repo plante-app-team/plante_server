@@ -30,7 +30,7 @@ object ShopTable : Table("shop") {
     val productsCount = integer("products_count").default(0)
     val lat = double("lat").nullable().index()
     val lon = double("lon").nullable().index()
-    val lastValidationTime = long("last_validation_time").nullable().index()
+    val lastAutoValidationTime = long("last_auto_validation_time").nullable().index()
     override val primaryKey = PrimaryKey(id)
 
     fun insertWithValidation(

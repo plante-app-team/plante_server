@@ -10,7 +10,7 @@ enum class ModeratorTaskType(
     USER_REPORT("user_report", 1, 1),
     PRODUCT_CHANGE("product_change", 2, 3),
     OSM_SHOP_CREATION("osm_shop_creation", 3, 2),
-    OSM_SHOP_NEEDS_VALIDATION("osm_shop_needs_validation", 4, 3);
+    OSM_SHOP_NEEDS_MANUAL_VALIDATION("osm_shop_needs_manual_validation", 4, 3);
     companion object {
         fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
     }

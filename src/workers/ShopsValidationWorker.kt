@@ -4,8 +4,11 @@ import com.google.common.annotations.VisibleForTesting
 import io.ktor.client.HttpClient
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -17,8 +20,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
+import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.osm.OpenStreetMap
@@ -45,24 +50,31 @@ object ShopsValidationWorker : BackgroundWorkerBase(
     }
 
     private fun scheduleValidationOfForgottenShops() = transaction {
-        val invalidRow = (ShopTable.lastValidationTime eq null) or
+        val invalidShop = (ShopTable.lastAutoValidationTime eq null) or
                 (ShopTable.lat eq null) or
                 (ShopTable.lon eq null)
-        val notValidated = ShopTable.select {
-            invalidRow and
-                notExists(ShopsValidationQueueTable.select {
-                    ShopsValidationQueueTable.shopId eq ShopTable.id
-                })
-        }
+        val notBeingManuallyModerated = (ModeratorTaskTable.taskType.isNull()) or (ModeratorTaskTable.taskType neq
+                ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.persistentCode)
+        val autoValidationNotScheduled = notExists(ShopsValidationQueueTable.select {
+            ShopsValidationQueueTable.shopId eq ShopTable.id
+        })
+        val notValidated = ShopTable.join(
+                ModeratorTaskTable,
+                joinType = JoinType.LEFT,
+                onColumn = ShopTable.osmUID,
+                otherColumn = ModeratorTaskTable.osmUID).select(
+            invalidShop and autoValidationNotScheduled and notBeingManuallyModerated
+        )
 
         for (row in notValidated) {
             val reason = if (row[ShopTable.lat] == null || row[ShopTable.lon] == null) {
                 ShopValidationReason.COORDS_WERE_NULL
-            } else if (row[ShopTable.lastValidationTime] == null) {
+            } else if (row[ShopTable.lastAutoValidationTime] == null) {
                 ShopValidationReason.NEVER_VALIDATED_BEFORE
             } else {
                 throw Error("Proper ShopValidationReason could not be chosen")
             }
+
             Log.w("ShopsValidationWorker", "forgotten not-validated shop found: ${Shop.from(row)}")
             ShopsValidationQueueTable.insert {
                 it[shopId] = row[ShopTable.id]
@@ -149,15 +161,24 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         val osmShopsMap = osmShops.associateBy { it.uid }
         for (task in tasks) {
             val osmShop = osmShopsMap[task.shop.osmUID]
-            if (osmShop == null) {
-                Log.w("ShopsValidationWorker", "shop for task is not found: $task")
-                continue
-            }
-            val shopId = task.shop.id
-            ShopTable.update( { ShopTable.id eq shopId } ) {
-                it[lat] = osmShop.lat
-                it[lon] = osmShop.lon
-                it[lastValidationTime] = now(testing = testing)
+            if (osmShop != null) {
+                ShopTable.update( { ShopTable.id eq task.shop.id } ) {
+                    it[lat] = osmShop.lat
+                    it[lon] = osmShop.lon
+                    it[lastAutoValidationTime] = now(testing = testing)
+                }
+            } else {
+                Log.w("ShopsValidationWorker", "shop for task is not found, creating moderator task. $task")
+                ModeratorTaskTable.insert {
+                    it[osmUID] = task.shop.osmUID.asStr
+                    it[taskType] = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.persistentCode
+                    it[taskSourceUserId] = task.sourceUserId
+                    it[creationTime] = now(testing = testing)
+                }
+                // Auto-moderation created manual moderation task
+                ShopTable.update( { ShopTable.id eq task.shop.id } ) {
+                    it[lastAutoValidationTime] = now(testing = testing)
+                }
             }
             ShopsValidationQueueTable.deleteWhere {
                 ShopsValidationQueueTable.id eq task.id

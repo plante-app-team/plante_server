@@ -12,6 +12,6 @@ class ModeratorTaskTypeTest {
         assertEquals(1, ModeratorTaskType.USER_REPORT.persistentCode)
         assertEquals(2, ModeratorTaskType.PRODUCT_CHANGE.persistentCode)
         assertEquals(3, ModeratorTaskType.OSM_SHOP_CREATION.persistentCode)
-        assertEquals(4, ModeratorTaskType.OSM_SHOP_NEEDS_VALIDATION.persistentCode)
+        assertEquals(4, ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.persistentCode)
     }
 }

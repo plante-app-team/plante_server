@@ -1,16 +1,21 @@
 package vegancheckteam.plante_server.workers
 
+import io.ktor.server.testing.TestApplicationCall
 import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -21,6 +26,7 @@ import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
+import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.ShopValidationReason
@@ -29,6 +35,7 @@ import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
+import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ShopsValidationWorkerTest {
@@ -193,7 +200,7 @@ class ShopsValidationWorkerTest {
     }
 
     @Test
-    fun `when backend creates a shop in OSM such shop is not validated`() {
+    fun `when backend creates a shop in OSM such a shop is not validated`() {
         withPlanteTestApplication {
             val fakeOsmResponses = String(
                 Base64.getEncoder().encode(
@@ -226,7 +233,7 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = BAD_COORD
                 it[lon] = BAD_COORD
-                it[lastValidationTime] = null
+                it[lastAutoValidationTime] = null
             }
         }
 
@@ -254,7 +261,7 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = null
                 it[lon] = null
-                it[lastValidationTime] = 123
+                it[lastAutoValidationTime] = 123
             }
         }
 
@@ -282,10 +289,10 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = 10.0
                 it[lon] = 10.0
-                it[lastValidationTime] = null
+                it[lastAutoValidationTime] = null
             }
             val validationTimes = transaction {
-                ShopTable.selectAll().map { it[ShopTable.lastValidationTime] }
+                ShopTable.selectAll().map { it[ShopTable.lastAutoValidationTime] }
             }
             assertTrue(validationTimes.any { it == null })
         }
@@ -293,7 +300,7 @@ class ShopsValidationWorkerTest {
         withPlanteTestApplication {
             ShopsValidationWorker.waitUntilIdle()
             val validationTimes = transaction {
-                ShopTable.selectAll().map { it[ShopTable.lastValidationTime] }
+                ShopTable.selectAll().map { it[ShopTable.lastAutoValidationTime] }
             }
             assertFalse(validationTimes.any { it == null })
         }
@@ -310,7 +317,7 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = BAD_COORD
                 it[lon] = BAD_COORD
-                it[lastValidationTime] = 123
+                it[lastAutoValidationTime] = 123
             }
         }
 
@@ -342,14 +349,14 @@ class ShopsValidationWorkerTest {
                     it[creatorUserId] = UUID.fromString(userId)
                     it[lat] = null
                     it[lon] = null
-                    it[lastValidationTime] = null
+                    it[lastAutoValidationTime] = null
                 }
             }
         }
 
         withPlanteTestApplication {
             ShopsValidationWorker.waitUntilIdle()
-            assertEquals(requestedOsmUidsBatches.size, 3)
+            assertEquals(3, requestedOsmUidsBatches.size)
             assertEquals(shopOsmUids.toSet(), allRequestedOsmUids.toSet())
 
             val shopsDataRequestBody = """ { "osm_uids": [ ${shopOsmUids.joinToString(",") { "\"$it\"" }} ] } """
@@ -382,7 +389,7 @@ class ShopsValidationWorkerTest {
                     it[creatorUserId] = UUID.fromString(userId)
                     it[lat] = 123.0
                     it[lon] = 123.0
-                    it[lastValidationTime] = 123
+                    it[lastAutoValidationTime] = 123
                 }
                 shopIds += insertedShop[ShopTable.id]
             }
@@ -416,6 +423,117 @@ class ShopsValidationWorkerTest {
         }
     }
 
+    @Test
+    fun `when OSM doesn't give any info about a shop it's scheduled to be manually validated`() {
+        ShopsValidationWorker.osmForTests = { uids ->
+            requestedOsmUidsBatches.add(uids.map { it.osmUID })
+            emptySet()
+        }
+
+        withPlanteTestApplication {
+            val moderator = registerModerator()
+            // No moderation tasks at start
+            var tasks = moderatorTasksFrom(authedGet(moderator, "/all_moderator_tasks_data/"))
+            assertEquals(0, tasks.size, tasks.toString())
+
+            // Put a product
+            val barcode = UUID.randomUUID().toString()
+            val osmUid = generateFakeOsmUID()
+            val clientToken = register()
+            val map = authedGet(clientToken, "/put_product_to_shop/?", mapOf(
+                "barcode" to barcode,
+                "shopOsmUID" to osmUid.asStr)).jsonMap()
+            assertEquals("ok", map["result"])
+            ShopsValidationWorker.waitUntilIdle()
+
+            // Shop is expected to be auto-validated
+            assertEquals(1, requestedOsmUidsBatches.size)
+            val shopRow = transaction {
+                ShopTable.select(ShopTable.osmUID eq osmUid.asStr).single()
+            }
+            assertNotNull(shopRow[ShopTable.lastAutoValidationTime])
+            // But its coords are still expected to be null
+            assertNull(shopRow[ShopTable.lat])
+            assertNull(shopRow[ShopTable.lon])
+
+            // Moderation tasks is expected to be created
+            tasks = moderatorTasksFrom(
+                authedGet(moderator, "/all_moderator_tasks_data/"),
+                withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
+            val task = tasks.single()
+            assertEquals(osmUid.asStr, task["osm_uid"])
+            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.taskName, task["task_type"])
+        }
+    }
+
+    @Test
+    fun `when OSM gives info about a shop it's NOT scheduled to be manually validated`() {
+        withPlanteTestApplication {
+            // Put a product
+            val barcode = UUID.randomUUID().toString()
+            val osmUid = generateFakeOsmUID()
+            val clientToken = register()
+            val map = authedGet(clientToken, "/put_product_to_shop/?", mapOf(
+                "barcode" to barcode,
+                "shopOsmUID" to osmUid.asStr)).jsonMap()
+            assertEquals("ok", map["result"])
+            ShopsValidationWorker.waitUntilIdle()
+
+            // Moderation tasks is expected to be NOT created
+            val moderator = registerModerator()
+            val tasks = moderatorTasksFrom(
+                authedGet(moderator, "/all_moderator_tasks_data/"),
+                withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
+            assertTrue(tasks.isEmpty(), tasks.toString())
+        }
+    }
+
+    @Test
+    fun `manually validated shops are not being auto-revalidated`() {
+        ShopsValidationWorker.osmForTests = { uids ->
+            requestedOsmUidsBatches.add(uids.map { it.osmUID })
+            emptySet()
+        }
+
+        withPlanteTestApplication {
+            // Put a product
+            val barcode = UUID.randomUUID().toString()
+            val osmUid = generateFakeOsmUID()
+            val clientToken = register()
+            val map = authedGet(clientToken, "/put_product_to_shop/?", mapOf(
+                "barcode" to barcode,
+                "shopOsmUID" to osmUid.asStr)).jsonMap()
+            assertEquals("ok", map["result"])
+            ShopsValidationWorker.waitUntilIdle()
+
+            // Moderation tasks is expected to be created
+            val moderator = registerModerator()
+            val tasks = moderatorTasksFrom(
+                authedGet(moderator, "/all_moderator_tasks_data/"),
+                withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
+            val task = tasks.single()
+            assertEquals(osmUid.asStr, task["osm_uid"])
+            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.taskName, task["task_type"])
+
+            // There was only 1 validation
+            assertEquals(1, requestedOsmUidsBatches.size)
+        }
+
+        // Now let's restart the app so that the validation worker would also restart
+        withPlanteTestApplication {
+            // The shop is not expected to not be re-auto-validated
+            ShopsValidationWorker.waitUntilIdle()
+            assertEquals(1, requestedOsmUidsBatches.size)
+
+            // Moderation task is still expected to be 1
+            val moderator = registerModerator()
+            val tasks = moderatorTasksFrom(
+                authedGet(moderator, "/all_moderator_tasks_data/"),
+                withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
+            assertEquals(1, tasks.size, tasks.toString())
+        }
+    }
+
     private fun shopFrom(map: Map<*, *>, shopOsmUid: OsmUID): Map<*, *> {
         val shops = map["results_v2"] as Map<*, *>
         assertEquals(1, shops.size, shops.toString())
@@ -425,6 +543,15 @@ class ShopsValidationWorkerTest {
     private fun shopsFrom(map: Map<*, *>): List<Map<*, *>> {
         val shops = map["results_v2"] as Map<*, *>
         return shops.values.map { it as Map<*, *> }
+    }
+
+    private fun moderatorTasksFrom(call: TestApplicationCall, withType: ModeratorTaskType? = null): List<Map<*, *>> {
+        val allTasks = call.jsonMap()["tasks"] as List<*>
+        var result = allTasks.map { it as Map<*, *> }
+        if (withType != null) {
+            result = result.filter { it["task_type"] == withType.taskName }
+        }
+        return result
     }
 }
 

@@ -95,6 +95,7 @@ abstract class BackgroundWorkerBase(
                                 return
                             }
                             try {
+                                Log.i("BackgroundWorkerBase ($name)", "waiting for new work")
                                 syncObjet.wait()
                             } catch (e: InterruptedException) {
                                 Log.w("BackgroundWorkerBase ($name)", "interruption", e)
