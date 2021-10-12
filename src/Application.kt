@@ -72,6 +72,7 @@ import vegancheckteam.plante_server.cmds.ProductsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
 import vegancheckteam.plante_server.cmds.ShopsDataParams
 import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
+import vegancheckteam.plante_server.cmds.ShopsInBoundsDataParams
 import vegancheckteam.plante_server.cmds.SignOutAllParams
 import vegancheckteam.plante_server.cmds.UpdateUserDataParams
 import vegancheckteam.plante_server.cmds.UserDataParams
@@ -106,6 +107,7 @@ import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.productsData
 import vegancheckteam.plante_server.cmds.putProductToShop
 import vegancheckteam.plante_server.cmds.shopsData
+import vegancheckteam.plante_server.cmds.shopsInBoundsData
 import vegancheckteam.plante_server.cmds.signOutAll
 import vegancheckteam.plante_server.cmds.updateUserData
 import vegancheckteam.plante_server.cmds.userData
@@ -312,6 +314,9 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<ShopsDataParams> { _, _ ->
                 val body = call.receive<ShopsDataRequestBody>()
                 call.respond(shopsData(body))
+            }
+            getAuthed<ShopsInBoundsDataParams> { params, _ ->
+                call.respond(shopsInBoundsData(params))
             }
 
             route("$OFF_PROXY_PATH/{...}", HttpMethod.Get) {

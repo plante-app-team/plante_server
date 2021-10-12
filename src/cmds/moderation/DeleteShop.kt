@@ -1,17 +1,14 @@
 package vegancheckteam.plante_server.cmds.moderation
 
 import io.ktor.locations.Location
-import java.util.UUID
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
-import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
