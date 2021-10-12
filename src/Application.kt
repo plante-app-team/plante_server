@@ -86,6 +86,7 @@ import vegancheckteam.plante_server.cmds.mobileAppConfigData
 import vegancheckteam.plante_server.cmds.moderation.ChangeModeratorTaskLangParams
 import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
+import vegancheckteam.plante_server.cmds.moderation.DeleteShopParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
@@ -93,6 +94,7 @@ import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReason
 import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
+import vegancheckteam.plante_server.cmds.moderation.deleteShop
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.offProxyGet
@@ -288,6 +290,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
+            }
+            getAuthed<DeleteShopParams> { params, user ->
+                call.respond(deleteShop(params, user))
             }
             getAuthed<PutProductToShopParams> { params, user ->
                 call.respond(putProductToShop(params, user, testing))
