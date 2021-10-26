@@ -47,6 +47,7 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
 import io.ktor.request.receive
+import io.ktor.request.uri
 import io.ktor.response.respond
 import io.ktor.routing.route
 import io.ktor.routing.routing
@@ -163,6 +164,13 @@ fun Application.module(testing: Boolean = false) {
 
     install(CallLogging) {
         level = Level.INFO
+        format { call ->
+            val responseStatus = call.response.status() ?: "Unhandled"
+            val uri = call.request.uri
+            val user = call.userPrincipal?.user
+            val userStr = user?.let { "${it.id} (${it.name})" } ?: "{Invalid}"
+            "User: $userStr, req: $uri, resp status: $responseStatus"
+        }
     }
 
     install(ContentNegotiation) {
