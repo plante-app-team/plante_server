@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -16,6 +17,7 @@ import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.statements.StatementInterceptor
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.base.Log
@@ -107,8 +109,14 @@ object ShopsValidationWorker : BackgroundWorkerBase(
                     it[reason] = task.reason.persistentCode
                 }
             }
+            // We need to make sure the worker is awakened AFTER
+            // the transaction is executed - otherwise it might
+            // wake up, see no tasks, go to sleep, and only then the
+            // task would appear in DB.
+            afterTransactionCommit {
+                wakeUp()
+            }
         }
-        wakeUp()
     }
 
     override fun hasWork(): Boolean = transaction {
@@ -209,5 +217,15 @@ private data class ShopValidationTask(
                 sourceUserId = tableRow[ShopsValidationQueueTable.sourceUserId],
                 reason = tableRow[ShopsValidationQueueTable.reason])
         }
+    }
+}
+
+fun Transaction.afterTransactionCommit(fn: () -> Unit) {
+    registerInterceptor(AfterCommitInterceptor(fn))
+}
+
+private class AfterCommitInterceptor(val fn: () -> Unit) : StatementInterceptor {
+    override fun afterCommit() {
+        fn.invoke()
     }
 }
