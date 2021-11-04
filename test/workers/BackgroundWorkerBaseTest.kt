@@ -2,12 +2,21 @@ package vegancheckteam.plante_server.workers
 
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.logging.Logger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.junit.Before
 import org.junit.Test
+import org.slf4j.helpers.NOPLogger
+import vegancheckteam.plante_server.GlobalStorage
 
 class BackgroundWorkerBaseTest {
+    @Before
+    fun setUp() {
+        GlobalStorage.logger = NOPLogger.NOP_LOGGER
+    }
+
     @Test
     fun `can start and stop`() {
         val worker = TestedWorker()

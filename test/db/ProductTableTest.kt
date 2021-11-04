@@ -21,8 +21,6 @@ class ProductTableTest {
             transaction {
                 val values1 = ProductTable.insert {
                     it[ProductTable.barcode] = barcode
-                    it[vegetarianStatus] = VegStatus.UNKNOWN.persistentCode
-                    it[vegetarianStatusSource] = VegStatusSource.UNKNOWN.persistentCode
                     it[veganStatus] = VegStatus.UNKNOWN.persistentCode
                     it[veganStatusSource] = VegStatusSource.UNKNOWN.persistentCode
                 }.resultedValues
@@ -32,8 +30,6 @@ class ProductTableTest {
                 transaction {
                     val values2 = ProductTable.insert {
                         it[ProductTable.barcode] = barcode
-                        it[vegetarianStatus] = VegStatus.POSITIVE.persistentCode
-                        it[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                         it[veganStatus] = VegStatus.POSITIVE.persistentCode
                         it[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                     }.resultedValues

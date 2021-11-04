@@ -804,7 +804,7 @@ class ProductsPresenceVotingTests {
             var map = authedGet(user, "/create_update_product/?barcode=${barcode1}").jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(user, "/create_update_product/?barcode=${barcode2}" +
-                    "&vegetarianStatus=positive&veganStatus=possible").jsonMap()
+                    "&veganStatus=possible").jsonMap()
             assertEquals("ok", map["result"])
 
             var now = 123

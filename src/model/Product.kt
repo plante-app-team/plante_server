@@ -12,18 +12,10 @@ data class Product(
     val id: Int,
     @JsonProperty("barcode")
     val barcode: String,
-    @JsonProperty("vegetarian_status")
-    val vegetarianStatus: VegStatus?,
     @JsonProperty("vegan_status")
     val veganStatus: VegStatus?,
-    @JsonProperty("vegetarian_status_source")
-    val vegetarianStatusSource: VegStatusSource?,
     @JsonProperty("vegan_status_source")
     val veganStatusSource: VegStatusSource?,
-    @JsonProperty("moderator_vegetarian_choice_reason")
-    val moderatorVegetarianChoiceReason: Short?,
-    @JsonProperty("moderator_vegetarian_sources_text")
-    val moderatorVegetarianSourcesText: String?,
     @JsonProperty("moderator_vegan_choice_reason")
     val moderatorVeganChoiceReason: Short?,
     @JsonProperty("moderator_vegan_sources_text")
@@ -33,12 +25,8 @@ data class Product(
         fun from(tableRow: ResultRow) = Product(
             id = tableRow[ProductTable.id],
             barcode = tableRow[ProductTable.barcode],
-            vegetarianStatus = vegStatusFrom(tableRow[ProductTable.vegetarianStatus]),
             veganStatus = vegStatusFrom(tableRow[ProductTable.veganStatus]),
-            vegetarianStatusSource = vegStatusSourceFrom(tableRow[ProductTable.vegetarianStatusSource]),
             veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]),
-            moderatorVegetarianChoiceReason = tableRow[ProductTable.moderatorVegetarianChoiceReason],
-            moderatorVegetarianSourcesText = tableRow[ProductTable.moderatorVegetarianSourcesText],
             moderatorVeganChoiceReason = tableRow[ProductTable.moderatorVeganChoiceReason],
             moderatorVeganSourcesText = tableRow[ProductTable.moderatorVeganSourcesText])
         private fun vegStatusFrom(code: Short?) = code?.let { VegStatus.fromPersistentCode(it) }

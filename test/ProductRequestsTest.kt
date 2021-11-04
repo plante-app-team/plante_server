@@ -31,25 +31,21 @@ class ProductRequestsTest {
 
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative"
+                        + "barcode=${barcode}&veganStatus=negative"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("positive", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("negative", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
         }
@@ -68,8 +64,6 @@ class ProductRequestsTest {
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
         }
@@ -88,29 +82,13 @@ class ProductRequestsTest {
                 map = authedGet(
                     clientToken, "/create_update_product/?"
                             + "barcode=${barcode}"
-                            + "&vegetarianStatus=${status.statusName}"
                             + "&veganStatus=${status.statusName}"
                 ).jsonMap()
                 assertEquals("ok", map["result"])
 
                 map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-                assertEquals(status.statusName, map["vegetarian_status"])
                 assertEquals(status.statusName, map["vegan_status"])
             }
-        }
-    }
-
-    @Test
-    fun `invalid vegetarian statuses`() {
-        withPlanteTestApplication {
-            val clientToken = register()
-            val barcode = UUID.randomUUID().toString()
-
-            val map = authedGet(
-                clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=nope"
-            ).jsonMap()
-            assertEquals("invalid_veg_status", map["error"])
         }
     }
 
@@ -139,22 +117,20 @@ class ProductRequestsTest {
 
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=positive"
+                        + "barcode=${barcode}&veganStatus=positive"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("positive", map["vegetarian_status"])
             assertEquals("positive", map["vegan_status"])
 
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=possible"
+                        + "barcode=${barcode}"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("possible", map["vegetarian_status"])
             assertEquals("positive", map["vegan_status"])
         }
     }
@@ -172,7 +148,7 @@ class ProductRequestsTest {
             val barcode = UUID.randomUUID().toString()
             map = authedGet(
                 userClientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -180,7 +156,7 @@ class ProductRequestsTest {
 
             map = authedGet(
                 userClientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative"
+                        + "barcode=${barcode}&veganStatus=negative"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -199,7 +175,6 @@ class ProductRequestsTest {
             assertTrue(timeStart < time1 && time1 < ZonedDateTime.now().toEpochSecond())
             val updatedProduct1 = change1["updated_product"] as Map<*, *>
             assertEquals(barcode, updatedProduct1["barcode"])
-            assertEquals("unknown", updatedProduct1["vegetarian_status"])
             assertEquals("unknown", updatedProduct1["vegan_status"])
 
             val change2 = changes[1] as Map<*, *>
@@ -209,7 +184,6 @@ class ProductRequestsTest {
             assertTrue(timeStart < time2 && time2 < ZonedDateTime.now().toEpochSecond())
             val updatedProduct2 = change2["updated_product"] as Map<*, *>
             assertEquals(barcode, updatedProduct2["barcode"])
-            assertEquals("positive", updatedProduct2["vegetarian_status"])
             assertEquals("negative", updatedProduct2["vegan_status"])
 
             assertTrue(time1 < time2, "$time1 $time2")
@@ -224,7 +198,7 @@ class ProductRequestsTest {
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -242,12 +216,12 @@ class ProductRequestsTest {
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -266,7 +240,7 @@ class ProductRequestsTest {
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -275,12 +249,12 @@ class ProductRequestsTest {
             for (index in 0 until MAX_PRODUCT_CHANGES_COUNT) {
                 map = authedGet(
                     clientToken, "/create_update_product/?"
-                            + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative"
+                            + "barcode=${barcode}&veganStatus=negative"
                 ).jsonMap()
                 assertEquals("ok", map["result"])
                 map = authedGet(
                     clientToken, "/create_update_product/?"
-                            + "barcode=${barcode}&vegetarianStatus=negative&veganStatus=positive"
+                            + "barcode=${barcode}&veganStatus=positive"
                 ).jsonMap()
                 assertEquals("ok", map["result"])
             }
@@ -295,7 +269,6 @@ class ProductRequestsTest {
             for (change in changes) {
                 val changeMap = change as Map<*, *>
                 val updatedProduct = changeMap["updated_product"] as Map<*, *>
-                assertNotEquals("unknown", updatedProduct["vegetarian_status"])
                 assertNotEquals("unknown", updatedProduct["vegan_status"])
             }
         }
@@ -348,28 +321,26 @@ class ProductRequestsTest {
             // Create product 1
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown"
+                        + "barcode=${barcode1}&veganStatus=unknown"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             // Create product 2
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode2}&vegetarianStatus=positive&veganStatus=positive"
+                        + "barcode=${barcode2}&veganStatus=positive"
             ).jsonMap()
             assertEquals("ok", map["result"])
             // Update product 2
             map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode2}&vegetarianStatus=negative&veganStatus=negative"
+                        + "barcode=${barcode2}&veganStatus=negative"
             ).jsonMap()
             assertEquals("ok", map["result"])
 
             // Ensure product 1 has same data as during creation
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
         }

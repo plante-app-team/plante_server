@@ -55,7 +55,7 @@ class ShopRequestsTest {
             var map = authedGet(clientToken, "/create_update_product/?barcode=${barcode1}").jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(clientToken, "/create_update_product/?barcode=${barcode2}" +
-                    "&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                    "&veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode1}&shopOsmUID=$shop1").jsonMap()
@@ -80,9 +80,7 @@ class ShopRequestsTest {
             assertTrue(shop2Barcodes.contains(barcode2))
 
             val shop2Product = shop2Products[0]
-            assertEquals("positive", shop2Product["vegetarian_status"])
             assertEquals("negative", shop2Product["vegan_status"])
-            assertEquals("community", shop2Product["vegetarian_status_source"])
             assertEquals("community", shop2Product["vegan_status_source"])
         }
     }
@@ -101,8 +99,6 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 

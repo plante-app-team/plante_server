@@ -11,8 +11,6 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 @Location("/specify_moderator_choice_reason/")
 data class SpecifyModeratorChoiceReasonParams(
     val barcode: String,
-    val vegetarianChoiceReason: Int? = null,
-    val vegetarianSourcesText: String? = null,
     val veganChoiceReason: Int? = null,
     val veganSourcesText: String? = null)
 
@@ -22,8 +20,6 @@ fun specifyModeratorChoiceReasonParams(params: SpecifyModeratorChoiceReasonParam
     }
     transaction {
         ProductTable.update({ ProductTable.barcode eq params.barcode }) {
-            it[moderatorVegetarianChoiceReason] = params.vegetarianChoiceReason?.toShort()
-            it[moderatorVegetarianSourcesText] = params.vegetarianSourcesText
             it[moderatorVeganChoiceReason] = params.veganChoiceReason?.toShort()
             it[moderatorVeganSourcesText] = params.veganSourcesText
         }

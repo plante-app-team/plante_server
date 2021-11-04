@@ -13,7 +13,6 @@ import vegancheckteam.plante_server.model.VegStatusSource
 @Location("/moderate_product_veg_statuses/")
 data class ModerateProductVegStatusesParams(
     val barcode: String,
-    val vegetarianStatus: String,
     val veganStatus: String)
 
 fun moderateProductVegStatuses(params: ModerateProductVegStatusesParams, user: User): Any {
@@ -21,19 +20,13 @@ fun moderateProductVegStatuses(params: ModerateProductVegStatusesParams, user: U
         return GenericResponse.failure("denied")
     }
 
-    val vegetarianStatus = VegStatus.fromStringName(params.vegetarianStatus)
     val veganStatus = VegStatus.fromStringName(params.veganStatus)
-    if (vegetarianStatus == null) {
-        return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.vegetarianStatus}")
-    }
     if (veganStatus == null) {
         return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.veganStatus}")
     }
 
     val updated = transaction {
         ProductTable.update({ ProductTable.barcode eq params.barcode }) {
-            it[ProductTable.vegetarianStatus] = vegetarianStatus.persistentCode
-            it[vegetarianStatusSource] = VegStatusSource.MODERATOR.persistentCode
             it[ProductTable.veganStatus] = veganStatus.persistentCode
             it[veganStatusSource] = VegStatusSource.MODERATOR.persistentCode
         }

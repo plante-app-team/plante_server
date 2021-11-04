@@ -33,7 +33,6 @@ class ChangeModeratorTaskLangTest {
             // Create a product
             var map = authedGet(simpleUserClientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "langs" to "en")).jsonMap()
             assertEquals("ok", map["result"])
@@ -85,7 +84,6 @@ class ChangeModeratorTaskLangTest {
             // Create a product
             var map = authedGet(simpleUserClientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "langs" to "en")).jsonMap()
             assertEquals("ok", map["result"])

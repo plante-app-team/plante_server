@@ -19,8 +19,6 @@ fun clearProductVegStatuses(params: ClearProductVegStatusesParams, user: User): 
 
     transaction {
         ProductTable.update({ ProductTable.barcode eq params.barcode }) {
-            it[vegetarianStatus] = null
-            it[vegetarianStatusSource] = null
             it[veganStatus] = null
             it[veganStatusSource] = null
         }

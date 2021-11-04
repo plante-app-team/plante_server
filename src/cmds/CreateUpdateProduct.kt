@@ -25,16 +25,12 @@ import vegancheckteam.plante_server.base.now
 @Location("/create_update_product/")
 data class CreateUpdateProductParams(
     val barcode: String,
-    val vegetarianStatus: String? = null,
+    val vegetarianStatus: String? = null, // unused, but old clients still send
     val veganStatus: String? = null,
     val langs: List<String>? = null)
 
 fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericResponse {
-    val vegetarianStatus = params.vegetarianStatus?.let { VegStatus.fromStringName(it) }
     val veganStatus = params.veganStatus?.let { VegStatus.fromStringName(it) }
-    if (vegetarianStatus == null && params.vegetarianStatus != null) {
-        return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.vegetarianStatus}")
-    }
     if (veganStatus == null && params.veganStatus != null) {
         return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.veganStatus}")
     }
@@ -46,18 +42,12 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
         val productRow = if (oldProduct == null) {
             ProductTable.insert { row ->
                 row[barcode] = params.barcode
-                row[ProductTable.vegetarianStatus] = (vegetarianStatus ?: VegStatus.UNKNOWN).persistentCode
-                row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                 row[ProductTable.veganStatus] = (veganStatus ?: VegStatus.UNKNOWN).persistentCode
                 row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                 row[creatorUserId] = user.id
             }.resultedValues!![0]
         } else {
             ProductTable.update({ barcode eq params.barcode }) { row ->
-                if (vegetarianStatus != null) {
-                    row[ProductTable.vegetarianStatus] = vegetarianStatus.persistentCode
-                    row[vegetarianStatusSource] = VegStatusSource.COMMUNITY.persistentCode
-                }
                 if (veganStatus != null) {
                     row[ProductTable.veganStatus] = veganStatus.persistentCode
                     row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode

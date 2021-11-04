@@ -59,7 +59,7 @@ class ModerationRequestsTest {
 
             // Create a product
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             // Now there is a task
@@ -80,7 +80,7 @@ class ModerationRequestsTest {
 
             // Update the product
             map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=positive").jsonMap()
+                    + "barcode=${barcode}&veganStatus=positive").jsonMap()
             assertEquals("ok", map["result"])
 
             // Now there is a task again
@@ -103,11 +103,11 @@ class ModerationRequestsTest {
 
             // Create a product
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
             // Update the product
             map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=positive").jsonMap()
+                    + "barcode=${barcode}&veganStatus=positive").jsonMap()
             assertEquals("ok", map["result"])
 
             // Expecting 1 task only
@@ -131,11 +131,11 @@ class ModerationRequestsTest {
 
             // Create product1
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode1}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
             // Create product2
             map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode2}&vegetarianStatus=positive").jsonMap()
+                    + "barcode=${barcode2}&veganStatus=positive").jsonMap()
             assertEquals("ok", map["result"])
 
             // Expecting 2 tasks, 1 for each product
@@ -159,7 +159,7 @@ class ModerationRequestsTest {
 
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=text1").jsonMap()
@@ -196,11 +196,11 @@ class ModerationRequestsTest {
 
             val barcode1 = UUID.randomUUID().toString()
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode1}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
             val barcode2 = UUID.randomUUID().toString()
             map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode2}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode2}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 2' is because
@@ -250,7 +250,7 @@ class ModerationRequestsTest {
 
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(clientToken1, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 1' is because
@@ -293,7 +293,7 @@ class ModerationRequestsTest {
 
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             val text1 = "a".repeat(REPORT_TEXT_MIN_LENGTH - 1)
@@ -782,11 +782,11 @@ class ModerationRequestsTest {
 
             val barcode1 = UUID.randomUUID().toString()
             var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode1}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode1}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
             val barcode2 = UUID.randomUUID().toString()
             map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode2}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                    + "barcode=${barcode2}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 2' is because
@@ -836,7 +836,7 @@ class ModerationRequestsTest {
 
             val barcode = UUID.randomUUID().toString()
             var map = authedGet(clientToken1, "/create_update_product/?"
-                    + "barcode=${barcode}&vegetarianStatus=unknown").jsonMap()
+                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 1' is because
@@ -952,23 +952,19 @@ class ModerationRequestsTest {
 
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                        + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 
             val moderatorClientToken = registerModerator()
             map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
-                    + "vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                    + "veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("positive", map["vegetarian_status"])
-            assertEquals("moderator", map["vegetarian_status_source"])
             assertEquals("negative", map["vegan_status"])
             assertEquals("moderator", map["vegan_status_source"])
         }
@@ -982,17 +978,15 @@ class ModerationRequestsTest {
 
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                        + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 
             map = authedGet(clientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
-                    + "vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                    + "veganStatus=negative").jsonMap()
             assertEquals("denied", map["error"])
         }
     }
@@ -1005,37 +999,13 @@ class ModerationRequestsTest {
 
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
+                        + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             val moderatorClientToken = registerModerator()
             map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
-                    + "vegetarianStatus=POPOPOSITIVE&veganStatus=negative").jsonMap()
+                    + "veganStatus=NENENEGATIVE").jsonMap()
             assertEquals("invalid_veg_status", map["error"])
-
-            map = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&"
-                    + "vegetarianStatus=positive&veganStatus=NENENEGATIVE").jsonMap()
-            assertEquals("invalid_veg_status", map["error"])
-        }
-    }
-
-    @Test
-    fun `product veg statuses moderation does not work with 1 param only`() {
-        withPlanteTestApplication {
-            val clientToken = register()
-            val barcode = UUID.randomUUID().toString()
-
-            val map = authedGet(
-                clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=unknown&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-
-            val moderatorClientToken = registerModerator()
-            var resp = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&veganStatus=negative")
-            assertEquals(404, resp.response.status()!!.value)
-
-            resp = authedGet(moderatorClientToken, "/moderate_product_veg_statuses/?barcode=${barcode}&vegetarianStatus=negative")
-            assertEquals(404, resp.response.status()!!.value)
         }
     }
 
@@ -1047,13 +1017,11 @@ class ModerationRequestsTest {
 
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                        + "barcode=${barcode}&veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals("positive", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("negative", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
 
@@ -1063,8 +1031,6 @@ class ModerationRequestsTest {
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals(null, map["vegetarian_status"])
-            assertEquals(null, map["vegetarian_status_source"])
             assertEquals(null, map["vegan_status"])
             assertEquals(null, map["vegan_status_source"])
         }
@@ -1078,7 +1044,7 @@ class ModerationRequestsTest {
 
             var map = authedGet(
                 clientToken, "/create_update_product/?"
-                        + "barcode=${barcode}&vegetarianStatus=positive&veganStatus=negative").jsonMap()
+                        + "barcode=${barcode}&veganStatus=negative").jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/clear_product_veg_statuses/?barcode=${barcode}").jsonMap()
@@ -1086,8 +1052,6 @@ class ModerationRequestsTest {
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals("positive", map["vegetarian_status"])
-            assertEquals("community", map["vegetarian_status_source"])
             assertEquals("negative", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
         }
@@ -1103,38 +1067,30 @@ class ModerationRequestsTest {
             var map = authedGet(
                 clientToken, "/create_update_product/", mapOf(
                     "barcode" to barcode,
-                    "vegetarianStatus" to "positive",
                     "veganStatus" to "negative",
             )).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals(null, map["moderator_vegetarian_choice_reason"])
-            assertEquals(null, map["moderator_vegetarian_sources_text"])
             assertEquals(null, map["moderator_vegan_choice_reason"])
             assertEquals(null, map["moderator_vegan_sources_text"])
 
             // Specify reason without text
             map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
                 "barcode" to barcode,
-                "vegetarianChoiceReason" to "1",
                 "veganChoiceReason" to "2",
             )).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals(1, map["moderator_vegetarian_choice_reason"])
-            assertEquals(null, map["moderator_vegetarian_sources_text"])
             assertEquals(2, map["moderator_vegan_choice_reason"])
             assertEquals(null, map["moderator_vegan_sources_text"])
 
             // Specify reason with text
             map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
                 "barcode" to barcode,
-                "vegetarianChoiceReason" to "3",
-                "vegetarianSourcesText" to "Hello there!",
                 "veganChoiceReason" to "4",
                 "veganSourcesText" to "General Kenobi!",
             )).jsonMap()
@@ -1142,8 +1098,6 @@ class ModerationRequestsTest {
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals(3, map["moderator_vegetarian_choice_reason"])
-            assertEquals("Hello there!", map["moderator_vegetarian_sources_text"])
             assertEquals(4, map["moderator_vegan_choice_reason"])
             assertEquals("General Kenobi!", map["moderator_vegan_sources_text"])
 
@@ -1155,8 +1109,6 @@ class ModerationRequestsTest {
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
-            assertEquals(null, map["moderator_vegetarian_choice_reason"])
-            assertEquals(null, map["moderator_vegetarian_sources_text"])
             assertEquals(null, map["moderator_vegan_choice_reason"])
             assertEquals(null, map["moderator_vegan_sources_text"])
         }
@@ -1173,14 +1125,12 @@ class ModerationRequestsTest {
             var map = authedGet(
                 clientToken, "/create_update_product/", mapOf(
                     "barcode" to barcode1,
-                    "vegetarianStatus" to "positive",
                     "veganStatus" to "negative",
                 )).jsonMap()
             assertEquals("ok", map["result"])
             map = authedGet(
                 clientToken, "/create_update_product/", mapOf(
                     "barcode" to barcode2,
-                    "vegetarianStatus" to "positive",
                     "veganStatus" to "negative",
                 )).jsonMap()
             assertEquals("ok", map["result"])
@@ -1188,8 +1138,6 @@ class ModerationRequestsTest {
             // Product 1 reason
             map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
                 "barcode" to barcode1,
-                "vegetarianChoiceReason" to "1",
-                "vegetarianSourcesText" to "Hello",
                 "veganChoiceReason" to "2",
                 "veganSourcesText" to "there!",
             )).jsonMap()
@@ -1198,8 +1146,6 @@ class ModerationRequestsTest {
             // Product 2 reason
             map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
                 "barcode" to barcode2,
-                "vegetarianChoiceReason" to "3",
-                "vegetarianSourcesText" to "General Kenobi!",
                 "veganChoiceReason" to "4",
                 "veganSourcesText" to "You're a bold one!",
             )).jsonMap()
@@ -1208,16 +1154,12 @@ class ModerationRequestsTest {
             // Verify product 1 reason
             map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
             assertEquals(barcode1, map["barcode"])
-            assertEquals(1, map["moderator_vegetarian_choice_reason"])
-            assertEquals("Hello", map["moderator_vegetarian_sources_text"])
             assertEquals(2, map["moderator_vegan_choice_reason"])
             assertEquals("there!", map["moderator_vegan_sources_text"])
 
             // Verify product 2 reason
             map = authedGet(clientToken, "/product_data/?barcode=${barcode2}").jsonMap()
             assertEquals(barcode2, map["barcode"])
-            assertEquals(3, map["moderator_vegetarian_choice_reason"])
-            assertEquals("General Kenobi!", map["moderator_vegetarian_sources_text"])
             assertEquals(4, map["moderator_vegan_choice_reason"])
             assertEquals("You're a bold one!", map["moderator_vegan_sources_text"])
         }
@@ -1232,14 +1174,12 @@ class ModerationRequestsTest {
             var map = authedGet(
                 clientToken, "/create_update_product/", mapOf(
                     "barcode" to barcode,
-                    "vegetarianStatus" to "positive",
                     "veganStatus" to "negative",
                 )).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/specify_moderator_choice_reason/", mapOf(
                 "barcode" to barcode,
-                "vegetarianChoiceReason" to "1",
                 "veganChoiceReason" to "2",
             )).jsonMap()
             assertEquals("denied", map["error"])
@@ -1483,7 +1423,6 @@ class ModerationRequestsTest {
             // Create a product
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                     "barcode" to barcode,
-                    "vegetarianStatus" to "unknown",
                     "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1524,7 +1463,6 @@ class ModerationRequestsTest {
             // Create a product
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown")).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -1549,7 +1487,6 @@ class ModerationRequestsTest {
             // Create a product
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1557,7 +1494,6 @@ class ModerationRequestsTest {
             // Update the product
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "positive",
                 "veganStatus" to "positive"),
                 mapOf("langs" to listOf("ru", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1586,7 +1522,6 @@ class ModerationRequestsTest {
             // Product 1
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1594,7 +1529,6 @@ class ModerationRequestsTest {
             // Product 2
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "ru"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1602,14 +1536,12 @@ class ModerationRequestsTest {
             // Product 1 update
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
                 "veganStatus" to "unknown")).jsonMap()
             assertEquals("ok", map["result"])
 
             // Product 2 update
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("de", "ru"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1637,7 +1569,6 @@ class ModerationRequestsTest {
 
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1658,7 +1589,6 @@ class ModerationRequestsTest {
             // Product 1
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1666,7 +1596,6 @@ class ModerationRequestsTest {
             // Product 2
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "ru"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1704,7 +1633,6 @@ class ModerationRequestsTest {
             // Product 1
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "testingNow" to "${++now}"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
@@ -1713,7 +1641,6 @@ class ModerationRequestsTest {
             // Product 2
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "testingNow" to "${++now}"),
                 mapOf("langs" to listOf("en", "ru"))).jsonMap()
@@ -1722,7 +1649,6 @@ class ModerationRequestsTest {
             // Product 1 update
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
                 "veganStatus" to "unknown",
                 "testingNow" to "${++now}")).jsonMap()
             assertEquals("ok", map["result"])
@@ -1730,7 +1656,6 @@ class ModerationRequestsTest {
             // Product 2 update
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "positive",
                 "veganStatus" to "unknown",
                 "testingNow" to "${++now}"),
                 mapOf("langs" to listOf("de", "ru"))).jsonMap()
@@ -1752,10 +1677,10 @@ class ModerationRequestsTest {
             )).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             assertEquals(2, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals(barcode2, tasks[1]["barcode"])
-            assertEquals("en", tasks[0]["lang"])
-            assertEquals("en", tasks[1]["lang"])
+            var barcodes = tasks.map { it["barcode"] }
+            var langs = tasks.map { it["lang"] }
+            assertEquals(barcodes.toSet(), setOf(barcode1, barcode2))
+            assertEquals(langs, listOf("en", "en"))
 
             // Ru
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
@@ -1763,10 +1688,10 @@ class ModerationRequestsTest {
             )).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             assertEquals(2, tasks.size, map.toString())
-            assertEquals(barcode2, tasks[0]["barcode"])
-            assertEquals(barcode1, tasks[1]["barcode"])
-            assertEquals("ru", tasks[0]["lang"])
-            assertEquals("ru", tasks[1]["lang"])
+            barcodes = tasks.map { it["barcode"] }
+            langs = tasks.map { it["lang"] }
+            assertEquals(barcodes.toSet(), setOf(barcode1, barcode2))
+            assertEquals(langs, listOf("ru", "ru"))
 
             // Nl
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
@@ -1774,8 +1699,10 @@ class ModerationRequestsTest {
             )).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             assertEquals(1, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals("nl", tasks[0]["lang"])
+            barcodes = tasks.map { it["barcode"] }
+            langs = tasks.map { it["lang"] }
+            assertEquals(barcodes.toSet(), setOf(barcode1))
+            assertEquals(langs, listOf("nl"))
 
             // De
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", mapOf(
@@ -1783,8 +1710,10 @@ class ModerationRequestsTest {
             )).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             assertEquals(1, tasks.size, map.toString())
-            assertEquals(barcode1, tasks[0]["barcode"])
-            assertEquals("de", tasks[0]["lang"])
+            barcodes = tasks.map { it["barcode"] }
+            langs = tasks.map { it["lang"] }
+            assertEquals(barcodes.toSet(), setOf(barcode1))
+            assertEquals(langs, listOf("de"))
         }
     }
 
@@ -1797,7 +1726,6 @@ class ModerationRequestsTest {
 
             var map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown"),
                 mapOf("langs" to listOf("en", "nl"))).jsonMap()
             assertEquals("ok", map["result"])
@@ -1829,7 +1757,6 @@ class ModerationRequestsTest {
             // En
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "langs" to "en")).jsonMap()
             assertEquals("ok", map["result"])
@@ -1837,7 +1764,6 @@ class ModerationRequestsTest {
             // Ru
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode1,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "langs" to "ru")).jsonMap()
             assertEquals("ok", map["result"])
@@ -1845,7 +1771,6 @@ class ModerationRequestsTest {
             // De
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown",
                 "langs" to "de")).jsonMap()
             assertEquals("ok", map["result"])
@@ -1853,7 +1778,6 @@ class ModerationRequestsTest {
             // No lang
             map = authedGet(clientToken, "/create_update_product/?", mapOf(
                 "barcode" to barcode2,
-                "vegetarianStatus" to "unknown",
                 "veganStatus" to "unknown")).jsonMap()
             assertEquals("ok", map["result"])
 
