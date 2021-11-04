@@ -95,8 +95,7 @@ class ShopRequestsTest_before_uid {
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegan_status"])
-            assertEquals("community", map["vegan_status_source"])
+            assertEquals(barcode, map["barcode"])
 
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsIds=$shop").jsonMap()
             val results = map["results"] as Map<*, *>

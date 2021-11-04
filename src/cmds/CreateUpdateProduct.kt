@@ -42,15 +42,19 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
         val productRow = if (oldProduct == null) {
             ProductTable.insert { row ->
                 row[barcode] = params.barcode
-                row[ProductTable.veganStatus] = (veganStatus ?: VegStatus.UNKNOWN).persistentCode
-                row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
-                row[creatorUserId] = user.id
-            }.resultedValues!![0]
-        } else {
-            ProductTable.update({ barcode eq params.barcode }) { row ->
                 if (veganStatus != null) {
                     row[ProductTable.veganStatus] = veganStatus.persistentCode
                     row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
+                }
+                row[creatorUserId] = user.id
+            }.resultedValues!![0]
+        } else {
+            if (oldProduct.veganStatusSource != VegStatusSource.MODERATOR) {
+                ProductTable.update({ barcode eq params.barcode }) { row ->
+                    if (veganStatus != null) {
+                        row[ProductTable.veganStatus] = veganStatus.persistentCode
+                        row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
+                    }
                 }
             }
             ProductTable.select { barcode eq params.barcode }.first()

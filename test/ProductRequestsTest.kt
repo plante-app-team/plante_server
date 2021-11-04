@@ -64,8 +64,8 @@ class ProductRequestsTest {
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegan_status"])
-            assertEquals("community", map["vegan_status_source"])
+            assertEquals(null, map["vegan_status"])
+            assertEquals(null, map["vegan_status_source"])
         }
     }
 

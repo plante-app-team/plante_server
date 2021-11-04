@@ -86,6 +86,45 @@ class ShopRequestsTest {
     }
 
     @Test
+    fun `products without veg-status are counted as a part of shop's product range`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+
+            // Create a product
+            var map = authedGet(clientToken, "/create_update_product/?barcode=${barcode}").jsonMap()
+            assertEquals("ok", map["result"])
+            // Verify it doesn't have a vegan status
+            map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals(null, map["vegan_status"])
+            assertEquals(null, map["vegan_status_source"])
+
+            // Put product to the shop
+            map = authedGet(clientToken, "/put_product_to_shop/?barcode=${barcode}&shopOsmUID=$shop").jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Ensure the product is counted in the "shops_data" response
+            map = authedGet(clientToken, "/shops_data/", body = """ { "osm_uids": [ "$shop" ] } """).jsonMap()
+            var results = map["results_v2"] as Map<*, *>
+            assertEquals(1, results.size)
+            val shopData = results[shop.asStr]!! as Map<*, *>
+            assertEquals(1, shopData["products_count"])
+
+            // Ensure the product is counted in the "products_at_shops_data" response
+            map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
+            results = map["results_v2"] as Map<*, *>
+            assertEquals(1, results.size)
+            val productsAtShop = productsOfShop(results, shop)
+            assertEquals(listOf(barcode), productsAtShop.map { it["barcode"] })
+            // The product has no vegan status
+            val productAtShop = productsAtShop.first()
+            assertEquals(null, productAtShop["vegan_status"])
+            assertEquals(null, productAtShop["vegan_status_source"])
+        }
+    }
+
+    @Test
     fun `putting not existing product to shop creates the product`() {
         withPlanteTestApplication {
             val clientToken = register()
@@ -99,8 +138,7 @@ class ShopRequestsTest {
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
-            assertEquals("unknown", map["vegan_status"])
-            assertEquals("community", map["vegan_status_source"])
+            assertEquals(barcode, map["barcode"])
 
             map = authedGet(clientToken, "/products_at_shops_data/?osmShopsUIDs=$shop").jsonMap()
             val results = map["results_v2"] as Map<*, *>

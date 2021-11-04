@@ -1010,6 +1010,43 @@ class ModerationRequestsTest {
     }
 
     @Test
+    fun `normal user cannot change veg status set by a moderator`() {
+        withPlanteTestApplication {
+            val user = register()
+            val barcode = UUID.randomUUID().toString()
+
+            // Create with an unknown vegan status
+            var map = authedGet(user, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "veganStatus" to "unknown")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Verify user's vegan status is used
+            map = authedGet(user, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("unknown", map["vegan_status"])
+            assertEquals("community", map["vegan_status_source"])
+
+            // Now moderator moderates the product
+            val moderator = registerModerator()
+            map = authedGet(moderator, "/moderate_product_veg_statuses/", mapOf(
+                "barcode" to barcode,
+                "veganStatus" to "negative")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // And user tries to change to status to another value
+            map = authedGet(user, "/create_update_product/?", mapOf(
+                "barcode" to barcode,
+                "veganStatus" to "positive")).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // The final vegan status is the one set by the moderator
+            map = authedGet(user, "/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("negative", map["vegan_status"])
+            assertEquals("moderator", map["vegan_status_source"])
+        }
+    }
+
+    @Test
     fun `clear product veg statuses`() {
         withPlanteTestApplication {
             val clientToken = register()
