@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds.moderation
 
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

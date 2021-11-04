@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds
 
 import java.util.UUID
 import kotlin.test.assertEquals

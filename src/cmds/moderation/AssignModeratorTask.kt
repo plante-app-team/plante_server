@@ -16,8 +16,8 @@ import java.util.*
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.cmds.moderation.sanitizeModerationTasks
 import vegancheckteam.plante_server.db.splitLangs
 
 @Location("/assign_moderator_task/")
@@ -32,9 +32,9 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
     }
 
     val now = now(params.testingNow, testing)
-    val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
-
     return transaction {
+        sanitizeModerationTasks(now)
+
         val assignee = if (params.assignee != null) {
             val assignee = UserTable.select {
                 UserTable.id eq UUID.fromString(params.assignee)
@@ -67,9 +67,7 @@ fun assignModeratorTask(params: AssignModeratorTaskParams, user: User, testing: 
                 Op.TRUE
             }
             val mainOp = langsOp and (ModeratorTaskTable.resolutionTime eq null)
-
-            val assignTimeOp = (ModeratorTaskTable.assignTime eq null) or
-                    (ModeratorTaskTable.assignTime less oldestAcceptable)
+            val assignTimeOp = ModeratorTaskTable.assignTime eq null
 
             val task = ModeratorTaskTable.select {
                 mainOp and assignTimeOp

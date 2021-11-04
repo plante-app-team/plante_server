@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds
 
 import io.ktor.http.HttpStatusCode
 import java.util.UUID
@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import org.junit.Test
-import vegancheckteam.plante_server.cmds.PRODUCTS_DATA_PARAMS_PAGE_SIZE
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register

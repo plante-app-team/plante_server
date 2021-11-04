@@ -1,6 +1,5 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds.moderation
 
-import io.ktor.server.testing.withTestApplication
 import java.util.UUID
 import kotlin.test.assertEquals
 import org.jetbrains.exposed.sql.deleteAll

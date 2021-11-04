@@ -1,6 +1,5 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds
 
-import io.ktor.server.testing.withTestApplication
 import java.util.Base64
 import kotlin.test.assertEquals
 import org.junit.Test

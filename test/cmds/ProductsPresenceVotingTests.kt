@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds
 
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -9,7 +9,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
 import test_utils.generateFakeOsmUID
-import vegancheckteam.plante_server.cmds.MIN_NEGATIVES_VOTES_FOR_DELETION
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable

@@ -2,7 +2,6 @@ package cmds.moderation
 
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -14,8 +13,7 @@ import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.model.ModeratorTasksDataResponse
 import java.util.*
 import vegancheckteam.plante_server.base.now
-
-const val ASSIGNATION_TIME_LIMIT_MINUTES = 5L
+import vegancheckteam.plante_server.cmds.moderation.sanitizeModerationTasks
 
 @Location("/assigned_moderator_tasks_data/")
 data class AssignedModeratorTasksDataParams(
@@ -31,16 +29,15 @@ fun assignedModeratorTasksData(params: AssignedModeratorTasksDataParams, user: U
     val now = now(params.testingNow, testing)
 
     return transaction {
+        sanitizeModerationTasks(now)
+
         val assignee = if (params.assignee != null) {
             UUID.fromString(params.assignee)
         } else {
             user.id
         }
 
-        val oldestAcceptable = now - ASSIGNATION_TIME_LIMIT_MINUTES * 60
-
-        val mainConstraint = (ModeratorTaskTable.assignee eq assignee) and
-                (ModeratorTaskTable.assignTime greater oldestAcceptable)
+        val mainConstraint = ModeratorTaskTable.assignee eq assignee
         val query = if (params.includeResolved) {
             ModeratorTaskTable.select {
                 mainConstraint

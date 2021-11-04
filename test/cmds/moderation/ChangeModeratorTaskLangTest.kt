@@ -1,6 +1,5 @@
-package vegancheckteam.plante_server
+package vegancheckteam.plante_server.cmds.moderation
 
-import io.ktor.server.testing.withTestApplication
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before

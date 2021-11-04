@@ -1,7 +1,6 @@
 package vegancheckteam.plante_server.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import vegancheckteam.plante_server.model.ModeratorTask
 
 data class ModeratorTasksDataResponse(
     @JsonProperty("tasks")

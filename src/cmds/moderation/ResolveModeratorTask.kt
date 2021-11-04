@@ -9,8 +9,7 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.base.now
-
-const val DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS = 7
+import vegancheckteam.plante_server.cmds.moderation.sanitizeModerationTasks
 
 @Location("/resolve_moderator_task/")
 data class ResolveModeratorTaskParams(
@@ -25,7 +24,7 @@ fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing
     val now = now(params.testingNow, testing)
 
     val updated = transaction {
-        deleteResolvedTasks(now)
+        sanitizeModerationTasks(now)
         ModeratorTaskTable.update( { ModeratorTaskTable.id eq params.taskId } ) {
             it[resolutionTime] = now
         }
@@ -34,12 +33,5 @@ fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing
         return GenericResponse.success()
     } else {
         return GenericResponse.failure("task_not_found", "Task for id ${params.taskId} not found")
-    }
-}
-
-fun deleteResolvedTasks(now: Long) {
-    val earliestAllowedTasksExistence = now - DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS * 24 * 60 * 60
-    ModeratorTaskTable.deleteWhere {
-        ModeratorTaskTable.resolutionTime less earliestAllowedTasksExistence
     }
 }
