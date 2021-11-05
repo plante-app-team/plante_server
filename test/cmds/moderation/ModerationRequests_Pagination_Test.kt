@@ -91,11 +91,11 @@ class ModerationRequests_Pagination_Test {
 
             assertEquals(5, tasks.size, tasks.toString())
             // Verify task types
-            assertEquals(tasksTypes[0].taskName, tasks[0]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[0].taskName, tasks[1]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[0].taskName, tasks[2]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[1].taskName, tasks[3]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[1].taskName, tasks[4]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[0].typeName, tasks[0]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[0].typeName, tasks[1]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[0].typeName, tasks[2]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[3]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[4]["task_type"], tasks.toString())
             // Verify time-related order
             assertEquals(1, tasks[0]["creation_time"], tasks.toString())
             assertEquals(2, tasks[1]["creation_time"], tasks.toString())
@@ -117,11 +117,11 @@ class ModerationRequests_Pagination_Test {
 
             assertEquals(5, tasks.size, tasks.toString())
             // Verify task types
-            assertEquals(tasksTypes[1].taskName, tasks[0]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[1].taskName, tasks[1]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[1].taskName, tasks[2]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[1].taskName, tasks[3]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[4]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[0]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[1]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[2]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[1].typeName, tasks[3]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[4]["task_type"], tasks.toString())
             // Verify time-related order
             assertEquals(6, tasks[0]["creation_time"], tasks.toString())
             assertEquals(7, tasks[1]["creation_time"], tasks.toString())
@@ -143,11 +143,11 @@ class ModerationRequests_Pagination_Test {
 
             assertEquals(5, tasks.size, tasks.toString())
             // Verify task types
-            assertEquals(tasksTypes[3].taskName, tasks[0]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[1]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[2]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[3]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[4]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[0]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[1]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[2]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[3]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[4]["task_type"], tasks.toString())
             // Verify time-related order
             assertEquals(11, tasks[0]["creation_time"], tasks.toString())
             assertEquals(12, tasks[1]["creation_time"], tasks.toString())
@@ -169,11 +169,11 @@ class ModerationRequests_Pagination_Test {
 
             assertEquals(5, tasks.size, tasks.toString())
             // Verify task types
-            assertEquals(tasksTypes[3].taskName, tasks[0]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[1]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[2]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[3]["task_type"], tasks.toString())
-            assertEquals(tasksTypes[3].taskName, tasks[4]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[0]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[1]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[2]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[3]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[4]["task_type"], tasks.toString())
             // Verify time-related order
             assertEquals(16, tasks[0]["creation_time"], tasks.toString())
             assertEquals(17, tasks[1]["creation_time"], tasks.toString())
@@ -195,7 +195,7 @@ class ModerationRequests_Pagination_Test {
 
             assertEquals(1, tasks.size, tasks.toString())
             // Verify task types
-            assertEquals(tasksTypes[3].taskName, tasks[0]["task_type"], tasks.toString())
+            assertEquals(tasksTypes[3].typeName, tasks[0]["task_type"], tasks.toString())
             // Verify time-related order
             assertEquals(21, tasks[0]["creation_time"], tasks.toString())
         }

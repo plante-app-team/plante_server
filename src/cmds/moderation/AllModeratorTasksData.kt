@@ -23,6 +23,8 @@ data class AllModeratorTasksDataParams(
     val pageSize: Int = 10,
     val lang: String? = null,
     val onlyWithNoLang: Boolean = false,
+    val includeTypes: List<String>? = null,
+    val excludeTypes: List<String>? = null,
     val testingNow: Long? = null)
 
 fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testing: Boolean): Any {
@@ -72,7 +74,13 @@ fun allModeratorTasksData(params: AllModeratorTasksDataParams, user: User, testi
         //   to return requested tasks, only then it starts to collect them.
         // See also [ModerationRequests_Pagination_Test].
 
-        val tasksTypes = ModeratorTaskType.values().sortedBy { it.priority }
+        val excludeTypes = params.excludeTypes ?: emptyList()
+        val includeTypes = params.includeTypes ?: ModeratorTaskType.values().map { it.typeName }
+        val tasksTypes = ModeratorTaskType.values()
+            .sortedBy { it.priority }
+            .filter {
+                includeTypes.contains(it.typeName) && !excludeTypes.contains(it.typeName)
+            }
         val countsOfTasksTypes = mutableMapOf<ModeratorTaskType, Long>()
         for (taskType in tasksTypes) {
             val where = mainOp and (ModeratorTaskTable.taskType eq taskType.persistentCode)

@@ -12,6 +12,10 @@ import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 import java.util.*
 import kotlin.test.assertEquals
+import org.jetbrains.exposed.sql.insert
+import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.model.ModeratorTaskType
+import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ModerationRequests_General_Test {
@@ -182,7 +186,6 @@ class ModerationRequests_General_Test {
         }
     }
 
-
     @Test
     fun `if product veg status was set by a moderator, normal user cannot change it`() {
         withPlanteTestApplication {
@@ -245,6 +248,84 @@ class ModerationRequests_General_Test {
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             assertEquals(0, tasks.size, map.toString())
+        }
+    }
+
+    @Test
+    fun `all tasks excluding certain types`() {
+        withPlanteTestApplication {
+            val (_, userId) = registerAndGetTokenWithID()
+            transaction {
+                for (type in ModeratorTaskType.values()) {
+                    ModeratorTaskTable.insert {
+                        it[productBarcode] = "123"
+                        it[taskType] = type.persistentCode
+                        it[taskSourceUserId] = UUID.fromString(userId)
+                        it[creationTime] = now()
+                    }
+                }
+            }
+
+            val moderatorClientToken = registerModerator()
+
+            // Get all
+            var map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            assertEquals(ModeratorTaskType.values().size, tasks.size, map.toString())
+            var types = tasks.map { it["task_type"] as String }
+            assertEquals(ModeratorTaskType.values().map { it.typeName }.toSet(), types.toSet())
+
+            // Get all excluding certain
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", queryParamsLists = mapOf(
+                "excludeTypes" to listOf(
+                        ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
+                        ModeratorTaskType.USER_REPORT.typeName))
+            ).jsonMap()
+            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            val expectedTypes = ModeratorTaskType
+                .values()
+                .filter { it != ModeratorTaskType.PRODUCT_CHANGE_IN_OFF && it != ModeratorTaskType.USER_REPORT }
+            assertEquals(expectedTypes.size, tasks.size, map.toString())
+            types = tasks.map { it["task_type"] as String }
+            assertEquals(expectedTypes.map { it.typeName }.toSet(), types.toSet())
+        }
+    }
+
+    @Test
+    fun `all tasks but with specified types`() {
+        withPlanteTestApplication {
+            val (_, userId) = registerAndGetTokenWithID()
+            transaction {
+                for (type in ModeratorTaskType.values()) {
+                    ModeratorTaskTable.insert {
+                        it[productBarcode] = "123"
+                        it[taskType] = type.persistentCode
+                        it[taskSourceUserId] = UUID.fromString(userId)
+                        it[creationTime] = now()
+                    }
+                }
+            }
+
+            val moderatorClientToken = registerModerator()
+
+            // Get all
+            var map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
+            var tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            assertEquals(ModeratorTaskType.values().size, tasks.size, map.toString())
+            var types = tasks.map { it["task_type"] as String }
+            assertEquals(ModeratorTaskType.values().map { it.typeName }.toSet(), types.toSet())
+
+            // Get all excluding certain
+            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", queryParamsLists = mapOf(
+                "includeTypes" to listOf(
+                    ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
+                    ModeratorTaskType.USER_REPORT.typeName))
+            ).jsonMap()
+            tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
+            val expectedTypes = listOf(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF, ModeratorTaskType.USER_REPORT)
+            assertEquals(expectedTypes.size, tasks.size, map.toString())
+            types = tasks.map { it["task_type"] as String }
+            assertEquals(expectedTypes.map { it.typeName }.toSet(), types.toSet())
         }
     }
 }

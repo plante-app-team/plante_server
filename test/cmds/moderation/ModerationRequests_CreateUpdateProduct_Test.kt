@@ -51,7 +51,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Now there is a task
             allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, map.toString())
-            assertEquals(expectedTaskType.taskName, allTasks.first()["task_type"])
+            assertEquals(expectedTaskType.typeName, allTasks.first()["task_type"])
 
             // Clear
             transaction {
@@ -68,7 +68,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Now there is a task again
             allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, map.toString())
-            assertEquals(expectedTaskType.taskName, allTasks.first()["task_type"])
+            assertEquals(expectedTaskType.typeName, allTasks.first()["task_type"])
         }
     }
 
@@ -109,7 +109,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             val moderatorClientToken = registerModerator()
             val allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, map.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.taskName, allTasks.first()["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.typeName, allTasks.first()["task_type"])
         }
     }
 
@@ -255,7 +255,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Expected task
             var allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, allTasks.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.taskName, allTasks[0]["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName, allTasks[0]["task_type"])
 
             // Update the product with a veg status
             map = authedGet(clientToken, "/create_update_product/?"
@@ -265,7 +265,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Still expecting 1 task, but this time with a different type
             allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, allTasks.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.taskName, allTasks[0]["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.typeName, allTasks[0]["task_type"])
         }
     }
 
@@ -282,7 +282,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Expected task
             var allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, allTasks.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.taskName, allTasks[0]["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.typeName, allTasks[0]["task_type"])
             val initialTask = allTasks[0]
 
             // Update the product with another veg status
@@ -311,7 +311,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Expected task
             var allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, allTasks.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.taskName, allTasks[0]["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName, allTasks[0]["task_type"])
             val initialTask = allTasks[0]
 
             // Update the product with not veg status, again
@@ -340,7 +340,7 @@ class ModerationRequests_CreateUpdateProduct_Test {
             // Expected task
             var allTasks = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").allModeratorTasks()
             assertEquals(1, allTasks.size, allTasks.toString())
-            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.taskName, allTasks[0]["task_type"])
+            assertEquals(ModeratorTaskType.PRODUCT_CHANGE.typeName, allTasks[0]["task_type"])
             val initialTask = allTasks[0]
 
             // Update the product without any veg status

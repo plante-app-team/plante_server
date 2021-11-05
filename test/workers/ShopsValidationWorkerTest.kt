@@ -462,7 +462,7 @@ class ShopsValidationWorkerTest {
                 withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
             val task = tasks.single()
             assertEquals(osmUid.asStr, task["osm_uid"])
-            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.taskName, task["task_type"])
+            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.typeName, task["task_type"])
         }
     }
 
@@ -513,7 +513,7 @@ class ShopsValidationWorkerTest {
                 withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
             val task = tasks.single()
             assertEquals(osmUid.asStr, task["osm_uid"])
-            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.taskName, task["task_type"])
+            assertEquals(ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.typeName, task["task_type"])
 
             // There was only 1 validation
             assertEquals(1, requestedOsmUidsBatches.size)
@@ -549,7 +549,7 @@ class ShopsValidationWorkerTest {
         val allTasks = call.jsonMap()["tasks"] as List<*>
         var result = allTasks.map { it as Map<*, *> }
         if (withType != null) {
-            result = result.filter { it["task_type"] == withType.taskName }
+            result = result.filter { it["task_type"] == withType.typeName }
         }
         return result
     }

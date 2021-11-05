@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 enum class ModeratorTaskType(
         @JsonValue
-        val taskName: String,
+        val typeName: String,
         val persistentCode: Short,
         val priority: Short /** the lower the better **/) {
     USER_REPORT("user_report", 1, 1),
