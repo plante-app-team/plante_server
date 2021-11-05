@@ -292,8 +292,8 @@ fun Application.module(testing: Boolean = false) {
             getAuthed<SpecifyModeratorChoiceReasonParams> { params, user ->
                 call.respond(specifyModeratorChoiceReasonParams(params, user))
             }
-            getAuthed<CountModeratorTasksParams> { _, user ->
-                call.respond(countModeratorTasks(user))
+            getAuthed<CountModeratorTasksParams> { params, user ->
+                call.respond(countModeratorTasks(params, user))
             }
             getAuthed<LatestProductsAddedToShopsDataParams> { params, user ->
                 call.respond(latestProductsAddedToShopsData(params, user))

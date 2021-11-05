@@ -3,13 +3,17 @@ package vegancheckteam.plante_server.cmds.moderation
 import java.util.UUID
 import kotlin.test.assertEquals
 import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
+import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
+import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
 import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
@@ -130,6 +134,68 @@ class ModerationRequests_CountModeratorTasks_Test {
                 )
             )
             assertEquals(expectedResult, map, map.toString())
+        }
+    }
+
+    @Test
+    fun `count_moderator_tasks excluding certain types`() {
+        withPlanteTestApplication {
+            val (_, userId) = registerAndGetTokenWithID()
+            transaction {
+                for (type in ModeratorTaskType.values()) {
+                    ModeratorTaskTable.insert {
+                        it[productBarcode] = "123"
+                        it[taskType] = type.persistentCode
+                        it[taskSourceUserId] = UUID.fromString(userId)
+                        it[creationTime] = now()
+                    }
+                }
+            }
+
+            val moderatorClientToken = registerModerator()
+
+            // Get all
+            var map = authedGet(moderatorClientToken, "/count_moderator_tasks/").jsonMap()
+            assertEquals(ModeratorTaskType.values().size, map["total_count"], map.toString())
+
+            // Get all excluding certain
+            map = authedGet(moderatorClientToken, "/count_moderator_tasks/", queryParamsLists = mapOf(
+                "excludeTypes" to listOf(
+                    ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
+                    ModeratorTaskType.USER_REPORT.typeName))
+            ).jsonMap()
+            assertEquals(ModeratorTaskType.values().size - 2, map["total_count"], map.toString())
+        }
+    }
+
+    @Test
+    fun `all tasks but with specified types`() {
+        withPlanteTestApplication {
+            val (_, userId) = registerAndGetTokenWithID()
+            transaction {
+                for (type in ModeratorTaskType.values()) {
+                    ModeratorTaskTable.insert {
+                        it[productBarcode] = "123"
+                        it[taskType] = type.persistentCode
+                        it[taskSourceUserId] = UUID.fromString(userId)
+                        it[creationTime] = now()
+                    }
+                }
+            }
+
+            val moderatorClientToken = registerModerator()
+
+            // Get all
+            var map = authedGet(moderatorClientToken, "/count_moderator_tasks/").jsonMap()
+            assertEquals(ModeratorTaskType.values().size, map["total_count"], map.toString())
+
+            // Get all excluding certain
+            map = authedGet(moderatorClientToken, "/count_moderator_tasks/", queryParamsLists = mapOf(
+                "includeTypes" to listOf(
+                    ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
+                    ModeratorTaskType.USER_REPORT.typeName))
+            ).jsonMap()
+            assertEquals(2, map["total_count"], map.toString())
         }
     }
 }

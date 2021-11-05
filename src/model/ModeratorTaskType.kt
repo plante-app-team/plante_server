@@ -15,5 +15,6 @@ enum class ModeratorTaskType(
     ;
     companion object {
         fun fromPersistentCode(code: Short) = values().find { it.persistentCode == code }
+        fun fromTaskTypeName(name: String) = values().find { it.typeName == name }
     }
 }
