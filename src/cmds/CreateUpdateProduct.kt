@@ -20,6 +20,7 @@ import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.VegStatus
 import vegancheckteam.plante_server.model.VegStatusSource
 import java.lang.Integer.max
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import vegancheckteam.plante_server.base.now
 
 @Location("/create_update_product/")
@@ -59,12 +60,21 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
             }
             ProductTable.select { barcode eq params.barcode }.first()
         }
+
         val newProduct = Product.from(productRow)
         maybeInsertProductChangeInfo(oldProduct, newProduct, user)
         deleteExtraProductChanges(newProduct.barcode)
-        // NOTE: we create a moderator task even if product change was not inserted into DB -
-        // that is because not all product changes happen on this server, some happen on OFF.
-        createModeratorTasks(newProduct.barcode, user, params.langs)
+        val productChangeType = if (oldProduct != null && oldProduct != newProduct) {
+            ProductChangeModerationTaskType.PRODUCT_CHANGE
+        } else {
+            val emptyProduct = emptyProductWith(newProduct.id, newProduct.barcode)
+            if (emptyProduct != newProduct) {
+                ProductChangeModerationTaskType.PRODUCT_CHANGE
+            } else {
+                ProductChangeModerationTaskType.PRODUCT_CHANGE_IN_OFF
+            }
+        }
+        maybeCreateModeratorTasks(newProduct.barcode, user, params.langs, productChangeType)
     }
     return GenericResponse.success()
 }
@@ -97,29 +107,59 @@ private fun deleteExtraProductChanges(barcode: String) {
     }
 }
 
-fun createModeratorTasks(barcode: String, user: User, langs: List<String>?) {
+private enum class ProductChangeModerationTaskType(val underlyingType: ModeratorTaskType) {
+    PRODUCT_CHANGE(ModeratorTaskType.PRODUCT_CHANGE),
+    PRODUCT_CHANGE_IN_OFF(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF),
+}
+
+private fun maybeCreateModeratorTasks(barcode: String, user: User, langs: List<String>?, taskType: ProductChangeModerationTaskType) {
     if (langs != null && langs.isNotEmpty()) {
         for (lang in langs) {
-            createModeratorTask(barcode, user, lang)
+            createModeratorTask(barcode, user, lang, taskType)
         }
     } else {
-        createModeratorTask(barcode, user, null)
+        createModeratorTask(barcode, user, null, taskType)
     }
 }
 
-fun createModeratorTask(barcode: String, user: User, lang: String?) {
-    ModeratorTaskTable.deleteWhere {
-        (ModeratorTaskTable.productBarcode eq barcode) and
-                (ModeratorTaskTable.taskType eq ModeratorTaskType.PRODUCT_CHANGE.persistentCode) and
-                (ModeratorTaskTable.lang eq lang)
+private fun createModeratorTask(barcode: String, user: User, lang: String?, taskType: ProductChangeModerationTaskType) {
+    val mainOp = (ModeratorTaskTable.productBarcode eq barcode) and (ModeratorTaskTable.lang eq lang)
+    val existingTasksCounts = ProductChangeModerationTaskType.values().associateWith {
+        ModeratorTaskTable.select(
+            mainOp and (ModeratorTaskTable.taskType eq it.underlyingType.persistentCode)
+        ).count()
     }
+
+    val typesSortedByPriority = ProductChangeModerationTaskType.values().sortedBy { it.underlyingType.priority }
+    for (type in typesSortedByPriority) {
+        val existingTasksCount = existingTasksCounts[type] ?: 0
+        if (existingTasksCount > 0 && type.underlyingType.priority <= taskType.underlyingType.priority) {
+            // A task with a higher or equal priority already exists
+            return
+        }
+    }
+
+    // Delete tasks with lower priority for the product
+    val sortedByPriorityReversed = typesSortedByPriority.reversed()
+    for (type in sortedByPriorityReversed) {
+        if (type == taskType) {
+            break
+        }
+        val typeOp = (ModeratorTaskTable.taskType eq type.underlyingType.persistentCode)
+        ModeratorTaskTable.deleteWhere(op = { mainOp and typeOp })
+    }
+
     ModeratorTaskTable.insert {
         it[productBarcode] = barcode
-        it[taskType] = ModeratorTaskType.PRODUCT_CHANGE.persistentCode
+        it[ModeratorTaskTable.taskType] = taskType.underlyingType.persistentCode
         it[taskSourceUserId] = user.id
         it[creationTime] = now()
         if (lang != null) {
             it[ModeratorTaskTable.lang] = lang
         }
     }
+}
+
+private fun emptyProductWith(id: Int, barcode: String): Product {
+    return Product(id, barcode, null, null, null, null)
 }
