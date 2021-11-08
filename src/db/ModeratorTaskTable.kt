@@ -13,6 +13,8 @@ object ModeratorTaskTable : Table("moderator_task") {
 
     val assignee = uuid("assignee").references(UserTable.id).nullable().index()
     val assignTime = long("assign_time").nullable().index()
+    val resolver = uuid("resolver").references(UserTable.id).nullable().index()
+    val resolverAction = text("resolver_action").nullable()
     val resolutionTime = long("resolution_time").nullable().index()
     val rejectedAssigneesList = text("rejected_assignees_list").nullable()
 

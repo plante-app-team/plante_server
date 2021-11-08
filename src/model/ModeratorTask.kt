@@ -29,6 +29,10 @@ data class ModeratorTask(
     val assignTime: Long?,
     @JsonProperty("resolution_time")
     val resolutionTime: Long?,
+    @JsonProperty("resolver")
+    val resolver: String?,
+    @JsonProperty("resolver_action")
+    val resolverAction: String?,
     @JsonProperty("rejected_assignees_list")
     val rejectedAssigneesList: List<UUID>,
     @JsonProperty("lang")
@@ -45,6 +49,8 @@ data class ModeratorTask(
             assignee = tableRow[ModeratorTaskTable.assignee]?.toString(),
             assignTime = tableRow[ModeratorTaskTable.assignTime],
             resolutionTime = tableRow[ModeratorTaskTable.resolutionTime],
+            resolver = tableRow[ModeratorTaskTable.resolver]?.toString(),
+            resolverAction = tableRow[ModeratorTaskTable.resolverAction],
             rejectedAssigneesList = (tableRow[ModeratorTaskTable.rejectedAssigneesList] ?: "")
                 .split(",")
                 .filter { it.isNotEmpty() }

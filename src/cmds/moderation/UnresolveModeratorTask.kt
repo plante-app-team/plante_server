@@ -20,6 +20,8 @@ fun unresolveModeratorTask(params: UnresolveModeratorTaskParams, user: User): An
     val updated = transaction {
         ModeratorTaskTable.update( { ModeratorTaskTable.id eq params.taskId } ) {
             it[resolutionTime] = null
+            it[resolver] = null
+            it[resolverAction] = null
         }
     }
     if (updated > 0) {

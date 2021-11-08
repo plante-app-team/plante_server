@@ -239,7 +239,10 @@ class ModerationRequests_MakeReport_Test {
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
             val allTasks = map["tasks"] as List<*>
             val taskId = (allTasks[0] as Map<*, *>)["id"]
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                "taskId" to "$taskId",
+                "performedAction" to "testing",
+            )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Can make another report now
@@ -294,7 +297,10 @@ class ModerationRequests_MakeReport_Test {
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
             val allTasks = map["tasks"] as List<*>
             val taskId = (allTasks[0] as Map<*, *>)["id"]
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                "taskId" to "$taskId",
+                "performedAction" to "testing",
+            )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Can make another report now

@@ -479,7 +479,10 @@ class ModerationRequests_TasksAssignation_Test {
                 assertEquals("ok", map["result"])
                 map = authedGet(moderatorClientToken, "/assigned_moderator_tasks_data/").jsonMap()
                 tasks.addAll((map["tasks"] as List<*>).map { it as Map<*, *> })
-                map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=${tasks.last()["id"]}").jsonMap()
+                map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                    "taskId" to tasks.last()["id"].toString(),
+                    "performedAction" to "testing",
+                )).jsonMap()
                 assertEquals("ok", map["result"])
             }
             // The expected tasks are of: en, ru, and of no language

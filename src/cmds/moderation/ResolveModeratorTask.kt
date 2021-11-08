@@ -14,6 +14,7 @@ import vegancheckteam.plante_server.cmds.moderation.sanitizeModerationTasks
 @Location("/resolve_moderator_task/")
 data class ResolveModeratorTaskParams(
     val taskId: Int,
+    val performedAction: String,
     val testingNow: Long? = null)
 
 fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing: Boolean): Any {
@@ -27,6 +28,8 @@ fun resolveModeratorTask(params: ResolveModeratorTaskParams, user: User, testing
         sanitizeModerationTasks(now)
         ModeratorTaskTable.update( { ModeratorTaskTable.id eq params.taskId } ) {
             it[resolutionTime] = now
+            it[resolver] = user.id
+            it[resolverAction] = params.performedAction
         }
     }
     if (updated > 0) {

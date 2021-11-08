@@ -55,7 +55,8 @@ class ModerationRequests_General_Test {
 
             // Resolve
             map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
-                "taskId" to taskId.toString()
+                "taskId" to taskId.toString(),
+                "performedAction" to "testing",
             )).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -229,7 +230,10 @@ class ModerationRequests_General_Test {
                 val row = ModeratorTaskTable.selectAll().first()
                 row[ModeratorTaskTable.id]
             }
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=$taskId").jsonMap()
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                "taskId" to "$taskId",
+                "performedAction" to "testing",
+            )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Try to change product's status by the user again

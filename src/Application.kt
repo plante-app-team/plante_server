@@ -91,6 +91,7 @@ import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
 import vegancheckteam.plante_server.cmds.moderation.DeleteShopParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
+import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
@@ -99,6 +100,7 @@ import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
 import vegancheckteam.plante_server.cmds.moderation.deleteShop
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
+import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
 import vegancheckteam.plante_server.cmds.moderation.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.productData
@@ -273,6 +275,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ModeratorTaskDataParams> { params, user ->
                 call.respond(moderatorTaskData(params, user))
+            }
+            getAuthed<ModeratorsActivitiesParams> { params, user ->
+                call.respond(moderatorsActivities(params, user))
             }
             getAuthed<ResolveModeratorTaskParams> { params, user ->
                 call.respond(resolveModeratorTask(params, user, testing))

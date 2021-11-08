@@ -19,7 +19,10 @@ const val REPORT_TEXT_MAX_LENGTH = 256
 const val REPORT_TEXT_MIN_LENGTH = 3
 
 @Location("/make_report/")
-data class MakeReportParams(val barcode: String, val text: String)
+data class MakeReportParams(
+    val barcode: String,
+    val text: String,
+    val testingNow: Long? = null)
 
 fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     val maxReportsForUser = if (testing) MAX_REPORTS_FOR_USER_TESTING else MAX_REPORTS_FOR_USER
@@ -63,7 +66,7 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
             it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
             it[taskSourceUserId] = user.id
             it[textFromUser] = params.text
-            it[creationTime] = now()
+            it[creationTime] = now(testingNow = params.testingNow, testing)
         }
     }
     return GenericResponse.success()

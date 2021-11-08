@@ -120,8 +120,11 @@ class ModerationRequests_CountModeratorTasks_Test {
             // Resolve the RU task
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
             val tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            val ruTask = tasks.find { it["lang"] == "ru" }
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/?taskId=${ruTask!!["id"]}").jsonMap()
+            val ruTask = tasks.find { it["lang"] == "ru" }!!
+            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
+                "taskId" to ruTask["id"].toString(),
+                "performedAction" to "testing",
+            )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Verify the resolved task is not included
