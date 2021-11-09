@@ -77,7 +77,6 @@ class ModeratorsActivitiesTest {
             val moderatorId = UUID.randomUUID()
             val moderator = registerModerator(moderatorId)
 
-
             var now = 123
 
             // Make 2 reports
@@ -106,6 +105,15 @@ class ModeratorsActivitiesTest {
             assertEquals(2, tasks.size, tasks.toString())
             assertEquals("unique text 2", tasks[0]["resolver_action"])
             assertEquals("unique text 1", tasks[1]["resolver_action"])
+        }
+    }
+
+    @Test
+    fun `moderators_activities cannot be obtained by normal user`() {
+        withPlanteTestApplication {
+            val user = register()
+            val map = authedGet(user, "/moderators_activities/?since=0").jsonMap()
+            assertEquals("denied", map["error"])
         }
     }
 }

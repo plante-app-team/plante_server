@@ -94,6 +94,7 @@ import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
+import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
 import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
@@ -103,6 +104,7 @@ import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
 import vegancheckteam.plante_server.cmds.moderation.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
+import vegancheckteam.plante_server.cmds.moderation.usersData
 import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
 import vegancheckteam.plante_server.cmds.productScan
@@ -227,6 +229,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<UserDataParams> { _, user ->
                 call.respond(userData(user))
+            }
+            getAuthed<UsersDataParams> { params, user ->
+                call.respond(usersData(params, user))
             }
             getAuthed<MobileAppConfigDataParams> { params, user ->
                 call.respond(mobileAppConfigData(params, user, testing))
