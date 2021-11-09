@@ -47,24 +47,11 @@ class ModerationRequests_General_Test {
                 row[ModeratorTaskTable.id]
             }
 
-            // Check 1
+            // Check
             map = authedGet(moderatorClientToken, "/moderator_task_data/", mapOf(
                 "taskId" to taskId.toString()
             )).jsonMap()
             assertEquals(taskId, map["id"])
-
-            // Resolve
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
-                "taskId" to taskId.toString(),
-                "performedAction" to "testing",
-            )).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Check 2
-            map = authedGet(moderatorClientToken, "/moderator_task_data/", mapOf(
-                "taskId" to taskId.toString()
-            )).jsonMap()
-            assertEquals("task_not_found", map["error"])
         }
     }
 

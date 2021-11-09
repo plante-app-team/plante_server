@@ -21,8 +21,7 @@ fun moderatorTaskData(params: ModeratorTaskDataParams, user: User): Any {
     }
     return transaction {
         val row = ModeratorTaskTable.select {
-            (ModeratorTaskTable.id eq params.taskId) and
-                    (ModeratorTaskTable.resolutionTime eq null)
+            ModeratorTaskTable.id eq params.taskId
         }.firstOrNull()
         if (row == null) {
             return@transaction GenericResponse.failure(
