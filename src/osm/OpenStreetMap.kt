@@ -35,7 +35,7 @@ object OpenStreetMap {
         } else {
             ""
         }
-        val cmd = "[out:json];($nodeCmdPiece$wayCmdPiece$relationCmdPiece);out center;"
+        val cmd = "[out:json];($nodeCmdPiece$wayCmdPiece$relationCmdPiece);out center meta;"
         val response = httpClient.get<HttpResponse>(
                 urlString = "https://lz4.overpass-api.de/api/interpreter?data=$cmd")
 
@@ -65,14 +65,16 @@ object OpenStreetMap {
             } else {
                 Pair(element["lat"] as Double?, element["lon"] as Double?)
             }
-            if (type == null || id == null || lat == null || lon == null) {
-                Log.w("OpenStreetMap", "shopsJsonToShops, element lacks data: $type $id $lat $lon")
+            val version = element["version"]?.toString()
+            if (type == null || id == null || lat == null || lon == null || version == null) {
+                Log.w("OpenStreetMap", "shopsJsonToShops, element lacks data: $type $id $lat $lon $version")
                 continue
             }
             result += OsmShop(
                 OsmUID.from(type, id),
                 lat,
                 lon,
+                version,
             )
         }
         return result

@@ -136,7 +136,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         } else if (osmForTests != null) {
             osmForTests!!.invoke(shops)
         } else {
-            shops.map { OsmShop(it.osmUID, it.lat ?: 1.0, it.lon ?: 2.0) }.toSet()
+            shops.map { OsmShop(it.osmUID, it.lat ?: 1.0, it.lon ?: 2.0, "1") }.toSet()
         }
         Log.i("ShopsValidationWorker", "doWork tasks: $tasks, shops: $shops")
         validate(tasks, osmShops)

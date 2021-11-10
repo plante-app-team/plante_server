@@ -6,4 +6,5 @@ data class OsmShop(
     val uid: OsmUID,
     val lat: Double,
     val lon: Double,
+    val version: String,
 )

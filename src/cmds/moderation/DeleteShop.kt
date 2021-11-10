@@ -14,7 +14,7 @@ import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 
-@Location("/delete_shop/")
+@Location("/delete_shop_locally/")
 data class DeleteShopParams(val shopOsmUID: String)
 
 fun deleteShop(params: DeleteShopParams, user: User): Any {

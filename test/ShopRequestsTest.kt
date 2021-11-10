@@ -304,7 +304,7 @@ class ShopRequestsTest {
     fun `a very fragile test of create_shop with REAL osm responses`() {
         withPlanteTestApplication {
             val user = register()
-            val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&productionDb=false").jsonMap()
+            val map = authedGet(user, "/create_shop/?lat=-24&lon=44&name=myshop&type=general&productionOsmDb=false").jsonMap()
             val osmId = map["osm_id"] as String
             val osmUIDStr = map["osm_uid"] as String
             val osmUID = OsmUID.from(osmUIDStr)
@@ -347,39 +347,6 @@ class ShopRequestsTest {
             val task = tasks[0] as Map<*, *>
             assertEquals("1:654322", task["osm_uid"])
             assertEquals("osm_shop_creation", task["task_type"])
-        }
-    }
-
-    @Test
-    fun `shop creation DOES NOT create a moderator task when not-prod osm db is used`() {
-        withPlanteTestApplication {
-            val user = register()
-            val moderatorId = UUID.randomUUID()
-            val moderator = registerModerator(moderatorId)
-            val fakeOsmResponses = String(
-                Base64.getEncoder().encode(
-                    CreateShopTestingOsmResponses("123456", "654323", "").toString().toByteArray()))
-
-            // No moderator tasks yet
-            var map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
-            assertEquals("no_unresolved_moderator_tasks", map["error"])
-            map = authedGet(moderator, "/assigned_moderator_tasks_data/").jsonMap()
-            assertEquals(emptyList<Any>(), map["tasks"])
-
-            map = authedGet(user, "/create_shop/", mapOf(
-                "lat" to "-24",
-                "lon" to "44",
-                "name" to "myshop",
-                "type" to "general",
-                "productionDb" to "false",
-                "testingResponsesJsonBase64" to fakeOsmResponses)).jsonMap()
-            assertEquals("654323", map["osm_id"])
-
-            // A moderator still not appeared
-            map = authedGet(moderator, "/assign_moderator_task/?assignee=${moderatorId}").jsonMap()
-            assertEquals("no_unresolved_moderator_tasks", map["error"])
-            map = authedGet(moderator, "/assigned_moderator_tasks_data/").jsonMap()
-            assertEquals(emptyList<Any>(), map["tasks"])
         }
     }
 

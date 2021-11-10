@@ -23,7 +23,6 @@ import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
-import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
 
 const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
@@ -59,7 +58,7 @@ data class CreateShopParams(
     val lon: Double,
     val name: String,
     val type: String,
-    val productionDb: Boolean = true,
+    val productionOsmDb: Boolean = true,
     val testingResponsesJsonBase64: String? = null,
     val testingNow: Long? = null)
 
@@ -81,7 +80,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         return GenericResponse.failure("max_shops_created_for_now", "Already created $shopsCreationSequenceSize shops")
     }
 
-    val (osmUrl, osmUser, osmPass) = if (params.productionDb) {
+    val (osmUrl, osmUser, osmPass) = if (params.productionOsmDb) {
         Triple("https://www.openstreetmap.org",
             Config.instance.osmProdUser,
             Config.instance.osmProdPassword)
@@ -110,7 +109,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
                 <osm>
                   <changeset>
                     <tag k="created_by" v="planteuser"/>
-                    <tag k="comment" v="Organization creation by a Plante App user"/>
+                    <tag k="comment" v="Organization creation by a Plante app user"/>
                   </changeset>
                 </osm>
         """.trimIndent()
@@ -145,22 +144,20 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
     }
 
     // Create a moderator task
-    if (params.productionDb) {
-        transaction {
-            ShopTable.insertWithoutValidation(
-                user.id,
-                OsmUID.from(OsmElementType.NODE, osmShopId),
-                now,
-                params.lat,
-                params.lon,
-                createdNewOsmNode = true
-            )
-            ModeratorTaskTable.insert {
-                it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
-                it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
-                it[taskSourceUserId] = user.id
-                it[creationTime] = now
-            }
+    transaction {
+        ShopTable.insertWithoutValidation(
+            user.id,
+            OsmUID.from(OsmElementType.NODE, osmShopId),
+            now,
+            params.lat,
+            params.lon,
+            createdNewOsmNode = true
+        )
+        ModeratorTaskTable.insert {
+            it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
+            it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
+            it[taskSourceUserId] = user.id
+            it[creationTime] = now
         }
     }
 

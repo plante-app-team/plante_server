@@ -61,7 +61,7 @@ class ShopsValidationWorkerTest {
             ShopsValidationWorker.waitUntilIdle()
             ShopsValidationWorker.osmForTests = { uids ->
                 requestedOsmUidsBatches.add(uids.map { it.osmUID })
-                uids.map { OsmShop(it.osmUID, VALIDATED_COORD, VALIDATED_COORD) }.toSet()
+                uids.map { OsmShop(it.osmUID, VALIDATED_COORD, VALIDATED_COORD, "1") }.toSet()
             }
         }
     }

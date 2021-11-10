@@ -12,7 +12,7 @@ import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
-class DeleteShopTest {
+class DeleteShopLocallyTest {
     @Test
     fun `can delete shop`() {
         withPlanteTestApplication {
@@ -33,7 +33,7 @@ class DeleteShopTest {
             assertEquals(shopUid.asStr, shop!!["osm_uid"])
 
             val moderator = registerModerator()
-            map = authedGet(moderator, "/delete_shop/", mapOf(
+            map = authedGet(moderator, "/delete_shop_locally/", mapOf(
                 "shopOsmUID" to shopUid.asStr)).jsonMap()
             assertEquals("ok", map["result"])
 
@@ -58,7 +58,7 @@ class DeleteShopTest {
             assertEquals("ok", map["result"])
 
             // Verify a normal user cannot delete a shop
-            map = authedGet(user, "/delete_shop/", mapOf(
+            map = authedGet(user, "/delete_shop_locally/", mapOf(
                 "shopOsmUID" to shopUid.asStr)).jsonMap()
             assertEquals("denied", map["error"])
 

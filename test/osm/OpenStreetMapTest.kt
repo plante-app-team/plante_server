@@ -31,21 +31,25 @@ class OpenStreetMapTest {
                         uid = OsmUID.from(OsmElementType.WAY, "41186009"),
                         lat = 50.8721113,
                         lon = 4.2968699,
+                        version = "4",
                     ),
                     OsmShop(
                         uid = OsmUID.from(OsmElementType.WAY, "220871591"),
                         lat = 50.9978489,
                         lon = 3.882942,
+                        version = "3",
                     ),
                     OsmShop(
                         uid = OsmUID.from(OsmElementType.NODE, "4450971294"),
                         lat = 56.3071606,
                         lon = 43.9984697,
+                        version = "3",
                     ),
                     OsmShop(
                         uid = OsmUID.from(OsmElementType.NODE, "1637412452"),
                         lat = 56.3233611,
                         lon = 43.9864469,
+                        version = "1",
                     ),
                 ),
                 shops

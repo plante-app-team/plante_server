@@ -92,6 +92,7 @@ import vegancheckteam.plante_server.cmds.moderation.DeleteShopParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
+import vegancheckteam.plante_server.cmds.moderation.MoveProductsDeleteShopParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
@@ -102,6 +103,7 @@ import vegancheckteam.plante_server.cmds.moderation.deleteShop
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
+import vegancheckteam.plante_server.cmds.moderation.moveProductsDeleteShop
 import vegancheckteam.plante_server.cmds.moderation.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
@@ -313,6 +315,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<DeleteShopParams> { params, user ->
                 call.respond(deleteShop(params, user))
+            }
+            getAuthed<MoveProductsDeleteShopParams> { params, user ->
+                call.respond(moveProductsDeleteShop(params, user, testing, client))
             }
             getAuthed<PutProductToShopParams> { params, user ->
                 call.respond(putProductToShop(params, user, testing))

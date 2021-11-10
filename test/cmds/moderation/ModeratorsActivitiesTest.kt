@@ -116,41 +116,42 @@ class ModeratorsActivitiesTest {
             assertEquals("denied", map["error"])
         }
     }
-}
 
-fun TestApplicationEngine.getModeratorsActivities(
+
+    fun TestApplicationEngine.getModeratorsActivities(
         moderator: String,
         since: Int = 0): List<Map<*, *>> {
-    val map = authedGet(moderator, "/moderators_activities/?since=$since").jsonMap()
-    return (map["result"] as List<*>).map { it as Map<*, *> }
-}
+        val map = authedGet(moderator, "/moderators_activities/?since=$since").jsonMap()
+        return (map["result"] as List<*>).map { it as Map<*, *> }
+    }
 
-fun TestApplicationEngine.createModeratorTask(
+    fun TestApplicationEngine.createModeratorTask(
         user: String,
         now: Int) {
-    val barcode = UUID.randomUUID().toString()
-    val map = authedGet(user, "/make_report/", mapOf(
-        "barcode" to barcode,
-        "text" to "some text",
-        "testingNow" to now.toString(),
-    )).jsonMap()
-    assertEquals("ok", map["result"])
-}
+        val barcode = UUID.randomUUID().toString()
+        val map = authedGet(user, "/make_report/", mapOf(
+            "barcode" to barcode,
+            "text" to "some text",
+            "testingNow" to now.toString(),
+        )).jsonMap()
+        assertEquals("ok", map["result"])
+    }
 
-fun TestApplicationEngine.resolveSomeTask(
+    fun TestApplicationEngine.resolveSomeTask(
         moderator: String,
         performedAction: String,
         now: Int) {
-    var map = authedGet(moderator, "/all_moderator_tasks_data/", mapOf(
-        "testingNow" to now.toString(),
-    )).jsonMap()
-    val allTasks = map["tasks"] as List<*>
-    val task = allTasks[0] as Map<*, *>
-    val taskId = task["id"]
-    map = authedGet(moderator, "/resolve_moderator_task/", mapOf(
-        "taskId" to "$taskId",
-        "performedAction" to performedAction,
-        "testingNow" to now.toString(),
-    )).jsonMap()
-    assertEquals("ok", map["result"])
+        var map = authedGet(moderator, "/all_moderator_tasks_data/", mapOf(
+            "testingNow" to now.toString(),
+        )).jsonMap()
+        val allTasks = map["tasks"] as List<*>
+        val task = allTasks[0] as Map<*, *>
+        val taskId = task["id"]
+        map = authedGet(moderator, "/resolve_moderator_task/", mapOf(
+            "taskId" to "$taskId",
+            "performedAction" to performedAction,
+            "testingNow" to now.toString(),
+        )).jsonMap()
+        assertEquals("ok", map["result"])
+    }
 }
