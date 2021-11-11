@@ -5,13 +5,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 
 @Location("/specify_moderator_choice_reason/")
 data class SpecifyModeratorChoiceReasonParams(
     val barcode: String,
-    val veganChoiceReason: Int? = null,
+    val veganChoiceReasons: List<Int>? = null,
     val veganSourcesText: String? = null)
 
 fun specifyModeratorChoiceReasonParams(params: SpecifyModeratorChoiceReasonParams, user: User): Any {
@@ -20,7 +21,7 @@ fun specifyModeratorChoiceReasonParams(params: SpecifyModeratorChoiceReasonParam
     }
     transaction {
         ProductTable.update({ ProductTable.barcode eq params.barcode }) {
-            it[moderatorVeganChoiceReason] = params.veganChoiceReason?.toShort()
+            it[moderatorVeganChoiceReasons] = Product.moderatorChoiceReasonsToStr(params.veganChoiceReasons)
             it[moderatorVeganSourcesText] = params.veganSourcesText
         }
     }

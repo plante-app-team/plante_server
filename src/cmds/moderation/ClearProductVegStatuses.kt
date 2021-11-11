@@ -21,6 +21,8 @@ fun clearProductVegStatuses(params: ClearProductVegStatusesParams, user: User): 
         ProductTable.update({ ProductTable.barcode eq params.barcode }) {
             it[veganStatus] = null
             it[veganStatusSource] = null
+            it[moderatorVeganChoiceReasons] = null // TODO: test
+            it[moderatorVeganSourcesText] = null // TODO: test
         }
     }
     return GenericResponse.success()

@@ -161,5 +161,5 @@ private fun createModeratorTask(barcode: String, user: User, lang: String?, task
 }
 
 private fun emptyProductWith(id: Int, barcode: String): Product {
-    return Product(id, barcode, null, null, null, null)
+    return Product(id, barcode, null, null, null, null, null)
 }

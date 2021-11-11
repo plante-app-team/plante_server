@@ -65,7 +65,7 @@ suspend fun moveProductsDeleteShop(params: MoveProductsDeleteShopParams, user: U
     }
 
     // Move products
-    moveProducts(params, badShop, goodOsmShop, user, testing)
+    moveProducts(params, badShop, goodOsmShop, testing)
 
     // Delete bad shop locally
     deleteShop(DeleteShopParams(badShop.osmUID.asStr), user)

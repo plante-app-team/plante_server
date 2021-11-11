@@ -18,19 +18,41 @@ data class Product(
     val veganStatusSource: VegStatusSource?,
     @JsonProperty("moderator_vegan_choice_reason")
     val moderatorVeganChoiceReason: Short?,
+    @JsonProperty("moderator_vegan_choice_reasons")
+    val moderatorVeganChoiceReasons: String?,
     @JsonProperty("moderator_vegan_sources_text")
     val moderatorVeganSourcesText: String?) {
 
     companion object {
-        fun from(tableRow: ResultRow) = Product(
-            id = tableRow[ProductTable.id],
-            barcode = tableRow[ProductTable.barcode],
-            veganStatus = vegStatusFrom(tableRow[ProductTable.veganStatus]),
-            veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]),
-            moderatorVeganChoiceReason = tableRow[ProductTable.moderatorVeganChoiceReason],
-            moderatorVeganSourcesText = tableRow[ProductTable.moderatorVeganSourcesText])
+        private const val MODERATOR_CHOICE_REASON_SEPARATOR = ","
+        fun from(tableRow: ResultRow): Product {
+            val moderatorVeganChoiceReasons = tableRow[ProductTable.moderatorVeganChoiceReasons]
+            val moderatorVeganChoiceReason: Short?
+            if (moderatorVeganChoiceReasons.isNullOrBlank()) {
+                moderatorVeganChoiceReason = null
+            } else {
+                moderatorVeganChoiceReason = moderatorVeganChoiceReasons
+                    .split(MODERATOR_CHOICE_REASON_SEPARATOR)
+                    .firstOrNull()
+                    ?.toShortOrNull()
+            }
+            return Product(
+                id = tableRow[ProductTable.id],
+                barcode = tableRow[ProductTable.barcode],
+                veganStatus = vegStatusFrom(tableRow[ProductTable.veganStatus]),
+                veganStatusSource = vegStatusSourceFrom(tableRow[ProductTable.veganStatusSource]),
+                moderatorVeganChoiceReason = moderatorVeganChoiceReason,
+                moderatorVeganChoiceReasons = tableRow[ProductTable.moderatorVeganChoiceReasons],
+                moderatorVeganSourcesText = tableRow[ProductTable.moderatorVeganSourcesText])
+        }
         private fun vegStatusFrom(code: Short?) = code?.let { VegStatus.fromPersistentCode(it) }
         private fun vegStatusSourceFrom(code: Short?) = code?.let { VegStatusSource.fromPersistentCode(it) }
+        fun moderatorChoiceReasonsToStr(reasons: List<Int>?): String? {
+            if (reasons == null || reasons.isEmpty()) {
+                return null
+            }
+            return reasons.joinToString(MODERATOR_CHOICE_REASON_SEPARATOR)
+        }
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
 }

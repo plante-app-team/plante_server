@@ -174,7 +174,7 @@ class ModerationRequests_ProductModeration_Test {
     }
 
     @Test
-    fun `specify product moderator choice reason`() {
+    fun `specify product moderator choice reasons`() {
         withPlanteTestApplication {
             val clientToken = register()
             val moderatorClientToken = registerModerator()
@@ -193,28 +193,36 @@ class ModerationRequests_ProductModeration_Test {
             assertEquals(null, map["moderator_vegan_sources_text"])
 
             // Specify reason without text
-            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
-                "barcode" to barcode,
-                "veganChoiceReason" to "2",
-            )).jsonMap()
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/",
+                mapOf(
+                    "barcode" to barcode,
+                ),
+                mapOf(
+                    "veganChoiceReasons" to listOf("2", "3", "4"),
+                )).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
             assertEquals(2, map["moderator_vegan_choice_reason"])
+            assertEquals("2,3,4", map["moderator_vegan_choice_reasons"])
             assertEquals(null, map["moderator_vegan_sources_text"])
 
             // Specify reason with text
-            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
-                "barcode" to barcode,
-                "veganChoiceReason" to "4",
-                "veganSourcesText" to "General Kenobi!",
-            )).jsonMap()
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/",
+                mapOf(
+                    "barcode" to barcode,
+                    "veganSourcesText" to "General Kenobi!",
+                ),
+                mapOf(
+                    "veganChoiceReasons" to listOf("4"),
+                )).jsonMap()
             assertEquals("ok", map["result"])
 
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
             assertEquals(4, map["moderator_vegan_choice_reason"])
+            assertEquals("4", map["moderator_vegan_choice_reasons"])
             assertEquals("General Kenobi!", map["moderator_vegan_sources_text"])
 
             // Clear reason
@@ -226,6 +234,7 @@ class ModerationRequests_ProductModeration_Test {
             map = authedGet(clientToken, "/product_data/?barcode=${barcode}").jsonMap()
             assertEquals(barcode, map["barcode"])
             assertEquals(null, map["moderator_vegan_choice_reason"])
+            assertEquals(null, map["moderator_vegan_choice_reasons"])
             assertEquals(null, map["moderator_vegan_sources_text"])
         }
     }
@@ -252,31 +261,39 @@ class ModerationRequests_ProductModeration_Test {
             assertEquals("ok", map["result"])
 
             // Product 1 reason
-            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
-                "barcode" to barcode1,
-                "veganChoiceReason" to "2",
-                "veganSourcesText" to "there!",
-            )).jsonMap()
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/",
+                mapOf(
+                    "barcode" to barcode1,
+                    "veganSourcesText" to "there!",
+                ),
+                mapOf(
+                    "veganChoiceReasons" to listOf("2"),
+                )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Product 2 reason
-            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/", mapOf(
-                "barcode" to barcode2,
-                "veganChoiceReason" to "4",
-                "veganSourcesText" to "You're a bold one!",
-            )).jsonMap()
+            map = authedGet(moderatorClientToken, "/specify_moderator_choice_reason/",
+                mapOf(
+                    "barcode" to barcode2,
+                    "veganSourcesText" to "You're a bold one!",
+                ),
+                mapOf(
+                    "veganChoiceReasons" to listOf("4", "5"),
+                )).jsonMap()
             assertEquals("ok", map["result"])
 
             // Verify product 1 reason
             map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
             assertEquals(barcode1, map["barcode"])
             assertEquals(2, map["moderator_vegan_choice_reason"])
+            assertEquals("2", map["moderator_vegan_choice_reasons"])
             assertEquals("there!", map["moderator_vegan_sources_text"])
 
             // Verify product 2 reason
             map = authedGet(clientToken, "/product_data/?barcode=${barcode2}").jsonMap()
             assertEquals(barcode2, map["barcode"])
             assertEquals(4, map["moderator_vegan_choice_reason"])
+            assertEquals("4,5", map["moderator_vegan_choice_reasons"])
             assertEquals("You're a bold one!", map["moderator_vegan_sources_text"])
         }
     }
