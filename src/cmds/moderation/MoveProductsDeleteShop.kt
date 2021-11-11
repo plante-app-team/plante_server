@@ -27,7 +27,6 @@ import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
-import vegancheckteam.plante_server.model.UserDataResponse
 import vegancheckteam.plante_server.model.UserRightsGroup
 import vegancheckteam.plante_server.osm.OpenStreetMap
 import vegancheckteam.plante_server.osm.OsmShop
@@ -106,7 +105,6 @@ private fun moveProducts(
         params: MoveProductsDeleteShopParams,
         from: Shop,
         to: OsmShop,
-        user: User,
         testing: Boolean) = transaction {
     val productsAtShopRows = ProductAtShopTable.select(ProductAtShopTable.shopId eq from.id)
     for (row in productsAtShopRows) {
