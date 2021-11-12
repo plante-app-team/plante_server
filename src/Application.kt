@@ -94,6 +94,7 @@ import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
 import vegancheckteam.plante_server.cmds.moderation.MoveProductsDeleteShopParams
 import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
+import vegancheckteam.plante_server.cmds.moderation.RecordCustomModerationActionParams
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
 import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
@@ -105,6 +106,7 @@ import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
 import vegancheckteam.plante_server.cmds.moderation.moveProductsDeleteShop
 import vegancheckteam.plante_server.cmds.moderation.offProxyGet
+import vegancheckteam.plante_server.cmds.moderation.recordCustomModerationAction
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
 import vegancheckteam.plante_server.cmds.productData
@@ -340,6 +342,9 @@ fun Application.module(testing: Boolean = false) {
             }
             getAuthed<ShopsInBoundsDataParams> { params, _ ->
                 call.respond(shopsInBoundsData(params))
+            }
+            getAuthed<RecordCustomModerationActionParams> { params, user ->
+                call.respond(recordCustomModerationAction(params, user, testing))
             }
 
             route("$OFF_PROXY_PATH/{...}", HttpMethod.Get) {

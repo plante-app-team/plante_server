@@ -117,15 +117,14 @@ class ModeratorsActivitiesTest {
         }
     }
 
-
-    fun TestApplicationEngine.getModeratorsActivities(
+    private fun TestApplicationEngine.getModeratorsActivities(
         moderator: String,
         since: Int = 0): List<Map<*, *>> {
         val map = authedGet(moderator, "/moderators_activities/?since=$since").jsonMap()
         return (map["result"] as List<*>).map { it as Map<*, *> }
     }
 
-    fun TestApplicationEngine.createModeratorTask(
+    private fun TestApplicationEngine.createModeratorTask(
         user: String,
         now: Int) {
         val barcode = UUID.randomUUID().toString()
@@ -137,7 +136,7 @@ class ModeratorsActivitiesTest {
         assertEquals("ok", map["result"])
     }
 
-    fun TestApplicationEngine.resolveSomeTask(
+    private fun TestApplicationEngine.resolveSomeTask(
         moderator: String,
         performedAction: String,
         now: Int) {
