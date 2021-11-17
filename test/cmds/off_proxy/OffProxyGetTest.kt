@@ -1,4 +1,4 @@
-package vegancheckteam.plante_server.cmds.moderation
+package vegancheckteam.plante_server.cmds.off_proxy
 
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,7 +9,7 @@ import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
-class OffProxyTest {
+class OffProxyGetTest {
     @Test
     fun `a very fragile get proxy test`() {
         withPlanteTestApplication {

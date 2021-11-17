@@ -22,11 +22,21 @@ import java.util.*
 import kotlin.test.assertEquals
 
 fun TestApplicationEngine.get(
+    url: String,
+    clientToken: String? = null,
+    queryParams: Map<String, String> = emptyMap(),
+    queryParamsLists: Map<String, List<String>> = emptyMap(),
+    body: String? = null,
+    headers: Map<String, String> = emptyMap()) = request(HttpMethod.Get, url, clientToken, queryParams, queryParamsLists, body, headers)
+
+fun TestApplicationEngine.request(
+        httpMethod: HttpMethod,
         url: String,
         clientToken: String? = null,
         queryParams: Map<String, String> = emptyMap(),
         queryParamsLists: Map<String, List<String>> = emptyMap(),
-        body: String? = null): TestApplicationCall {
+        body: String? = null,
+        headers: Map<String, String> = emptyMap()): TestApplicationCall {
     val queryParamsFinal = mutableListOf<Pair<String, String>>()
     for (keyValue in queryParams.entries) {
         queryParamsFinal.add(Pair(keyValue.key, keyValue.value))
@@ -48,9 +58,12 @@ fun TestApplicationEngine.get(
     } else {
         "$url?$queryParamsStr"
     }
-    return handleRequest(HttpMethod.Get, urlFinal) {
+    return handleRequest(httpMethod, urlFinal) {
         clientToken?.let {
             addHeader("Authorization", "Bearer $it")
+        }
+        for (header in headers.entries) {
+            addHeader(header.key, header.value)
         }
         body?.let {
             addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -64,7 +77,8 @@ fun TestApplicationEngine.authedGet(
     url: String,
     queryParams: Map<String, String> = emptyMap(),
     queryParamsLists: Map<String, List<String>> = emptyMap(),
-    body: String? = null) = get(url, token, queryParams, queryParamsLists, body)
+    body: String? = null,
+    headers: Map<String, String> = emptyMap()) = get(url, token, queryParams, queryParamsLists, body, headers)
 
 fun TestApplicationResponse.jsonMap(): Map<*, *> {
     return ObjectMapper().readValue(content, MutableMap::class.java)

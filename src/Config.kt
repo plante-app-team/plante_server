@@ -11,12 +11,7 @@ data class Config(
     val psqlUser: String,
     @JsonProperty("psql_pass")
     val psqlPassword: String,
-    @JsonProperty("db_connection_attempts_timeout_seconds")
-    val dbConnectionAttemptsTimeoutSeconds: Int,
-    @JsonProperty("jwt_secret")
-    val jwtSecret: String,
-    @JsonProperty("ios_backend_private_key_file_path")
-    val iOSBackendPrivateKeyFilePath: String,
+
     @JsonProperty("osm_prod_user")
     val osmProdUser: String,
     @JsonProperty("osm_prod_password")
@@ -25,13 +20,33 @@ data class Config(
     val osmTestingUser: String,
     @JsonProperty("osm_testing_password")
     val osmTestingPassword: String,
-    @JsonProperty("always_moderator_name")
-    val alwaysModeratorName: String?,
+
+    @JsonProperty("off_prod_user")
+    val offProdUser: String,
+    @JsonProperty("off_prod_password")
+    val offProdPassword: String,
+    @JsonProperty("off_testing_user")
+    val offTestingUser: String,
+    @JsonProperty("off_testing_password")
+    val offTestingPassword: String,
+
+    @JsonProperty("jwt_secret")
+    val jwtSecret: String,
+    @JsonProperty("ios_backend_private_key_file_path")
+    val iOSBackendPrivateKeyFilePath: String,
     @JsonProperty("allow_cors")
     val allowCors: Boolean = false,
     @JsonProperty("nominatim_enabled")
-    val nominatimEnabled: Boolean = true) {
+    val nominatimEnabled: Boolean = true,
+    @JsonProperty("db_connection_attempts_timeout_seconds")
+    val dbConnectionAttemptsTimeoutSeconds: Int,
 
+    /**
+     * For local WebAdmin development.
+     */
+    @JsonProperty("always_moderator_name")
+    val alwaysModeratorName: String?,
+) {
     companion object {
         lateinit var instance: Config
         var instanceInited = false

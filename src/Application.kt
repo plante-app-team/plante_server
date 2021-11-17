@@ -93,7 +93,8 @@ import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDa
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
 import vegancheckteam.plante_server.cmds.moderation.MoveProductsDeleteShopParams
-import vegancheckteam.plante_server.cmds.moderation.OFF_PROXY_PATH
+import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_GET_PATH
+import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_POST_FORM_PATH
 import vegancheckteam.plante_server.cmds.moderation.RecordCustomModerationActionParams
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
@@ -105,10 +106,13 @@ import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsDa
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
 import vegancheckteam.plante_server.cmds.moderation.moveProductsDeleteShop
-import vegancheckteam.plante_server.cmds.moderation.offProxyGet
+import vegancheckteam.plante_server.cmds.off_proxy.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.recordCustomModerationAction
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
+import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_MULTIPART_PATH
+import vegancheckteam.plante_server.cmds.off_proxy.offProxyMultipart
+import vegancheckteam.plante_server.cmds.off_proxy.offProxyPostForm
 import vegancheckteam.plante_server.cmds.productData
 import vegancheckteam.plante_server.cmds.productPresenceVote
 import vegancheckteam.plante_server.cmds.productScan
@@ -225,136 +229,141 @@ fun Application.module(testing: Boolean = false) {
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
 
         authenticate {
-            getAuthed<BanMeParams> { _, user ->
+            authedLocation<BanMeParams> { _, user ->
                 if (!testing) {
-                    return@getAuthed
+                    return@authedLocation
                 }
                 call.respond(banMe(user))
             }
-            getAuthed<UserDataParams> { _, user ->
+            authedLocation<UserDataParams> { _, user ->
                 call.respond(userData(user))
             }
-            getAuthed<UsersDataParams> { params, user ->
+            authedLocation<UsersDataParams> { params, user ->
                 call.respond(usersData(params, user))
             }
-            getAuthed<MobileAppConfigDataParams> { params, user ->
+            authedLocation<MobileAppConfigDataParams> { params, user ->
                 call.respond(mobileAppConfigData(params, user, testing))
             }
-            getAuthed<UpdateUserDataParams> { params, user ->
+            authedLocation<UpdateUserDataParams> { params, user ->
                 call.respond(updateUserData(params, user))
             }
-            getAuthed<SignOutAllParams> { _, user ->
+            authedLocation<SignOutAllParams> { _, user ->
                 call.respond(signOutAll(user))
             }
-            getAuthed<CreateUpdateProductParams> { params, user ->
+            authedLocation<CreateUpdateProductParams> { params, user ->
                 call.respond(createUpdateProduct(params, user))
             }
-            getAuthed<ProductDataParams> { params, _ ->
+            authedLocation<ProductDataParams> { params, _ ->
                 call.respond(productData(params))
             }
-            getAuthed<ProductsDataParams> { params, _ ->
+            authedLocation<ProductsDataParams> { params, _ ->
                 call.respond(productsData(params))
             }
-            getAuthed<ProductChangesDataParams> { params, user ->
+            authedLocation<ProductChangesDataParams> { params, user ->
                 call.respond(productChangesData(params, user))
             }
-            getAuthed<UserQuizParams> { params, user ->
+            authedLocation<UserQuizParams> { params, user ->
                 call.respond(userQuiz(params, user))
             }
-            getAuthed<UserQuizDataParams> { _, user ->
+            authedLocation<UserQuizDataParams> { _, user ->
                 call.respond(userQuizData(user))
             }
-            getAuthed<MakeReportParams> { params, user ->
+            authedLocation<MakeReportParams> { params, user ->
                 call.respond(makeReport(params, user, testing))
             }
-            getAuthed<ProductScanParams> { params, user ->
+            authedLocation<ProductScanParams> { params, user ->
                 call.respond(productScan(params, user, testing))
             }
-            getAuthed<AssignModeratorTaskParams> { params, user ->
+            authedLocation<AssignModeratorTaskParams> { params, user ->
                 call.respond(assignModeratorTask(params, user, testing))
             }
-            getAuthed<AssignedModeratorTasksDataParams> { params, user ->
+            authedLocation<AssignedModeratorTasksDataParams> { params, user ->
                 call.respond(assignedModeratorTasksData(params, user, testing))
             }
-            getAuthed<RejectModeratorTaskParams> { params, user ->
+            authedLocation<RejectModeratorTaskParams> { params, user ->
                 call.respond(rejectModeratorTask(params, user))
             }
-            getAuthed<AllModeratorTasksDataParams> { params, user ->
+            authedLocation<AllModeratorTasksDataParams> { params, user ->
                 call.respond(allModeratorTasksData(params, user, testing))
             }
-            getAuthed<ModeratorTaskDataParams> { params, user ->
+            authedLocation<ModeratorTaskDataParams> { params, user ->
                 call.respond(moderatorTaskData(params, user))
             }
-            getAuthed<ModeratorsActivitiesParams> { params, user ->
+            authedLocation<ModeratorsActivitiesParams> { params, user ->
                 call.respond(moderatorsActivities(params, user))
             }
-            getAuthed<ResolveModeratorTaskParams> { params, user ->
+            authedLocation<ResolveModeratorTaskParams> { params, user ->
                 call.respond(resolveModeratorTask(params, user, testing))
             }
-            getAuthed<UnresolveModeratorTaskParams> { params, user ->
+            authedLocation<UnresolveModeratorTaskParams> { params, user ->
                 call.respond(unresolveModeratorTask(params, user))
             }
-            getAuthed<ChangeModeratorTaskLangParams> { params, user ->
+            authedLocation<ChangeModeratorTaskLangParams> { params, user ->
                 call.respond(changeModeratorTaskLang(params, user))
             }
-            getAuthed<ModerateProductVegStatusesParams> { params, user ->
+            authedLocation<ModerateProductVegStatusesParams> { params, user ->
                 call.respond(moderateProductVegStatuses(params, user))
             }
-            getAuthed<ClearProductVegStatusesParams> { params, user ->
+            authedLocation<ClearProductVegStatusesParams> { params, user ->
                 call.respond(clearProductVegStatuses(params, user))
             }
-            getAuthed<SpecifyModeratorChoiceReasonParams> { params, user ->
+            authedLocation<SpecifyModeratorChoiceReasonParams> { params, user ->
                 call.respond(specifyModeratorChoiceReasonParams(params, user))
             }
-            getAuthed<CountModeratorTasksParams> { params, user ->
+            authedLocation<CountModeratorTasksParams> { params, user ->
                 call.respond(countModeratorTasks(params, user))
             }
-            getAuthed<LatestProductsAddedToShopsDataParams> { params, user ->
+            authedLocation<LatestProductsAddedToShopsDataParams> { params, user ->
                 call.respond(latestProductsAddedToShopsData(params, user))
             }
-            getAuthed<DeleteUserParams> { params, user ->
+            authedLocation<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
             }
-            getAuthed<DeleteShopParams> { params, user ->
+            authedLocation<DeleteShopParams> { params, user ->
                 call.respond(deleteShop(params, user))
             }
-            getAuthed<MoveProductsDeleteShopParams> { params, user ->
+            authedLocation<MoveProductsDeleteShopParams> { params, user ->
                 call.respond(moveProductsDeleteShop(params, user, testing, client))
             }
-            getAuthed<PutProductToShopParams> { params, user ->
+            authedLocation<PutProductToShopParams> { params, user ->
                 call.respond(putProductToShop(params, user, testing))
             }
-            getAuthed<ProductsAtShopsDataParams> { params, _ ->
+            authedLocation<ProductsAtShopsDataParams> { params, _ ->
                 call.respond(productsAtShopsData(params))
             }
-            getAuthed<ProductPresenceVoteParams> { params, user ->
+            authedLocation<ProductPresenceVoteParams> { params, user ->
                 call.respond(productPresenceVote(params, user, testing))
             }
-            getAuthed<ProductPresenceVotesDataParams> { params, user ->
+            authedLocation<ProductPresenceVotesDataParams> { params, user ->
                 call.respond(productPresenceVotesData(params, user))
             }
-            getAuthed<CreateShopParams> { params, user ->
+            authedLocation<CreateShopParams> { params, user ->
                 call.respond(createShop(params, user, testing, client))
             }
-            getAuthed<ShopsDataParams> { _, _ ->
+            authedLocation<ShopsDataParams> { _, _ ->
                 val body = call.receive<ShopsDataRequestBody>()
                 call.respond(shopsData(body))
             }
-            getAuthed<ShopsInBoundsDataParams> { params, _ ->
+            authedLocation<ShopsInBoundsDataParams> { params, _ ->
                 call.respond(shopsInBoundsData(params))
             }
-            getAuthed<RecordCustomModerationActionParams> { params, user ->
+            authedLocation<RecordCustomModerationActionParams> { params, user ->
                 call.respond(recordCustomModerationAction(params, user, testing))
             }
 
-            route("$OFF_PROXY_PATH/{...}", HttpMethod.Get) {
-                handle {
-                    val user = call.userPrincipal?.user
-                    validateUser(user)?.let { error ->
-                        call.respond(error)
-                        return@handle
-                    }
-                    call.respond(offProxyGet(call, user!!, client))
+            route("$OFF_PROXY_GET_PATH/{...}", HttpMethod.Get) {
+                authedRoute { call, user ->
+                    offProxyGet(call, user, client)
+                }
+            }
+            route("$OFF_PROXY_POST_FORM_PATH/{...}", HttpMethod.Post) {
+                authedRoute { call, _ ->
+                    offProxyPostForm(call, client, testing)
+                }
+            }
+            route("$OFF_PROXY_MULTIPART_PATH/{...}") {
+                authedRoute { call, _ ->
+                    offProxyMultipart(call, client, testing)
                 }
             }
         }
