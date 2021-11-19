@@ -25,22 +25,22 @@ class OffProxyPostFormTest {
                 addHeader("Authorization", "Bearer $user")
                 addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
                 setBody(listOf(
-                    "comment" to " Plante server integration test",
-                    "user_id" to " invalid_user_id",
-                    "password" to " invalid_password",
-                    "code" to " 1111111111111",
-                    "product_name" to " Coca Cola Light",
-                    "brands" to " Coca Cola",
-                    "countries" to " Deutschland",
-                    "lang" to " de",
-                    "serving_size" to " 100g",
-                    "selected_images" to " {}",
-                    "images" to " {}",
-                    "ingredients_text" to " Wasser, Kohlensäure, e150d, Citronensäure",
-                    "ingredients_analysis_tags" to " []",
-                    "additives_tags" to " [en:e150d, en:e950]",
-                    "nutriment_energy_unit" to " kcal",
-                    "nutrition_data_per" to " serving").formUrlEncode())
+                    "comment" to "Plante server integration test",
+                    "user_id" to "invalid_user_id",
+                    "password" to "invalid_password",
+                    "code" to "1111111111111",
+                    "product_name" to "Coca Cola Light",
+                    "brands" to "Coca Cola",
+                    "countries" to "Deutschland",
+                    "lang" to "de",
+                    "serving_size" to "100g",
+                    "selected_images" to "{}",
+                    "images" to "{}",
+                    "ingredients_text" to "Wasser, Kohlensäure, e150d, Citronensäure",
+                    "ingredients_analysis_tags" to "[]",
+                    "additives_tags" to "[en:e150d, en:e950]",
+                    "nutriment_energy_unit" to "kcal",
+                    "nutrition_data_per" to "serving").formUrlEncode())
             }.response.content!!
             assertTrue(response.contains("\"status\":1"), response)
         }

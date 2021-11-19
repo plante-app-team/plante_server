@@ -17,15 +17,17 @@ import java.io.File
 import java.io.OutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.multipart_proxy.MultipartProxyStorage
 
 abstract class MultipartProxy(
     private val storage: MultipartProxyStorage,
 ) {
     suspend fun proxy(call: ApplicationCall, client: HttpClient, testing: Boolean): HttpResponse {
-        val (files, formItems) = receiveMultiformParts(call)
+        val targetUrl = convertUrl(call.url(), testing)
+        val (files, formItems) = receiveMultiformParts(call, targetUrl)
         val result = try {
-            proxyImpl(call, formItems, files, client, testing)
+            proxyImpl(call, targetUrl, formItems, files, client, testing)
         } finally {
             files.forEach { it.localFile.delete() }
         }
@@ -35,6 +37,7 @@ abstract class MultipartProxy(
 
     private suspend fun receiveMultiformParts(
         call: ApplicationCall,
+        targetUrl: String,
     ): Pair<List<ProxiedFileData>, List<PartData.FormItem>> {
         val filesMap = mutableMapOf<String, ProxiedFileData>()
         val multipartData = call.receiveMultipart()
@@ -53,6 +56,7 @@ abstract class MultipartProxy(
                             stream,
                             part.headers,
                         )
+                        Log.i("MultipartProxy", "target: $targetUrl, receiving file: $name (${part.originalFileName})")
                     }
                     val stream = filesMap[part.name]!!.localFileStream
                     runOnIO { stream.write(part.streamProvider().readBytes()) }
@@ -73,12 +77,12 @@ abstract class MultipartProxy(
 
     private suspend fun proxyImpl(
         call: ApplicationCall,
+        targetUrl: String,
         formItems: List<PartData.FormItem>,
         files: List<ProxiedFileData>,
         client: HttpClient,
         testing: Boolean,
     ): HttpResponse {
-        val targetUrl = convertUrl(call.url(), testing)
         val filesFormData = formData {
             for (file in files) {
                 val inputProvider = InputProvider { file.localFile.inputStream().asInput() }
@@ -94,6 +98,7 @@ abstract class MultipartProxy(
             for (header in additionalHeaders(testing)) {
                 headers.append(header.key, header.value)
             }
+            Log.i("MultipartProxy", "target: $targetUrl, headers: ${headers.entries()}")
         }
         return result
     }

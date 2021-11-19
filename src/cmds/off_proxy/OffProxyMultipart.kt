@@ -34,7 +34,7 @@ private val storage = MultipartProxyStorage(
 
 private object OffProxyImpl : MultipartProxy(storage) {
     override fun convertUrl(url: String, testing: Boolean): String {
-        val proxiedPiece = url.replace(Regex(".*://(.*?)$OFF_PROXY_MULTIPART_PATH"), "")
+        val proxiedPiece = url.replace(Regex(".*://(.*?)$OFF_PROXY_MULTIPART_PATH/"), "")
         return if (testing) {
             "https://world.openfoodfacts.net/$proxiedPiece"
         } else {

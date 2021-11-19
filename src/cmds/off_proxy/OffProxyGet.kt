@@ -26,7 +26,7 @@ suspend fun offProxyGet(call: ApplicationCall, user: User, client: HttpClient): 
         // app can (and should) send them directly to OFF.
         return Pair(HttpStatusCode.OK, GenericResponse.failure("denied"))
     }
-    val proxiedPiece = call.url().replace(Regex(".*://(.*?)$OFF_PROXY_GET_PATH"), "")
+    val proxiedPiece = call.url().replace(Regex(".*://(.*?)$OFF_PROXY_GET_PATH/"), "")
     // NOTE: we don't pass the headers and body to the target address - this is because
     // at the present time the GET proxy is needed only for Plante Web Admin.
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

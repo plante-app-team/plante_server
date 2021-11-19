@@ -7,11 +7,11 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
-import io.ktor.request.receive
 import io.ktor.request.receiveParameters
 import io.ktor.util.toMap
 import io.ktor.util.url
 import vegancheckteam.plante_server.Config
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.proxy.ensureCredentialsWereRemovedFromHeaders
 import vegancheckteam.plante_server.proxy.proxyHeaders
 
@@ -23,7 +23,7 @@ const val OFF_PROXY_POST_FORM_PATH = "/off_proxy_form_post"
  * and we cannot store OFF credentials in the mobile app - it's a vulnerability.
  */
 suspend fun offProxyPostForm(call: ApplicationCall, client: HttpClient, testing: Boolean): Pair<HttpStatusCode, Any> {
-    val proxiedPiece = call.url().replace(Regex(".*://(.*?)$OFF_PROXY_POST_FORM_PATH"), "")
+    val proxiedPiece = call.url().replace(Regex(".*://(.*?)$OFF_PROXY_POST_FORM_PATH/"), "")
     val target = if (testing) {
         "https://world.openfoodfacts.net/$proxiedPiece"
     } else {
@@ -46,10 +46,11 @@ suspend fun offProxyPostForm(call: ApplicationCall, client: HttpClient, testing:
                 appendAll(param.key, param.value)
             }
         }) {
-            headers.appendAll(proxyHeaders(call))
-            for (header in additionalOffHeaders(testing)) {
-                headers.append(header.key, header.value)
-            }
+        headers.appendAll(proxyHeaders(call))
+        for (header in additionalOffHeaders(testing)) {
+            headers.append(header.key, header.value)
+        }
+        Log.i("offProxyPostForm", "target: $target, form params: $params, headers: ${headers.entries()}")
     }
 
     ensureCredentialsWereRemovedFromHeaders(call, result)
