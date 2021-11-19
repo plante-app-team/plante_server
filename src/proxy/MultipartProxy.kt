@@ -71,6 +71,7 @@ abstract class MultipartProxy(
         }
         for (file in filesMap.values) {
             runOnIO { file.localFileStream.close() }
+            Log.i("MultipartProxy", "target: $targetUrl, file ${file.fieldName} has size ${file.localFile.length()}")
         }
         return Pair(filesMap.values.toList(), formItems)
     }
