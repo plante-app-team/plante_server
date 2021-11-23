@@ -46,11 +46,21 @@ import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
+import io.ktor.metrics.micrometer.MicrometerMetrics
 import io.ktor.request.receive
 import io.ktor.request.uri
 import io.ktor.response.respond
 import io.ktor.routing.route
 import io.ktor.routing.routing
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.core.instrument.binder.system.UptimeMetrics
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import java.io.File
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -93,8 +103,6 @@ import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDa
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
 import vegancheckteam.plante_server.cmds.moderation.MoveProductsDeleteShopParams
-import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_GET_PATH
-import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_POST_FORM_PATH
 import vegancheckteam.plante_server.cmds.moderation.RecordCustomModerationActionParams
 import vegancheckteam.plante_server.cmds.moderation.SpecifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
@@ -106,11 +114,13 @@ import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsDa
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
 import vegancheckteam.plante_server.cmds.moderation.moveProductsDeleteShop
-import vegancheckteam.plante_server.cmds.off_proxy.offProxyGet
 import vegancheckteam.plante_server.cmds.moderation.recordCustomModerationAction
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
+import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_GET_PATH
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_MULTIPART_PATH
+import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_POST_FORM_PATH
+import vegancheckteam.plante_server.cmds.off_proxy.offProxyGet
 import vegancheckteam.plante_server.cmds.off_proxy.offProxyMultipart
 import vegancheckteam.plante_server.cmds.off_proxy.offProxyPostForm
 import vegancheckteam.plante_server.cmds.productData
@@ -176,6 +186,12 @@ fun Application.module(testing: Boolean = false) {
 
     install(CallLogging) {
         level = Level.INFO
+        filter { call ->
+            val uri = call.request.uri
+            // Prometheus sends a metrics request
+            // each 5 seconds
+            uri != "/${Config.instance.metricsEndpoint}"
+        }
         format { call ->
             val responseStatus = call.response.status() ?: "Unhandled"
             val uri = call.request.uri
@@ -211,6 +227,20 @@ fun Application.module(testing: Boolean = false) {
         }
     }
 
+    val prometheusRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+    install(MicrometerMetrics) {
+        registry = prometheusRegistry
+        meterBinders = listOf(
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            FileDescriptorMetrics(),
+            UptimeMetrics(),
+        )
+    }
+
     val client = HttpClient(CIO) {
         install(Logging) {
             level = LogLevel.INFO
@@ -227,6 +257,12 @@ fun Application.module(testing: Boolean = false) {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
+
+        route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
+            handle {
+                call.respond(prometheusRegistry.scrape())
+            }
+        }
 
         authenticate {
             authedLocation<BanMeParams> { _, user ->

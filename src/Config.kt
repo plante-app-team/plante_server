@@ -32,6 +32,16 @@ data class Config(
 
     @JsonProperty("jwt_secret")
     val jwtSecret: String,
+    /**
+     * Must be a completely random set of chars like:
+     * zghcnbiqztgoeubhgecmhpilfvbdwlehquwasxjz
+     * This is security by obscurity and therefore is not really nice.
+     * But Ktor doesn't really give us a way to validate endpoint's caller,
+     * so obscurity is the simplest thing we can do.
+     * https://stackoverflow.com/questions/67054276/how-to-get-client-ip-with-ktor
+     */
+    @JsonProperty("metrics_endpoint")
+    val metricsEndpoint: String,
     @JsonProperty("ios_backend_private_key_file_path")
     val iOSBackendPrivateKeyFilePath: String,
     @JsonProperty("allow_cors")
