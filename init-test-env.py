@@ -33,8 +33,10 @@ def Popen(cmd):
 
 def main(args):
   parser = argparse.ArgumentParser()
-  parser.add_argument('--osm-testing-user', required=True, help='User at https://master.apis.dev.openstreetmap.org')
-  parser.add_argument('--osm-testing-password', required=True, help='Password of user at https://master.apis.dev.openstreetmap.org')
+  parser.add_argument('--osm-testing-user', required=True, help='User at master.apis.dev.openstreetmap.org')
+  parser.add_argument('--osm-testing-password', required=True, help='Password of user at master.apis.dev.openstreetmap.org')
+  parser.add_argument('--off-testing-user', required=True, help='User at openfoodfacts.net')
+  parser.add_argument('--off-testing-password', required=True, help='Password of user at openfoodfacts.net')
   parser.add_argument('--ios-server-private-key-path', default='/not/existing/path', help='Optional path to the backend iOS private key')
   args = parser.parse_args()
   step('Args: {}'.format(args))
@@ -86,8 +88,12 @@ def main(args):
    "ios_backend_private_key_file_path": "{}",
    "osm_testing_user": "{}",
    "osm_testing_password": "{}",
-   "osm_prod_user": "intentionally invalid so that tests wouldn't screw with prod osm db",
+   "off_testing_user": "{}",
+   "off_testing_password": "{}",
+   "osm_prod_user": "intentionally invalid so that tests wouldn't mess prod osm db",
    "osm_prod_password": "",
+   "off_prod_user": "intentionally invalid so that tests wouldn't mess prod off db",
+   "off_prod_password": "",
    "always_moderator_name": "local always moderator",
    "allow_cors": true
   }}
@@ -99,7 +105,9 @@ def main(args):
     users_password,
     args.ios_server_private_key_path,
     args.osm_testing_user,
-    args.osm_testing_password)
+    args.osm_testing_password,
+    args.off_testing_user,
+    args.off_testing_password)
 
   step('Writing config to a file')
   config_file = os.path.join(testing_env_dir, 'testing_config.json')

@@ -51,8 +51,8 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
             }.resultedValues!![0]
         } else {
             if (oldProduct.veganStatusSource != VegStatusSource.MODERATOR) {
-                ProductTable.update({ barcode eq params.barcode }) { row ->
-                    if (veganStatus != null) {
+                if (veganStatus != null) {
+                    ProductTable.update({ barcode eq params.barcode }) { row ->
                         row[ProductTable.veganStatus] = veganStatus.persistentCode
                         row[veganStatusSource] = VegStatusSource.COMMUNITY.persistentCode
                     }
