@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
+        jcenter()
         mavenCentral()
     }
     
@@ -34,7 +34,7 @@ sourceSets {
 repositories {
     mavenLocal()
     maven { url 'https://kotlin.bintray.com/ktor' }
-    mavenCentral()
+    jcenter()
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
