@@ -1,5 +1,6 @@
 package vegancheckteam.plante_server
 
+import io.ktor.http.HttpStatusCode
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
@@ -343,6 +344,36 @@ class ProductRequestsTest {
             map = authedGet(clientToken, "/product_data/?barcode=${barcode1}").jsonMap()
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
+        }
+    }
+
+    @Test
+    fun `unauthorized user can request product data`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+
+            // Unauthorized get
+            var map = get("/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("product_not_found", map["error"])
+
+            // Unauthorized create
+            val response = get(
+                "/create_update_product/?"
+                        + "barcode=${barcode}&veganStatus=positive"
+            ).response
+            assertEquals(HttpStatusCode.Unauthorized, response.status())
+
+            // Authorized create
+            map = authedGet(
+                clientToken, "/create_update_product/?"
+                        + "barcode=${barcode}&veganStatus=positive"
+            ).jsonMap()
+            assertEquals("ok", map["result"])
+
+            // Unauthorized get 2
+            map = get("/product_data/?barcode=${barcode}").jsonMap()
+            assertEquals("positive", map["vegan_status"])
         }
     }
 }

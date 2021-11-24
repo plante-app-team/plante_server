@@ -257,6 +257,9 @@ fun Application.module(testing: Boolean = false) {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
+        get<ProductDataParams> { params ->
+            call.respond(productData(params))
+        }
 
         route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
             handle {
@@ -288,9 +291,6 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<CreateUpdateProductParams> { params, user ->
                 call.respond(createUpdateProduct(params, user))
-            }
-            authedLocation<ProductDataParams> { params, _ ->
-                call.respond(productData(params))
             }
             authedLocation<ProductsDataParams> { params, _ ->
                 call.respond(productsData(params))
