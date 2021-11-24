@@ -95,7 +95,8 @@ def main(args):
    "off_prod_user": "intentionally invalid so that tests wouldn't mess prod off db",
    "off_prod_password": "",
    "always_moderator_name": "local always moderator",
-   "allow_cors": true
+   "allow_cors": true,
+   "metrics_endpoint": "doesnt_matter_its_not_tested"
   }}
   '''
   postgres_url = 'postgresql://localhost/main'

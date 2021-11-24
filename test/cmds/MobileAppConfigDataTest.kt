@@ -74,6 +74,7 @@ class MobileAppConfigDataTest {
               "always_moderator_name":"",
               "allow_cors":false,
               "ios_backend_private_key_file_path":"",
+              "metrics_endpoint":"a",
               "nominatim_enabled":$enabled
             }
         """.trimIndent()
