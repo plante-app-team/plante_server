@@ -1,5 +1,6 @@
 package vegancheckteam.plante_server.cmds.off_proxy
 
+import io.ktor.http.HttpStatusCode
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -14,7 +15,9 @@ class OffProxyGetTest {
     fun `a very fragile get proxy test`() {
         withPlanteTestApplication {
             val moderatorClientToken = registerModerator()
-            val map = authedGet(moderatorClientToken, "/off_proxy_get/api/v0/product/3083680015394.json?fields=product_name").jsonMap()
+            val call = authedGet(moderatorClientToken, "/off_proxy_get/api/v0/product/3083680015394.json?fields=product_name")
+            assertEquals(call.response.status(), HttpStatusCode.OK)
+            val map = call.jsonMap()
             assertEquals("3083680015394", map["code"])
             val product = map["product"] as Map<*, *>
             assertTrue(product["name"].toString().isNotEmpty())

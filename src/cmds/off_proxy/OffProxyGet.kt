@@ -7,9 +7,12 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
 import io.ktor.http.HttpStatusCode
 import io.ktor.util.url
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
+import vegancheckteam.plante_server.proxy.ensureCredentialsWereRemovedFromHeaders
+import vegancheckteam.plante_server.proxy.proxyHeaders
 
 const val OFF_PROXY_GET_PATH = "/off_proxy_get"
 
@@ -20,18 +23,24 @@ const val OFF_PROXY_GET_PATH = "/off_proxy_get"
  * by proxying Plante Web Admin requests to OFF through server, which this
  * function does.
  */
-suspend fun offProxyGet(call: ApplicationCall, user: User, client: HttpClient): Pair<HttpStatusCode, Any> {
+suspend fun offProxyGet(call: ApplicationCall, user: User, client: HttpClient, testing: Boolean): Pair<HttpStatusCode, Any> {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         // Get requests to OFF don't require any authentication - the mobile
         // app can (and should) send them directly to OFF.
         return Pair(HttpStatusCode.OK, GenericResponse.failure("denied"))
     }
     val proxiedPiece = call.url().replace(Regex(".*://(.*?)$OFF_PROXY_GET_PATH/"), "")
-    // NOTE: we don't pass the headers and body to the target address - this is because
-    // at the present time the GET proxy is needed only for Plante Web Admin.
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !! WARNING: if you decide to pass headers, ENSURE the Auth header IS ERASED. !!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    val result = client.get<HttpResponse>("https://world.openfoodfacts.org/$proxiedPiece")
+
+    val target = "https://world.openfoodfacts.org/$proxiedPiece"
+    val result = client.get<HttpResponse>(target) {
+        headers.appendAll(proxyHeaders(call))
+        for (header in additionalOffHeaders(testing)) {
+            headers.append(header.key, header.value)
+        }
+        Log.i("offProxyGet", "target: $target, headers: ${headers.entries()}")
+    }
+
+    ensureCredentialsWereRemovedFromHeaders(call, result)
+
     return Pair(result.status, result.readText())
 }

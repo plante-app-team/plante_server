@@ -389,7 +389,7 @@ fun Application.module(testing: Boolean = false) {
 
             route("$OFF_PROXY_GET_PATH/{...}", HttpMethod.Get) {
                 authedRoute { call, user ->
-                    offProxyGet(call, user, client)
+                    offProxyGet(call, user, client, testing)
                 }
             }
             route("$OFF_PROXY_POST_FORM_PATH/{...}", HttpMethod.Post) {
