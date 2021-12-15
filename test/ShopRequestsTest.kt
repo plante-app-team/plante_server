@@ -6,8 +6,10 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
@@ -18,10 +20,12 @@ import vegancheckteam.plante_server.cmds.SHOPS_CREATION_SEQUENCE_LENGTH_SECS
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
+import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.model.ProductAtShopSource
 import vegancheckteam.plante_server.model.VegStatus
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
@@ -517,6 +521,69 @@ class ShopRequestsTest {
             val results = map["results_v2"] as Map<*, *>
             val shopBarcodes = productsOfShop(results, shop).map { it["barcode"] }
             assertEquals(setOf(barcode1, barcode2, barcode3, barcode4), shopBarcodes.toSet())
+        }
+    }
+
+    @Test
+    fun `put_product_to_shop source param`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+            val barcode0 = UUID.randomUUID().toString()
+            val barcodes = ProductAtShopSource.values().map { UUID.randomUUID().toString() }
+            val shop = generateFakeOsmUID()
+
+            var map = authedGet(clientToken, "/put_product_to_shop/", mapOf(
+                "barcode" to barcode0,
+                "shopOsmUID" to shop.toString(),
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+            barcodes.forEachIndexed { index, barcode ->
+                val source = ProductAtShopSource.values()[index].persistentName
+                map = authedGet(clientToken, "/put_product_to_shop/", mapOf(
+                    "barcode" to barcode,
+                    "shopOsmUID" to shop.toString(),
+                    "source" to source,
+                )).jsonMap()
+                assertEquals("ok", map["result"])
+            }
+
+            val codesMap = transaction {
+                ProductAtShopTable.join(
+                    ProductTable,
+                    joinType = JoinType.LEFT,
+                    onColumn = ProductAtShopTable.productId,
+                    otherColumn = ProductTable.id
+                )
+                    .selectAll()
+                    .map { Pair(it[ProductTable.barcode], it[ProductAtShopTable.sourceCode]) }
+                    .associateBy { it.first }
+                    .mapValues { it.value.second }
+            }
+
+            assertEquals(4, codesMap.size, codesMap.toString())
+
+            // Default source
+            assertEquals(ProductAtShopSource.MANUAL.persistentCode, codesMap[barcode0])
+            // Check whether the codes are valid
+            barcodes.forEachIndexed { index, barcode ->
+                val code = ProductAtShopSource.values()[index].persistentCode
+                assertEquals(code, codesMap[barcode])
+            }
+        }
+    }
+
+    @Test
+    fun `put_product_to_shop invalid source param`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+            val map = authedGet(clientToken, "/put_product_to_shop/", mapOf(
+                "barcode" to barcode,
+                "shopOsmUID" to shop.toString(),
+                "source" to "hello there",
+            )).jsonMap()
+            assertEquals("invalid_source", map["error"])
         }
     }
 }

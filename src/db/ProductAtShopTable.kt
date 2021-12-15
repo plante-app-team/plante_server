@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
+import vegancheckteam.plante_server.model.ProductAtShopSource
 import vegancheckteam.plante_server.model.VegStatus
 
 /**
@@ -19,6 +20,7 @@ object ProductAtShopTable : Table("product_at_shop") {
     val id = integer("id").autoIncrement()
     val productId = integer("product_id").references(ProductTable.id).index()
     val shopId = integer("shop_id").references(ShopTable.id).index()
+    val sourceCode = short("source").default(ProductAtShopSource.MANUAL.persistentCode)
     val creationTime = long("creation_time").index()
     val creatorUserId = uuid("creator_user_id").references(UserTable.id).nullable().index()
     override val primaryKey = PrimaryKey(id)

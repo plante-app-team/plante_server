@@ -12,6 +12,7 @@ import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
+import vegancheckteam.plante_server.model.ProductAtShopSource
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
@@ -21,6 +22,7 @@ data class PutProductToShopParams(
     val barcode: String,
     val shopOsmId: String? = null,
     val shopOsmUID: String? = null,
+    val source: String = ProductAtShopSource.MANUAL.persistentName,
     val testingNow: Long? = null,
     val lat: Double? = null,
     val lon: Double? = null)
@@ -29,6 +31,10 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
     val osmUID = OsmUID.fromEitherOf(params.shopOsmUID, params.shopOsmId)
     if (osmUID == null) {
         return@transaction GenericResponse.failure("wtf")
+    }
+    val source = ProductAtShopSource.fromPersistentName(params.source)
+    if (source == null) {
+        return@transaction GenericResponse.failure("invalid_source", "Invalid source: ${params.source}")
     }
 
     val existingProduct = ProductTable.select { ProductTable.barcode eq params.barcode }.firstOrNull()
@@ -77,6 +83,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
     ProductAtShopTable.insert {
         it[ProductAtShopTable.productId] = productId
         it[ProductAtShopTable.shopId] = shopId
+        it[sourceCode] = source.persistentCode
         it[creationTime] = now
         it[creatorUserId] = user.id
     }
