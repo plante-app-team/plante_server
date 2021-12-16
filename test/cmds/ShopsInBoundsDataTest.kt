@@ -14,6 +14,7 @@ import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
+import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
@@ -146,6 +147,58 @@ class ShopsInBoundsDataTest {
             northEastBounds = Pair(11.0, -175.0),
             southWestBounds = Pair(9.0, 175.0),
         )
+    }
+
+    @Test
+    fun `barcodes map`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+
+            val barcodes = listOf(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+            )
+            val osmUIDs = listOf(
+                generateFakeOsmUID(),
+                generateFakeOsmUID(),
+                generateFakeOsmUID(),
+            )
+
+            val putProductToShop = { barcode: String, osmUID: OsmUID ->
+                val map = authedGet(clientToken, "/put_product_to_shop/?", mapOf(
+                    "barcode" to barcode,
+                    "shopOsmUID" to osmUID.asStr,
+                    "lat" to "1",
+                    "lon" to "1",
+                )).jsonMap()
+                assertEquals("ok", map["result"])
+            }
+            putProductToShop(barcodes[0], osmUIDs[0])
+            putProductToShop(barcodes[1], osmUIDs[0])
+            putProductToShop(barcodes[1], osmUIDs[1])
+            putProductToShop(barcodes[2], osmUIDs[1])
+            putProductToShop(barcodes[2], osmUIDs[2])
+            putProductToShop(barcodes[3], osmUIDs[2])
+
+            val map = authedGet(clientToken, "/shops_in_bounds_data/?", mapOf(
+                "north" to "1.1",
+                "south" to "0.9",
+                "west" to "0.9",
+                "east" to "1.1",
+            )).jsonMap()
+
+            val shops = shopsFrom(map)
+            assertEquals(
+                shops.map { it["osm_uid"] }.toSet(),
+                osmUIDs.map { it.asStr }.toSet())
+
+            val barcodesMap = (map["barcodes"] as Map<*, *>)
+            assertEquals(barcodesMap[osmUIDs[0].asStr], listOf(barcodes[0], barcodes[1]))
+            assertEquals(barcodesMap[osmUIDs[1].asStr], listOf(barcodes[1], barcodes[2]))
+            assertEquals(barcodesMap[osmUIDs[2].asStr], listOf(barcodes[2], barcodes[3]))
+        }
     }
 
     private fun shopsFrom(map: Map<*, *>): List<Map<*, *>> {
