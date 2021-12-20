@@ -1,5 +1,6 @@
 package vegancheckteam.plante_server.cmds
 
+import io.ktor.server.testing.TestApplicationEngine
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -166,21 +167,12 @@ class ShopsInBoundsDataTest {
                 generateFakeOsmUID(),
             )
 
-            val putProductToShop = { barcode: String, osmUID: OsmUID ->
-                val map = authedGet(clientToken, "/put_product_to_shop/?", mapOf(
-                    "barcode" to barcode,
-                    "shopOsmUID" to osmUID.asStr,
-                    "lat" to "1",
-                    "lon" to "1",
-                )).jsonMap()
-                assertEquals("ok", map["result"])
-            }
-            putProductToShop(barcodes[0], osmUIDs[0])
-            putProductToShop(barcodes[1], osmUIDs[0])
-            putProductToShop(barcodes[1], osmUIDs[1])
-            putProductToShop(barcodes[2], osmUIDs[1])
-            putProductToShop(barcodes[2], osmUIDs[2])
-            putProductToShop(barcodes[3], osmUIDs[2])
+            putProductToShop(clientToken, barcodes[0], osmUIDs[0])
+            putProductToShop(clientToken, barcodes[1], osmUIDs[0])
+            putProductToShop(clientToken, barcodes[1], osmUIDs[1])
+            putProductToShop(clientToken, barcodes[2], osmUIDs[1])
+            putProductToShop(clientToken, barcodes[2], osmUIDs[2])
+            putProductToShop(clientToken, barcodes[3], osmUIDs[2])
 
             val map = authedGet(clientToken, "/shops_in_bounds_data/?", mapOf(
                 "north" to "1.1",
@@ -199,6 +191,69 @@ class ShopsInBoundsDataTest {
             assertEquals(barcodesMap[osmUIDs[1].asStr], listOf(barcodes[1], barcodes[2]))
             assertEquals(barcodesMap[osmUIDs[2].asStr], listOf(barcodes[2], barcodes[3]))
         }
+    }
+
+    @Test
+    fun `barcodes map does not have non-vegan products`() {
+        withPlanteTestApplication {
+            val clientToken = register()
+
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val osmUID = generateFakeOsmUID()
+
+            var map = authedGet(clientToken, "/create_update_product/", mapOf(
+                "barcode" to barcode1,
+                "veganStatus" to "positive",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(clientToken, "/create_update_product/", mapOf(
+                "barcode" to barcode2,
+                "veganStatus" to "negative",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+
+            putProductToShop(clientToken, barcode1, osmUID)
+            putProductToShop(clientToken, barcode2, osmUID)
+
+            map = authedGet(clientToken, "/shops_in_bounds_data/?", mapOf(
+                "north" to "1.1",
+                "south" to "0.9",
+                "west" to "0.9",
+                "east" to "1.1",
+            )).jsonMap()
+            var barcodesMap = (map["barcodes"] as Map<*, *>)
+            // barcode2 is non-vegan
+            assertEquals(barcodesMap[osmUID.asStr], listOf(barcode1))
+
+            // Now barcode2 is vegan
+            map = authedGet(clientToken, "/create_update_product/", mapOf(
+                "barcode" to barcode2,
+                "veganStatus" to "positive",
+            )).jsonMap()
+            assertEquals("ok", map["result"])
+            map = authedGet(clientToken, "/shops_in_bounds_data/?", mapOf(
+                "north" to "1.1",
+                "south" to "0.9",
+                "west" to "0.9",
+                "east" to "1.1",
+            )).jsonMap()
+            barcodesMap = (map["barcodes"] as Map<*, *>)
+            assertEquals(barcodesMap[osmUID.asStr], listOf(barcode1, barcode2))
+        }
+    }
+
+    private fun TestApplicationEngine.putProductToShop(
+        user: String,
+        barcode: String,
+        shop: OsmUID) {
+        val map = authedGet(user, "/put_product_to_shop/", mapOf(
+            "barcode" to barcode,
+            "shopOsmUID" to shop.asStr,
+            "lat" to "1",
+            "lon" to "1",
+        )).jsonMap()
+        assertEquals("ok", map["result"], map.toString())
     }
 
     private fun shopsFrom(map: Map<*, *>): List<Map<*, *>> {

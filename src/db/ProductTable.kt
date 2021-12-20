@@ -1,6 +1,11 @@
 package vegancheckteam.plante_server.db
 
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.or
+import vegancheckteam.plante_server.model.VegStatus
 
 object ProductTable : Table("product") {
     val id = integer("id").autoIncrement()
@@ -13,4 +18,7 @@ object ProductTable : Table("product") {
     val moderatorVeganChoiceReasons =  text("moderator_vegan_choice_reasons").nullable()
     val moderatorVeganSourcesText = text("moderator_vegan_sources_text").nullable()
     override val primaryKey = PrimaryKey(id)
+
+    val nothingNonVegan: Op<Boolean>
+        get() = veganStatus.isNull() or (veganStatus neq VegStatus.NEGATIVE.persistentCode)
 }

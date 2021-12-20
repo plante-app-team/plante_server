@@ -54,12 +54,13 @@ fun shopsInBoundsData(params: ShopsInBoundsDataParams) = transaction {
         .select(withinLon and withinLat)
         .map { Shop.from(it) }
 
+    val wantedProducts = (ProductAtShopTable.shopId inList shops.map { it.id }) and ProductTable.nothingNonVegan
     val selectionWithBarcodes = ProductAtShopTable.join(
         ProductTable,
         joinType = JoinType.LEFT,
         onColumn = ProductAtShopTable.productId,
         otherColumn = ProductTable.id,
-    ).select(ProductAtShopTable.shopId inList shops.map { it.id })
+    ).select(wantedProducts)
     val barcodesMap = mutableMapOf<OsmUID, MutableList<String>>()
     for (shop in shops) {
         barcodesMap[shop.osmUID] = mutableListOf()
