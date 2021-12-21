@@ -216,14 +216,17 @@ fun Application.module(testing: Boolean = false) {
         }
     }
 
-    if (Config.instance.allowCors) {
-        install(CORS) {
-            method(HttpMethod.Options)
-            header(HttpHeaders.Authorization)
-            header(HttpHeaders.ContentType)
-            allowCredentials = true
-            allowNonSimpleContentTypes = true
+    install(CORS) {
+        method(HttpMethod.Options)
+        header(HttpHeaders.Authorization)
+        header(HttpHeaders.ContentType)
+        allowCredentials = true
+        allowNonSimpleContentTypes = true
+        if (Config.instance.allowCors) {
             anyHost()
+        } else {
+            host("planteapp.vercel.app", listOf("http", "https"))
+            host("localhost:3000")
         }
     }
 
