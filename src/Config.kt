@@ -30,6 +30,15 @@ data class Config(
     @JsonProperty("off_testing_password")
     val offTestingPassword: String,
 
+    @JsonProperty("aws_s3_access_key_id")
+    val awsS3AccessKeyId: String,
+    @JsonProperty("aws_s3_secret_access_key")
+    val awsS3SecretAccessKey: String,
+    @JsonProperty("aws_s3_region")
+    val awsS3Region: String,
+    @JsonProperty("aws_s3_bucket_name")
+    val awsS3BucketName: String,
+
     @JsonProperty("jwt_secret")
     val jwtSecret: String,
     /**

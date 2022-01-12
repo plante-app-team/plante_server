@@ -38,6 +38,12 @@ def main(args):
   parser.add_argument('--off-testing-user', required=True, help='User at openfoodfacts.net')
   parser.add_argument('--off-testing-password', required=True, help='Password of user at openfoodfacts.net')
   parser.add_argument('--ios-server-private-key-path', default='/not/existing/path', help='Optional path to the backend iOS private key')
+  parser.add_argument('--aws-s3-bucket-name', default='plante.files.testing', help='S3 bucket which will be used for testing')
+  parser.add_argument('--aws-s3-region', default='eu-central-1', help='S3 bucket\'s region')
+  parser.add_argument('--aws-s3-access-key-id', required=True,
+                      help='Access key ID of your AWS user, which has the rights to write to the provided S3 bucket')
+  parser.add_argument('--aws-s3-secret-access-key', required=True,
+                      help='Secret access key of your AWS user, which has the rights to write to the provided S3 bucket')
   args = parser.parse_args()
   step('Args: {}'.format(args))
   step('std out log file: {}'.format(stdout_log_file))
@@ -94,6 +100,10 @@ def main(args):
    "osm_prod_password": "",
    "off_prod_user": "intentionally invalid so that tests wouldn't mess prod off db",
    "off_prod_password": "",
+   "aws_s3_access_key_id": "{}",
+   "aws_s3_secret_access_key": "{}",
+   "aws_s3_region": "{}",
+   "aws_s3_bucket_name": "{}",
    "always_moderator_name": "local always moderator",
    "allow_cors": true,
    "metrics_endpoint": "doesnt_matter_its_not_tested"
@@ -108,7 +118,11 @@ def main(args):
     args.osm_testing_user,
     args.osm_testing_password,
     args.off_testing_user,
-    args.off_testing_password)
+    args.off_testing_password,
+    args.aws_s3_access_key_id,
+    args.aws_s3_secret_access_key,
+    args.aws_s3_region,
+    args.aws_s3_bucket_name)
 
   step('Writing config to a file')
   config_file = os.path.join(testing_env_dir, 'testing_config.json')

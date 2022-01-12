@@ -13,9 +13,9 @@ object UserTable : Table("user") {
     val name = text("name")
     val gender = short("gender").nullable()
     val birthday = text("birthday").nullable()
-    val eatsMilk = bool("eats_milk").nullable()
-    val eatsEggs = bool("eats_eggs").nullable()
-    val eatsHoney = bool("eats_honey").nullable()
+    val eatsMilk = bool("eats_milk").nullable() // TODO: remove
+    val eatsEggs = bool("eats_eggs").nullable() // TODO: remove
+    val eatsHoney = bool("eats_honey").nullable() // TODO: remove
     val langsPrioritized = text("langs_prioritized").nullable()
     val userRightsGroup = short("user_rights_group").default(UserRightsGroup.NORMAL.persistentCode).index()
     override val primaryKey = PrimaryKey(id)

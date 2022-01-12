@@ -75,6 +75,10 @@ class MobileAppConfigDataTest {
               "allow_cors":false,
               "ios_backend_private_key_file_path":"",
               "metrics_endpoint":"a",
+              "aws_s3_access_key_id": "",
+              "aws_s3_secret_access_key": "",
+              "aws_s3_region": "",
+              "aws_s3_bucket_name": "",
               "nominatim_enabled":$enabled
             }
         """.trimIndent()
