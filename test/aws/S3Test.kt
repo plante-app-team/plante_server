@@ -2,6 +2,7 @@ package vegancheckteam.plante_server.aws
 
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.toList
@@ -30,6 +31,35 @@ class S3Test {
 
             S3.deleteData(key)
             assertNull(S3.getData(key))
+        }
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    @Test
+    fun `S3 can overwrite data fragile test`() = withPlanteTestApplication {
+        runBlocking {
+            val key = "testing"
+            if (S3.getData(key) != null) {
+                S3.deleteData(key)
+            }
+            assertNull(S3.getData(key))
+
+            val data = "Hello there"
+            S3.putData(key, data.byteInputStream())
+
+            var receivedData = S3.getData(key)!!
+            var receivedStr = String(receivedData.readAllBytes())
+            receivedData.close()
+            assertEquals(data, receivedStr, receivedStr)
+
+            val data2 = "Hello there 2"
+            assertNotEquals(data, data2)
+            S3.putData(key, data2.byteInputStream())
+
+            receivedData = S3.getData(key)!!
+            receivedStr = String(receivedData.readAllBytes())
+            receivedData.close()
+            assertEquals(data2, receivedStr, receivedStr)
         }
     }
 
