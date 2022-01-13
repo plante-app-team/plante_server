@@ -20,7 +20,7 @@ import vegancheckteam.plante_server.model.User
 const val USER_AVATAR_DATA = "/user_avatar_data"
 const val USER_AVATAR_DATA_USER_ID_PARAM = "user_id"
 
-suspend fun userAvatarData(call: ApplicationCall, user: User) {
+suspend fun userAvatarData(call: ApplicationCall, requester: User) {
     val userId = call.parameters[USER_AVATAR_DATA_USER_ID_PARAM]
     val targetUser = transaction {
         UserTable
@@ -42,14 +42,14 @@ suspend fun userAvatarData(call: ApplicationCall, user: User) {
         return
     }
 
-    val avatar = S3.getData(userAvatarPathS3(user))
+    val avatar = S3.getData(userAvatarPathS3(targetUser))
     if (avatar == null) {
         transaction {
-            UserTable.update({ UserTable.id eq user.id }) {
+            UserTable.update({ UserTable.id eq targetUser.id }) {
                 it[hasAvatar] = false
             }
         }
-        val msg = "S3 does not have user avatar: ${userAvatarPathS3(user)}"
+        val msg = "S3 does not have user avatar: ${userAvatarPathS3(targetUser)}"
         Log.w("UserAvatarData", msg)
         call.respond(HttpStatusCode.NotFound, msg)
         return

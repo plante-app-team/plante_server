@@ -9,6 +9,8 @@ import io.ktor.server.testing.setBody
 import java.io.File
 import java.util.*
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -24,6 +26,7 @@ import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
+import vegancheckteam.plante_server.test_utils.registerModeratorOfEverything
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class UserAvatarCmdsTest {
@@ -149,6 +152,77 @@ class UserAvatarCmdsTest {
                 assertEquals(HttpStatusCode.OK, resp.response.status())
                 val respAvatar = resp.response.byteContent
                 assertTrue(Arrays.equals(notTooLargeData.toByteArray(), respAvatar))
+            }
+        }
+    }
+
+    @Test
+    fun `a user can get avatar of another user`() {
+        withPlanteTestApplication {
+            runBlocking {
+                val (token1, userId1) = registerAndGetTokenWithID()
+                val (token2, userId2) = registerAndGetTokenWithID()
+
+                val img = File("./assets_for_tests/front_coca_light_de.jpg")
+                assertTrue(img.exists())
+
+                // User1 has an avatar
+                var resp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                    addHeader("Authorization", "Bearer $token1")
+                    setBody(img.readBytes())
+                }
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+
+                // User2 requests avatar of User1
+                resp = authedGet(token2, "/user_avatar_data/$userId1")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                val respAvatar = resp.response.byteContent
+                assertTrue(Arrays.equals(img.readBytes(), respAvatar))
+
+                // User2 requests their own avatar
+                resp = authedGet(token2, "/user_avatar_data/$userId2")
+                assertEquals(HttpStatusCode.NotFound, resp.response.status())
+            }
+        }
+    }
+
+    @Test
+    fun `user deletion deletes their avatar from S3`() {
+        withPlanteTestApplication {
+            runBlocking {
+                val moderatorId = UUID.randomUUID()
+                val moderatorClientToken = registerModeratorOfEverything(id = moderatorId)
+                val (simpleUserClientToken, simpleUserId) = registerAndGetTokenWithID()
+                val simpleUser = transaction {
+                    UserTable
+                        .select(UserTable.id eq UUID.fromString(simpleUserId))
+                        .map { User.from(it) }
+                        .first()
+                }
+
+                // Upload user avatar
+                val img = File("./assets_for_tests/front_coca_light_de.jpg")
+                var resp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                    addHeader("Authorization", "Bearer $simpleUserClientToken")
+                    setBody(img.readBytes())
+                }
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+
+                // Ensure the user has the avatar
+                resp = authedGet(moderatorClientToken, "/user_avatar_data/$simpleUserId")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                // ...S3 has the file, too
+                assertNotNull(S3.getData(userAvatarPathS3(simpleUser)))
+
+                // Delete user
+                val map = authedGet(moderatorClientToken, "/delete_user/?userId=$simpleUserId").jsonMap()
+                assertEquals("ok", map["result"])
+
+                // Ensure the user does not have the avatar anymore
+                resp = authedGet(moderatorClientToken, "/user_avatar_data/$simpleUserId")
+                assertEquals(HttpStatusCode.NotFound, resp.response.status())
+                // ...S3 doesn't have the file, too
+                assertNull(S3.getData(userAvatarPathS3(simpleUser)))
             }
         }
     }
