@@ -1,5 +1,10 @@
 package vegancheckteam.plante_server
 
+import cmds.avatar.USER_AVATAR_DATA
+import cmds.avatar.USER_AVATAR_DATA_USER_ID_PARAM
+import cmds.avatar.USER_AVATAR_UPLOAD
+import cmds.avatar.userAvatarData
+import cmds.avatar.userAvatarUpload
 import cmds.deprecated.LoginParams
 import cmds.deprecated.RegisterParams
 import cmds.deprecated.loginUser
@@ -388,6 +393,17 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<RecordCustomModerationActionParams> { params, user ->
                 call.respond(recordCustomModerationAction(params, user, testing))
+            }
+
+            route(USER_AVATAR_UPLOAD, HttpMethod.Post) {
+                authedRouteCustomResponse { call, user ->
+                    userAvatarUpload(call, user)
+                }
+            }
+            route("$USER_AVATAR_DATA/{$USER_AVATAR_DATA_USER_ID_PARAM}", HttpMethod.Get) {
+                authedRouteCustomResponse { call, user ->
+                    userAvatarData(call, user)
+                }
             }
 
             route("$OFF_PROXY_GET_PATH/{...}", HttpMethod.Get) {

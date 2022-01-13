@@ -59,7 +59,7 @@ abstract class MultipartProxy(
                         Log.i("MultipartProxy", "target: $targetUrl, receiving file: $name (${part.originalFileName})")
                     }
                     val stream = filesMap[part.name]!!.localFileStream
-                    runOnIO { stream.write(part.streamProvider().readBytes()) }
+                    withContext(Dispatchers.IO) { stream.write(part.streamProvider().readBytes()) }
                 }
                 is PartData.FormItem -> {
                     formItems.add(part)
@@ -70,7 +70,7 @@ abstract class MultipartProxy(
             }
         }
         for (file in filesMap.values) {
-            runOnIO { file.localFileStream.close() }
+            withContext(Dispatchers.IO) { file.localFileStream.close() }
             Log.i("MultipartProxy", "target: $targetUrl, file ${file.fieldName} has size ${file.localFile.length()}")
         }
         return Pair(filesMap.values.toList(), formItems)
@@ -102,12 +102,6 @@ abstract class MultipartProxy(
             Log.i("MultipartProxy", "target: $targetUrl, headers: ${headers.entries()}")
         }
         return result
-    }
-
-    private suspend fun <R> runOnIO(block: () -> R) {
-        withContext(Dispatchers.IO) {
-            runCatching(block)
-        }.getOrThrow()
     }
 
     private data class ProxiedFileData(

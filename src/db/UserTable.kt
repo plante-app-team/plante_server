@@ -18,6 +18,7 @@ object UserTable : Table("user") {
     val eatsHoney = bool("eats_honey").nullable() // TODO: remove
     val langsPrioritized = text("langs_prioritized").nullable()
     val userRightsGroup = short("user_rights_group").default(UserRightsGroup.NORMAL.persistentCode).index()
+    val hasAvatar = bool("has_avatar").default(false)
     override val primaryKey = PrimaryKey(id)
 }
 

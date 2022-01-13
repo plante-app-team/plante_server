@@ -11,6 +11,7 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.util.pipeline.PipelineContext
 import vegancheckteam.plante_server.auth.userPrincipal
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 
@@ -41,7 +42,7 @@ fun validateUser(user: User?): GenericResponse? {
 }
 
 fun Route.authedRoute(
-        handle: suspend (call: ApplicationCall, user: User) -> Pair<HttpStatusCode, Any>,
+    handle: suspend (call: ApplicationCall, user: User) -> Pair<HttpStatusCode, Any>,
 ) {
     handle {
         val user = call.userPrincipal?.user
@@ -51,5 +52,21 @@ fun Route.authedRoute(
         }
         val (code, text) = handle(call, user!!)
         call.respond(code, text)
+    }
+}
+
+fun Route.authedRouteCustomResponse(
+    handle: suspend (call: ApplicationCall, user: User) -> Unit,
+) {
+    handle {
+        val user = call.userPrincipal?.user
+        validateUser(user)?.let { error ->
+            call.respond(error)
+            return@handle
+        }
+        handle(call, user!!)
+        if (call.response.status() == null) {
+            Log.e("authedRouteCustomResponse", "A custom road does not set its response")
+        }
     }
 }

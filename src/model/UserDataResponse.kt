@@ -27,7 +27,9 @@ data class UserDataResponse(
     @JsonProperty("langs_prioritized")
     val langsPrioritized: List<String>? = null,
     @JsonProperty("rights_group")
-    val rightsGroup: Short? = null) {
+    val rightsGroup: Short? = null,
+    @JsonProperty("has_avatar")
+    val hasAvatar: Boolean? = null) {
 
     companion object {
         fun from(user: User) = UserDataResponse(
@@ -39,7 +41,8 @@ data class UserDataResponse(
                 eatsEggs = user.eatsEggs,
                 eatsHoney = user.eatsHoney,
                 langsPrioritized = user.langsPrioritizedStr?.let { UserTable.splitLangs(it) },
-                rightsGroup = user.userRightsGroup.persistentCode)
+                rightsGroup = user.userRightsGroup.persistentCode,
+                hasAvatar = user.hasAvatar)
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
 }

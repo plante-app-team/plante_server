@@ -2,6 +2,9 @@ package vegancheckteam.plante_server.aws
 
 import java.io.InputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
@@ -10,9 +13,11 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import vegancheckteam.plante_server.Config
+
 
 object S3 {
     private val client: S3Client by lazy {
@@ -30,16 +35,28 @@ object S3 {
 
     /**
      * NOTE: the function will close the stream after everything is read from it.
+     * @param maxBytes - max allowed sized for the passed [data] stream.
+     * @throws DataTooLargeException - if given stream is greater than [maxBytes].
      */
-    suspend fun putData(key: String, data: InputStream) {
+    suspend fun putData(key: String, data: InputStream, maxBytes: Int? = null) {
         val objectRequest = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(key)
             .build()
-        runOnIO {
-            val bytes = data.readAllBytes()
-            data.close()
-            client.putObject(objectRequest, RequestBody.fromBytes(bytes))
+        withContext(Dispatchers.IO) {
+            data.use { data ->
+                val bytesLimit = if (maxBytes != null) {
+                    maxBytes + 1
+                } else {
+                    Int.MAX_VALUE
+                }
+
+                val bytes = data.readNBytes(bytesLimit)
+                if (maxBytes != null && maxBytes < bytes.size) {
+                    throw DataTooLargeException()
+                }
+                client.putObject(objectRequest, RequestBody.fromBytes(bytes))
+            }
         }
     }
 
@@ -51,7 +68,7 @@ object S3 {
             .bucket(bucketName)
             .key(key)
             .build()
-        return runOnIO {
+        return withContext(Dispatchers.IO) {
             try {
                 client.getObject(getObjectRequest)
             } catch (e: NoSuchKeyException) {
@@ -65,14 +82,30 @@ object S3 {
             .bucket(bucketName)
             .key(key)
             .build()
-        runOnIO {
+        withContext(Dispatchers.IO) {
             client.deleteObject(deleteObjectRequest)
         }
     }
 
-    private suspend fun <R> runOnIO(block: () -> R): R {
-        return withContext(Dispatchers.IO) {
-            runCatching(block)
-        }.getOrThrow()
-    }
+    suspend fun listKeys(): Flow<String> = flow {
+        var listObjectsReqManual = ListObjectsV2Request.builder()
+            .bucket(bucketName)
+            .build()
+
+            var done = false
+            while (!done) {
+                val listObjResponse = client.listObjectsV2(listObjectsReqManual)
+                for (content in listObjResponse.contents()) {
+                    emit(content.key())
+                }
+                if (listObjResponse.nextContinuationToken() == null) {
+                    done = true
+                }
+                listObjectsReqManual = listObjectsReqManual.toBuilder()
+                    .continuationToken(listObjResponse.nextContinuationToken())
+                    .build()
+            }
+    }.flowOn(Dispatchers.IO)
 }
+
+class DataTooLargeException : Exception()

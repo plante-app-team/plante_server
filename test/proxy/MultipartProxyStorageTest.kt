@@ -1,6 +1,5 @@
-package vegancheckteam.plante_server.multipart_proxy
+package vegancheckteam.plante_server.proxy
 
-import java.nio.file.FileSystem
 import java.util.UUID
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
@@ -17,6 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import org.slf4j.helpers.NOPLogger
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.multipart_proxy.MultipartProxyStorage
 
 class MultipartProxyStorageTest {
     @Before
