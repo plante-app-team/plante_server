@@ -11,11 +11,9 @@ object UserTable : Table("user") {
     val loginGeneration = integer("login_generation")
     val creationTime = long("creation_time").index()
     val name = text("name")
+    val selfDescription = text("self_description").nullable()
     val gender = short("gender").nullable()
     val birthday = text("birthday").nullable()
-    val eatsMilk = bool("eats_milk").nullable() // TODO: remove
-    val eatsEggs = bool("eats_eggs").nullable() // TODO: remove
-    val eatsHoney = bool("eats_honey").nullable() // TODO: remove
     val langsPrioritized = text("langs_prioritized").nullable()
     val userRightsGroup = short("user_rights_group").default(UserRightsGroup.NORMAL.persistentCode).index()
     val hasAvatar = bool("has_avatar").default(false)

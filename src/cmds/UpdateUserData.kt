@@ -14,11 +14,9 @@ import vegancheckteam.plante_server.model.User
 @Location("/update_user_data/")
 data class UpdateUserDataParams(
     val name: String? = null,
+    val selfDescription: String? = null,
     val gender: String? = null,
     val birthday: String? = null,
-    val eatsMilk: Boolean? = null,
-    val eatsEggs: Boolean? = null,
-    val eatsHoney: Boolean? = null,
     val langsPrioritized: List<String>? = null)
 
 fun updateUserData(params: UpdateUserDataParams, user: User): Any {
@@ -44,11 +42,9 @@ fun updateUserData(params: UpdateUserDataParams, user: User): Any {
     transaction {
         UserTable.update({ UserTable.id eq user.id }) { row ->
             params.name?.let { row[name] = it }
+            params.selfDescription?.let { row[selfDescription] = it }
             gender?.let { row[UserTable.gender] = it.persistentCode }
             params.birthday?.let { row[birthday] = it }
-            params.eatsMilk?.let { row[eatsMilk] = it }
-            params.eatsEggs?.let { row[eatsEggs] = it }
-            params.eatsHoney?.let { row[eatsHoney] = it }
             params.langsPrioritized?.let { row[langsPrioritized] = UserTable.joinLangs(it) }
         }
     }

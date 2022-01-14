@@ -14,16 +14,12 @@ data class UserDataResponse(
     val clientToken: String? = null,
     @JsonProperty("name")
     val name: String? = null,
+    @JsonProperty("self_description")
+    val selfDescription: String? = null,
     @JsonProperty("gender")
     val gender: String? = null,
     @JsonProperty("birthday")
     val birthday: String? = null,
-    @JsonProperty("eats_milk")
-    val eatsMilk: Boolean? = null,
-    @JsonProperty("eats_eggs")
-    val eatsEggs: Boolean? = null,
-    @JsonProperty("eats_honey")
-    val eatsHoney: Boolean? = null,
     @JsonProperty("langs_prioritized")
     val langsPrioritized: List<String>? = null,
     @JsonProperty("rights_group")
@@ -35,11 +31,9 @@ data class UserDataResponse(
         fun from(user: User) = UserDataResponse(
                 userId = user.id.toString(),
                 name = user.name,
+                selfDescription = user.selfDescription,
                 gender = user.gender?.genderName,
                 birthday = user.birthday,
-                eatsMilk = user.eatsMilk,
-                eatsEggs = user.eatsEggs,
-                eatsHoney = user.eatsHoney,
                 langsPrioritized = user.langsPrioritizedStr?.let { UserTable.splitLangs(it) },
                 rightsGroup = user.userRightsGroup.persistentCode,
                 hasAvatar = user.hasAvatar)

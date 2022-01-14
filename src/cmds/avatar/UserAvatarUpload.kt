@@ -2,7 +2,6 @@ package cmds.avatar
 
 import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
-import io.ktor.locations.Location
 import io.ktor.request.receiveStream
 import io.ktor.response.respondText
 import org.jetbrains.exposed.sql.transactions.transaction
