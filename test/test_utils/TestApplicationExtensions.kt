@@ -81,6 +81,9 @@ fun TestApplicationEngine.authedGet(
     headers: Map<String, String> = emptyMap()) = get(url, token, queryParams, queryParamsLists, body, headers)
 
 fun TestApplicationResponse.jsonMap(): Map<*, *> {
+    if (content == null) {
+        throw IllegalStateException("Response content is null. HTTP status: ${status()}")
+    }
     return ObjectMapper().readValue(content, MutableMap::class.java)
 }
 

@@ -10,6 +10,8 @@ import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.UserContributionTable
+import vegancheckteam.plante_server.model.UserContributionType
 
 const val MAX_REPORTS_FOR_PRODUCT = 100
 const val MAX_REPORTS_FOR_PRODUCT_TESTING = 10
@@ -60,14 +62,21 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
         return GenericResponse.failure("report_text_too_long")
     }
 
+    val now = now(testingNow = params.testingNow, testing)
     transaction {
         ModeratorTaskTable.insert {
             it[productBarcode] = params.barcode
             it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
             it[taskSourceUserId] = user.id
             it[textFromUser] = params.text
-            it[creationTime] = now(testingNow = params.testingNow, testing)
+            it[creationTime] = now
         }
+        UserContributionTable.add(
+            user,
+            UserContributionType.PRODUCT_REPORTED,
+            now,
+            barcode = params.barcode,
+        )
     }
     return GenericResponse.success()
 }

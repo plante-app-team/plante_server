@@ -19,11 +19,13 @@ import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.UserContributionTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserContributionType
 
 const val MAX_CREATED_SHOPS_IN_SEQUENCE = 10
 const val SHOPS_CREATION_SEQUENCE_LENGTH_SECS = 60 * 60 * 24 // a day
@@ -143,24 +145,7 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
         resp.readText()
     }
 
-    // Create a moderator task
-    transaction {
-        ShopTable.insertWithoutValidation(
-            user.id,
-            OsmUID.from(OsmElementType.NODE, osmShopId),
-            now,
-            params.lat,
-            params.lon,
-            createdNewOsmNode = true
-        )
-        ModeratorTaskTable.insert {
-            it[osmUID] = OsmUID.from(OsmElementType.NODE, osmShopId).asStr
-            it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
-            it[taskSourceUserId] = user.id
-            it[creationTime] = now
-        }
-    }
-
+    // Finish OSM shop creation
     if (testingResponse != null) {
         testingResponse.resp3
     } else {
@@ -172,6 +157,30 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
             return GenericResponse.failure("osm_error")
         }
         resp.readText()
+    }
+
+    // Create a moderator task
+    transaction {
+        val osmUID = OsmUID.from(OsmElementType.NODE, osmShopId)
+        ShopTable.insertWithoutValidation(
+            user.id,
+            osmUID,
+            now,
+            params.lat,
+            params.lon,
+            createdNewOsmNode = true
+        )
+        ModeratorTaskTable.insert {
+            it[ModeratorTaskTable.osmUID] = osmUID.asStr
+            it[taskType] = ModeratorTaskType.OSM_SHOP_CREATION.persistentCode
+            it[taskSourceUserId] = user.id
+            it[creationTime] = now
+        }
+        UserContributionTable.add(
+            user,
+            UserContributionType.SHOP_CREATED,
+            now,
+            shopUID = osmUID)
     }
 
     return CreateShopResponse(osmShopId, OsmUID.from(OsmElementType.NODE, osmShopId))

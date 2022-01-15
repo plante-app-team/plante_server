@@ -10,12 +10,14 @@ import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.UserContributionTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.ProductAtShopSource
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
+import vegancheckteam.plante_server.model.UserContributionType
 
 @Location("/put_product_to_shop/")
 data class PutProductToShopParams(
@@ -41,7 +43,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
     val productId = if (existingProduct != null) {
         existingProduct[ProductTable.id]
     } else {
-        val result = createUpdateProduct(CreateUpdateProductParams(params.barcode), user)
+        val result = createUpdateProduct(CreateUpdateProductParams(params.barcode), user, testing)
         if (result.error != null) {
             return@transaction result;
         }
@@ -97,6 +99,13 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         ProductPresenceVoteParams(params.barcode, null, osmUID.asStr, 1, params.testingNow),
         user,
         testing)
+
+    UserContributionTable.add(
+        user,
+        UserContributionType.PRODUCT_ADDED_TO_SHOP,
+        now,
+        barcode = params.barcode,
+        shopUID = osmUID)
 
     GenericResponse.success()
 }

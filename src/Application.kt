@@ -91,6 +91,7 @@ import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
 import vegancheckteam.plante_server.cmds.ShopsInBoundsDataParams
 import vegancheckteam.plante_server.cmds.SignOutAllParams
 import vegancheckteam.plante_server.cmds.UpdateUserDataParams
+import vegancheckteam.plante_server.cmds.UserContributionsDataParams
 import vegancheckteam.plante_server.cmds.UserDataParams
 import vegancheckteam.plante_server.cmds.UserQuizDataParams
 import vegancheckteam.plante_server.cmds.UserQuizParams
@@ -138,6 +139,7 @@ import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.shopsInBoundsData
 import vegancheckteam.plante_server.cmds.signOutAll
 import vegancheckteam.plante_server.cmds.updateUserData
+import vegancheckteam.plante_server.cmds.userContributionsData
 import vegancheckteam.plante_server.cmds.userData
 import vegancheckteam.plante_server.cmds.userQuiz
 import vegancheckteam.plante_server.cmds.userQuizData
@@ -149,6 +151,7 @@ import vegancheckteam.plante_server.db.ProductScanTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
+import vegancheckteam.plante_server.db.UserContributionTable
 import vegancheckteam.plante_server.db.UserQuizTable
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.workers.ShopsValidationWorker
@@ -183,7 +186,7 @@ object Main {
 
 @KtorExperimentalLocationsAPI
 @Suppress("unused") // Referenced in application.conf
-@kotlin.jvm.JvmOverloads
+@JvmOverloads
 fun Application.module(testing: Boolean = false) {
     mainServerInit()
 
@@ -298,7 +301,7 @@ fun Application.module(testing: Boolean = false) {
                 call.respond(signOutAll(user))
             }
             authedLocation<CreateUpdateProductParams> { params, user ->
-                call.respond(createUpdateProduct(params, user))
+                call.respond(createUpdateProduct(params, user, testing))
             }
             authedLocation<ProductsDataParams> { params, _ ->
                 call.respond(productsData(params))
@@ -394,6 +397,9 @@ fun Application.module(testing: Boolean = false) {
             authedLocation<RecordCustomModerationActionParams> { params, user ->
                 call.respond(recordCustomModerationAction(params, user, testing))
             }
+            authedLocation<UserContributionsDataParams> { params, user ->
+                call.respond(userContributionsData(params, user))
+            }
 
             route(USER_AVATAR_UPLOAD, HttpMethod.Post) {
                 authedRouteCustomResponse { call, user ->
@@ -452,6 +458,7 @@ private fun mainServerInit() {
             ProductAtShopTable,
             ProductPresenceVoteTable,
             ShopsValidationQueueTable,
+            UserContributionTable,
         )
     }
 }

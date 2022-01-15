@@ -22,15 +22,19 @@ import vegancheckteam.plante_server.model.VegStatusSource
 import java.lang.Integer.max
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.UserContributionTable
+import vegancheckteam.plante_server.model.UserContributionType
 
 @Location("/create_update_product/")
 data class CreateUpdateProductParams(
     val barcode: String,
     val vegetarianStatus: String? = null, // unused, but old clients still send
     val veganStatus: String? = null,
-    val langs: List<String>? = null)
+    val langs: List<String>? = null,
+    val edited: Boolean? = false,
+    val testingNow: Long? = null)
 
-fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericResponse {
+fun createUpdateProduct(params: CreateUpdateProductParams, user: User, testing: Boolean): GenericResponse {
     val veganStatus = params.veganStatus?.let { VegStatus.fromStringName(it) }
     if (veganStatus == null && params.veganStatus != null) {
         return GenericResponse.failure("invalid_veg_status", "Provided status: ${params.veganStatus}")
@@ -75,6 +79,7 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User): GenericR
             }
         }
         maybeCreateModeratorTasks(newProduct.barcode, user, params.langs, productChangeType)
+        maybeAddContribution(user, newProduct, params, testing)
     }
     return GenericResponse.success()
 }
@@ -157,6 +162,18 @@ private fun createModeratorTask(barcode: String, user: User, lang: String?, task
         if (lang != null) {
             it[ModeratorTaskTable.lang] = lang
         }
+    }
+}
+
+private fun maybeAddContribution(
+    user: User,
+    product: Product,
+    params: CreateUpdateProductParams,
+    testing: Boolean
+) {
+    if (params.edited == true) {
+        val now = now(params.testingNow, testing)
+        UserContributionTable.add(user, UserContributionType.PRODUCT_EDITED, now, barcode = product.barcode)
     }
 }
 
