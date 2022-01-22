@@ -95,6 +95,8 @@ import vegancheckteam.plante_server.cmds.UserContributionsDataParams
 import vegancheckteam.plante_server.cmds.UserDataParams
 import vegancheckteam.plante_server.cmds.UserQuizDataParams
 import vegancheckteam.plante_server.cmds.UserQuizParams
+import vegancheckteam.plante_server.cmds.avatar.UserAvatarDeleteParams
+import vegancheckteam.plante_server.cmds.avatar.userAvatarDelete
 import vegancheckteam.plante_server.cmds.banMe
 import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
@@ -410,6 +412,9 @@ fun Application.module(testing: Boolean = false) {
                 authedRouteCustomResponse { call, user ->
                     userAvatarData(call, user)
                 }
+            }
+            authedLocation<UserAvatarDeleteParams> { params, user ->
+                call.respond(userAvatarDelete(params, user))
             }
 
             route("$OFF_PROXY_GET_PATH/{...}", HttpMethod.Get) {

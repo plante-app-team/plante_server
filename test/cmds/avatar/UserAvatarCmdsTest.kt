@@ -26,6 +26,7 @@ import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
+import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.registerModeratorOfEverything
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
@@ -223,6 +224,130 @@ class UserAvatarCmdsTest {
                 assertEquals(HttpStatusCode.NotFound, resp.response.status())
                 // ...S3 doesn't have the file, too
                 assertNull(S3.getData(userAvatarPathS3(simpleUser)))
+            }
+        }
+    }
+
+    @Test
+    fun `user can delete their own avatar`() {
+        withPlanteTestApplication {
+            runBlocking {
+                val (clientToken, userId) = registerAndGetTokenWithID()
+                val simpleUser = transaction {
+                    UserTable
+                        .select(UserTable.id eq UUID.fromString(userId))
+                        .map { User.from(it) }
+                        .first()
+                }
+
+                // Upload user avatar
+                val img = File("./assets_for_tests/front_coca_light_de.jpg")
+                var resp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                    addHeader("Authorization", "Bearer $clientToken")
+                    setBody(img.readBytes())
+                }
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+
+                // Ensure the user has the avatar
+                resp = authedGet(clientToken, "/user_avatar_data/$userId")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                // ...S3 has the file, too
+                assertNotNull(S3.getData(userAvatarPathS3(simpleUser)))
+
+                // Delete avatar
+                val map = authedGet(clientToken, "/user_avatar_delete/").jsonMap()
+                assertEquals("ok", map["result"])
+
+                // Ensure the user does not have the avatar anymore
+                resp = authedGet(clientToken, "/user_avatar_data/$userId")
+                assertEquals(HttpStatusCode.NotFound, resp.response.status())
+                // ...S3 doesn't have the file, too
+                assertNull(S3.getData(userAvatarPathS3(simpleUser)))
+            }
+        }
+    }
+
+    @Test
+    fun `user cannot delete avatar of another user`() {
+        withPlanteTestApplication {
+            runBlocking {
+                val (userToken1, userId1) = registerAndGetTokenWithID()
+                val (userToken2, _) = registerAndGetTokenWithID()
+                val user1 = transaction {
+                    UserTable
+                        .select(UserTable.id eq UUID.fromString(userId1))
+                        .map { User.from(it) }
+                        .first()
+                }
+
+                // Upload user avatar
+                val img = File("./assets_for_tests/front_coca_light_de.jpg")
+                var resp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                    addHeader("Authorization", "Bearer $userToken1")
+                    setBody(img.readBytes())
+                }
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+
+                // Ensure the user has the avatar
+                resp = authedGet(userToken2, "/user_avatar_data/$userId1")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                // ...S3 has the file, too
+                assertNotNull(S3.getData(userAvatarPathS3(user1)))
+
+                // Try to delete avatar using token of another user
+                val map = authedGet(userToken2, "/user_avatar_delete/", mapOf(
+                    "userId" to userId1
+                )).jsonMap()
+                assertEquals("denied", map["error"])
+
+                // Ensure the user still has the avatar
+                resp = authedGet(userToken2, "/user_avatar_data/$userId1")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                // ...S3 has the file, too
+                assertNotNull(S3.getData(userAvatarPathS3(user1)))
+            }
+        }
+    }
+
+    @Test
+    fun `moderator can delete avatar of another user`() {
+        withPlanteTestApplication {
+            runBlocking {
+                val (userToken, userId) = registerAndGetTokenWithID()
+                val moderatorId = UUID.randomUUID()
+                val moderatorClientToken = registerModerator(moderatorId)
+                val user = transaction {
+                    UserTable
+                        .select(UserTable.id eq UUID.fromString(userId))
+                        .map { User.from(it) }
+                        .first()
+                }
+
+                // Upload user avatar
+                val img = File("./assets_for_tests/front_coca_light_de.jpg")
+                var resp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                    addHeader("Authorization", "Bearer $userToken")
+                    setBody(img.readBytes())
+                }
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+
+                // Ensure the user has the avatar
+                resp = authedGet(userToken, "/user_avatar_data/$userId")
+                assertEquals(HttpStatusCode.OK, resp.response.status())
+                // ...S3 has the file, too
+                assertNotNull(S3.getData(userAvatarPathS3(user)))
+
+                // Delete avatar using token of the moderator
+                val map = authedGet(moderatorClientToken, "/user_avatar_delete/", mapOf(
+                    "userId" to userId
+                )).jsonMap()
+                assertEquals("ok", map["result"])
+
+                // Ensure the user does not have the avatar anymore
+                resp = authedGet(userToken, "/user_avatar_data/$userId")
+                assertEquals(HttpStatusCode.NotFound, resp.response.status())
+                // ...S3 doesn't have the file, too
+                assertNull(S3.getData(userAvatarPathS3(user)))
             }
         }
     }
