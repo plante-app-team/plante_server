@@ -87,9 +87,10 @@ object S3 {
         }
     }
 
-    suspend fun listKeys(): Flow<String> = flow {
+    suspend fun listKeys(prefix: String): Flow<String> = flow {
         var listObjectsReqManual = ListObjectsV2Request.builder()
             .bucket(bucketName)
+            .prefix(prefix)
             .build()
 
             var done = false

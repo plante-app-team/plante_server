@@ -1,7 +1,6 @@
 package vegancheckteam.plante_server
 
 import cmds.avatar.USER_AVATAR_DATA
-import cmds.avatar.USER_AVATAR_DATA_USER_ID_PARAM
 import cmds.avatar.USER_AVATAR_UPLOAD
 import cmds.avatar.userAvatarData
 import cmds.avatar.userAvatarUpload
@@ -408,7 +407,7 @@ fun Application.module(testing: Boolean = false) {
                     userAvatarUpload(call, user)
                 }
             }
-            route("$USER_AVATAR_DATA/{$USER_AVATAR_DATA_USER_ID_PARAM}", HttpMethod.Get) {
+            route(USER_AVATAR_DATA, HttpMethod.Get) {
                 authedRouteCustomResponse { call, user ->
                     userAvatarData(call, user)
                 }

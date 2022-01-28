@@ -16,7 +16,7 @@ object UserTable : Table("user") {
     val birthday = text("birthday").nullable()
     val langsPrioritized = text("langs_prioritized").nullable()
     val userRightsGroup = short("user_rights_group").default(UserRightsGroup.NORMAL.persistentCode).index()
-    val hasAvatar = bool("has_avatar").default(false)
+    val avatarId = uuid("avatar_id").nullable()
     override val primaryKey = PrimaryKey(id)
 }
 

@@ -17,11 +17,14 @@ import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.model.User
 
-const val USER_AVATAR_DATA = "/user_avatar_data"
-const val USER_AVATAR_DATA_USER_ID_PARAM = "user_id"
+private const val USER_AVATAR_DATA_USER_ID_PARAM = "user_id"
+private const val USER_AVATAR_DATA_AVATAR_ID_PARAM = "avatar_id"
+const val USER_AVATAR_DATA =
+    "/user_avatar_data/{$USER_AVATAR_DATA_USER_ID_PARAM}/{$USER_AVATAR_DATA_AVATAR_ID_PARAM}"
 
 suspend fun userAvatarData(call: ApplicationCall, requester: User) {
     val userId = call.parameters[USER_AVATAR_DATA_USER_ID_PARAM]
+    val avatarId = call.parameters[USER_AVATAR_DATA_AVATAR_ID_PARAM]
     val targetUser = transaction {
         UserTable
             .select(UserTable.id eq UUID.fromString(userId))
@@ -34,22 +37,26 @@ suspend fun userAvatarData(call: ApplicationCall, requester: User) {
         call.respond(HttpStatusCode.NotFound, msg)
         return
     }
-
-    if (!targetUser.hasAvatar) {
-        val msg = "User does not have avatar in DB: $userId"
+    if (avatarId == null) {
+        val msg = "Avatar ID must be provided"
         Log.i("UserAvatarData", msg)
         call.respond(HttpStatusCode.NotFound, msg)
         return
     }
 
-    val avatar = S3.getData(userAvatarPathS3(targetUser))
+    val userAvatarPath = userAvatarPathS3(targetUser.id.toString(), avatarId)
+    val avatar = S3.getData(userAvatarPath)
     if (avatar == null) {
-        transaction {
-            UserTable.update({ UserTable.id eq targetUser.id }) {
-                it[hasAvatar] = false
+        if (targetUser.avatarId.toString() == avatarId) {
+            // Avatar was not found in S3, and it's same avatar as
+            // the one stored in the DB.
+            transaction {
+                UserTable.update({ UserTable.id eq targetUser.id }) {
+                    it[UserTable.avatarId] = null
+                }
             }
         }
-        val msg = "S3 does not have user avatar: ${userAvatarPathS3(targetUser)}"
+        val msg = "S3 does not have user avatar: $userAvatarPath"
         Log.w("UserAvatarData", msg)
         call.respond(HttpStatusCode.NotFound, msg)
         return

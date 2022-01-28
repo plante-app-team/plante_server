@@ -31,8 +31,8 @@ suspend fun deleteUser(params: DeleteUserParams, requester: User): Any {
         return GenericResponse.failure("user_not_found", "No user with ID: ${params.userId}")
     }
 
-    if (targetUser.hasAvatar) {
-        S3.deleteData(userAvatarPathS3(targetUser))
+    if (targetUser.avatarId != null) {
+        S3.deleteData(userAvatarPathS3(targetUser.id.toString(), targetUser.avatarId.toString()))
     }
     val updated = transaction {
         UserTable.update({ UserTable.id eq targetUser.id }) { row ->
@@ -40,7 +40,7 @@ suspend fun deleteUser(params: DeleteUserParams, requester: User): Any {
             row[name] = ""
             row[birthday] = null
             row[loginGeneration] = targetUser.loginGeneration + 1 // Sign out
-            row[hasAvatar] = false
+            row[avatarId] = null
         }
     }
     return if (updated > 0) {

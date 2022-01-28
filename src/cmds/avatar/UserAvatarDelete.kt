@@ -33,10 +33,12 @@ suspend fun userAvatarDelete(params: UserAvatarDeleteParams, user: User): Any {
     if (targetUser == null) {
         return GenericResponse.failure("user_not_found", "No user with ID: ${params.userId}")
     }
-    S3.deleteData(userAvatarPathS3(targetUser))
-    transaction {
-        UserTable.update({ UserTable.id eq user.id }) {
-            it[hasAvatar] = false
+    if (targetUser.avatarId != null) {
+        S3.deleteData(userAvatarPathS3(targetUser.id.toString(), targetUser.avatarId.toString()))
+        transaction {
+            UserTable.update({ UserTable.id eq user.id }) {
+                it[avatarId] = null
+            }
         }
     }
     return GenericResponse.success()

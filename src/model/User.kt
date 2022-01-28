@@ -16,7 +16,7 @@ data class User(
     val birthday: String? = null,
     val langsPrioritizedStr: String? = null,
     val userRightsGroup: UserRightsGroup = UserRightsGroup.NORMAL,
-    val hasAvatar: Boolean = false) {
+    val avatarId: UUID? = null) {
 
     companion object {
         fun from(tableRow: ResultRow) = User(
@@ -31,7 +31,7 @@ data class User(
                 birthday = tableRow[UserTable.birthday],
                 langsPrioritizedStr = tableRow[UserTable.langsPrioritized],
                 userRightsGroup = extractUserRightsGroup(tableRow[UserTable.userRightsGroup]),
-                hasAvatar = tableRow[UserTable.hasAvatar])
+                avatarId = tableRow[UserTable.avatarId])
         private fun extractUserRightsGroup(code: Short) =
             UserRightsGroup.fromPersistentCode(code) ?: UserRightsGroup.NORMAL
     }

@@ -18,7 +18,7 @@ data class GenericResponse(
         const val RESULT_FIELD_NAME = "result"
         const val RESULT_FIELD_OK_VAL = "ok"
         fun fromString(str: String): GenericResponse? = jsonMapper.readOrNull(str)
-        fun success() = GenericResponse(null, null, RESULT_FIELD_OK_VAL)
+        fun success(result: String = RESULT_FIELD_OK_VAL) = GenericResponse(null, null, result)
         fun failure(error: String, errorDescription: String? = null) = GenericResponse(error, errorDescription, null)
     }
 
