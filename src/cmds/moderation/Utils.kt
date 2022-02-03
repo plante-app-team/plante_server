@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 
-const val DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS = 7
+const val DELETE_RESOLVED_MODERATOR_TASKS_AFTER_DAYS = 365*10
 const val ASSIGNATION_TIME_LIMIT_MINUTES = 5L
 
 fun sanitizeModerationTasks(now: Long) {
