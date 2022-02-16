@@ -3,12 +3,15 @@ package vegancheckteam.plante_server.workers
 import com.google.common.annotations.VisibleForTesting
 import io.ktor.client.HttpClient
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -39,10 +42,39 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         name = "ShopsValidationWorker",
         backoffDelays = listOf(MINUTE, MINUTE * 2, MINUTE * 4, MINUTE * 10)) {
     const val SINGLE_VALIDATION_SHOPS_COUNT_MAX = 20
-    private lateinit var httpClient: HttpClient
 
     private var testing = false
+
+    private lateinit var httpClient: HttpClient
+
+    // How much time should pass before a shop is revalidated
+    @VisibleForTesting
+    var millisBeforeShopRevalidation = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS)
+
+    // How much time should pass before the worker tries to collect new
+    // shops which need revalidation.
+    @VisibleForTesting
+    var millisBetweenAutoRevalidations = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
+
+    @VisibleForTesting
     var osmForTests: OsmForTests? = null
+
+    private val invalidShop = (ShopTable.lastAutoValidationTime eq null) or
+            (ShopTable.lat eq null) or
+            (ShopTable.lon eq null)
+    private val notBeingManuallyModerated = (ModeratorTaskTable.taskType.isNull()) or (ModeratorTaskTable.taskType neq
+            ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.persistentCode)
+    private val autoValidationNotScheduled = notExists(ShopsValidationQueueTable.select {
+        ShopsValidationQueueTable.shopId eq ShopTable.id
+    })
+    private val autoValidatedTooLongAgo: Op<Boolean>
+        get() {
+            val secsBeforeShopRevalidation = millisBeforeShopRevalidation / 1000
+            val lastValidationAcceptedTime = now(testing = testing) - secsBeforeShopRevalidation
+            return ShopTable.lastAutoValidationTime less lastValidationAcceptedTime
+        }
+
+    override fun autoRepeatPeriodMillis() = millisBetweenAutoRevalidations
 
     fun start(httpClient: HttpClient, testing: Boolean) {
         this.httpClient = httpClient
@@ -51,15 +83,12 @@ object ShopsValidationWorker : BackgroundWorkerBase(
         super.start()
     }
 
+    override fun maybePrepareNewWork() {
+        scheduleValidationOfForgottenShops()
+        schedulePeriodicShopsRevalidation()
+    }
+
     private fun scheduleValidationOfForgottenShops() = transaction {
-        val invalidShop = (ShopTable.lastAutoValidationTime eq null) or
-                (ShopTable.lat eq null) or
-                (ShopTable.lon eq null)
-        val notBeingManuallyModerated = (ModeratorTaskTable.taskType.isNull()) or (ModeratorTaskTable.taskType neq
-                ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION.persistentCode)
-        val autoValidationNotScheduled = notExists(ShopsValidationQueueTable.select {
-            ShopsValidationQueueTable.shopId eq ShopTable.id
-        })
         val notValidated = ShopTable.join(
                 ModeratorTaskTable,
                 joinType = JoinType.LEFT,
@@ -83,6 +112,30 @@ object ShopsValidationWorker : BackgroundWorkerBase(
                 it[enqueuingTime] = now(testing = testing)
                 it[sourceUserId] = row[ShopTable.creatorUserId]
                 it[ShopsValidationQueueTable.reason] = reason.persistentCode
+            }
+        }
+    }
+
+    private fun schedulePeriodicShopsRevalidation() = transaction {
+        val notValidated = ShopTable.join(
+            ModeratorTaskTable,
+            joinType = JoinType.LEFT,
+            onColumn = ShopTable.osmUID,
+            otherColumn = ModeratorTaskTable.osmUID).select(
+                autoValidatedTooLongAgo and autoValidationNotScheduled and notBeingManuallyModerated
+        ).toList()
+        if (notValidated.isEmpty()) {
+            Log.w("ShopsValidationWorker", "Periodic revalidation: 0 shops need revalidation")
+        } else {
+            Log.w("ShopsValidationWorker",
+                "Periodic revalidation: ${notValidated.size} shops need revalidation, scheduling")
+        }
+        for (row in notValidated) {
+            ShopsValidationQueueTable.insert {
+                it[shopId] = row[ShopTable.id]
+                it[enqueuingTime] = now(testing = testing)
+                it[sourceUserId] = row[ShopTable.creatorUserId]
+                it[reason] = ShopValidationReason.PERIODIC_REVALIDATION.persistentCode
             }
         }
     }

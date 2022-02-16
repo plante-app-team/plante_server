@@ -1,8 +1,8 @@
 package vegancheckteam.plante_server.workers
 
+import java.time.Instant
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.logging.Logger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -46,6 +46,8 @@ class BackgroundWorkerBaseTest {
 
         worker.waitUntilIdle()
         assertEquals(workedOnList.size, 10)
+
+        worker.stop()
     }
 
     @Test
@@ -67,6 +69,8 @@ class BackgroundWorkerBaseTest {
 
         worker.waitUntilIdle()
         assertEquals(workedOnList.size, 10)
+
+        worker.stop()
     }
 
     @Test
@@ -92,6 +96,8 @@ class BackgroundWorkerBaseTest {
         assertFalse(workDone)
         Thread.sleep(300)
         assertTrue(workDone)
+
+        worker.stop()
     }
 
     @Test
@@ -100,11 +106,100 @@ class BackgroundWorkerBaseTest {
         worker.startWorker()
         worker.waitUntilIdle()
         // In case of a fail the test will hang
+
+        worker.stop()
+    }
+
+    @Test
+    fun `auto repeat mechanics`() {
+        var lastWorkCreatedTime = Instant.now().toEpochMilli()
+        val timeBeforeNewWorkAppears = 300L
+
+        var workDoneTimes = 0
+
+        val workPreparer = {
+            val now = Instant.now().toEpochMilli()
+            if (timeBeforeNewWorkAppears <= now - lastWorkCreatedTime) {
+                lastWorkCreatedTime = now
+                Runnable { workDoneTimes += 1 }
+            } else {
+                null
+            }
+        }
+
+        val worker = TestedWorker(
+            autoRepeatPeriodMillis = timeBeforeNewWorkAppears,
+            workPreparer = workPreparer)
+        worker.startWorker()
+
+        // Immediately after start the work is not done yet, because
+        // new work appears each [timeBeforeNewWorkAppears] millis.
+        worker.waitUntilIdle()
+        assertEquals(0, workDoneTimes)
+
+        // After half of [timeBeforeNewWorkAppears], the work still not done.
+        Thread.sleep(timeBeforeNewWorkAppears / 2)
+        worker.waitUntilIdle()
+        assertEquals(0, workDoneTimes)
+
+        // Now [timeBeforeNewWorkAppears] has passed, the work
+        // is expected to be done.
+        Thread.sleep(timeBeforeNewWorkAppears / 2)
+        worker.waitUntilIdle()
+        assertEquals(1, workDoneTimes)
+
+        // After 1 + 1/2 of [timeBeforeNewWorkAppears] passed, the work is not done
+        // for the second time yet
+        Thread.sleep(timeBeforeNewWorkAppears / 2)
+        worker.waitUntilIdle()
+        assertEquals(1, workDoneTimes)
+
+        // Now [timeBeforeNewWorkAppears] has passed the second time.
+        Thread.sleep(timeBeforeNewWorkAppears / 2)
+        worker.waitUntilIdle()
+        assertEquals(2, workDoneTimes)
+
+        worker.stop()
+    }
+
+    @Test
+    fun `auto repeat won't happen if the period param is not provided`() {
+        var lastWorkCreatedTime = Instant.now().toEpochMilli()
+        val timeBeforeNewWorkAppears = 300L
+
+        var workDoneTimes = 0
+
+        val workPreparer = {
+            val now = Instant.now().toEpochMilli()
+            if (timeBeforeNewWorkAppears <= now - lastWorkCreatedTime) {
+                lastWorkCreatedTime = now
+                Runnable { workDoneTimes += 1 }
+            } else {
+                null
+            }
+        }
+
+        val worker = TestedWorker(
+            autoRepeatPeriodMillis = null,
+            workPreparer = workPreparer)
+        worker.startWorker()
+        worker.waitUntilIdle()
+
+        // Even after we wait 2x of [timeBeforeNewWorkAppears], no work is done,
+        // because we have passed [null] as [autoRepeatPeriodMillis].
+        Thread.sleep(timeBeforeNewWorkAppears * 2)
+        assertEquals(0, workDoneTimes)
     }
 }
 
-private class TestedWorker(backoffDelays: List<Long> = listOf(1)) : BackgroundWorkerBase("TestedWorker", backoffDelays) {
+private class TestedWorker(
+    backoffDelays: List<Long> = listOf(1),
+    val autoRepeatPeriodMillis: Long? = null,
+    val workPreparer: (() -> Runnable?)? = null)
+        : BackgroundWorkerBase("TestedWorker", backoffDelays) {
     private val tasks = Collections.synchronizedList(mutableListOf<Runnable>())
+
+    override fun autoRepeatPeriodMillis() = autoRepeatPeriodMillis
 
     fun startWorker() {
         super.start()
@@ -122,6 +217,13 @@ private class TestedWorker(backoffDelays: List<Long> = listOf(1)) : BackgroundWo
         }
         @Suppress("ControlFlowWithEmptyBody")
         while (!called.get());
+    }
+
+    override fun maybePrepareNewWork() {
+        val newWork = workPreparer?.invoke()
+        if (newWork != null) {
+            tasks.add(newWork)
+        }
     }
 
     override fun hasWork() = tasks.isNotEmpty()

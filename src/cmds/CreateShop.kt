@@ -162,9 +162,10 @@ suspend fun createShop(params: CreateShopParams, user: User, testing: Boolean, c
     // Create a moderator task
     transaction {
         val osmUID = OsmUID.from(OsmElementType.NODE, osmShopId)
-        ShopTable.insertWithoutValidation(
+        ShopTable.insertValidated(
             user.id,
             osmUID,
+            now,
             now,
             params.lat,
             params.lon,

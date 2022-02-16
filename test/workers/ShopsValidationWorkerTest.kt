@@ -20,6 +20,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import test_utils.generateFakeOsmUID
+import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.cmds.CreateShopTestingOsmResponses
 import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
@@ -261,7 +262,7 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = null
                 it[lon] = null
-                it[lastAutoValidationTime] = 123
+                it[lastAutoValidationTime] = now(testing = true)
             }
         }
 
@@ -317,7 +318,7 @@ class ShopsValidationWorkerTest {
                 it[creatorUserId] = UUID.fromString(userId)
                 it[lat] = BAD_COORD
                 it[lon] = BAD_COORD
-                it[lastAutoValidationTime] = 123
+                it[lastAutoValidationTime] = now(testing = true)
             }
         }
 
@@ -389,7 +390,7 @@ class ShopsValidationWorkerTest {
                     it[creatorUserId] = UUID.fromString(userId)
                     it[lat] = 123.0
                     it[lon] = 123.0
-                    it[lastAutoValidationTime] = 123
+                    it[lastAutoValidationTime] = now(testing = true)
                 }
                 shopIds += insertedShop[ShopTable.id]
             }
@@ -531,6 +532,51 @@ class ShopsValidationWorkerTest {
                 authedGet(moderator, "/all_moderator_tasks_data/"),
                 withType = ModeratorTaskType.OSM_SHOP_NEEDS_MANUAL_VALIDATION)
             assertEquals(1, tasks.size, tasks.toString())
+        }
+    }
+
+    @Test
+    fun `shops are being auto-revalidated after some time`() {
+        ShopsValidationWorker.millisBetweenAutoRevalidations = 1000
+        ShopsValidationWorker.millisBeforeShopRevalidation = 3000
+
+        val (userToken, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
+        val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
+        transaction {
+            ShopTable.insert {
+                it[osmUID] = shopOsmUid.asStr
+                it[creationTime] = 100
+                it[creatorUserId] = UUID.fromString(userId)
+                it[lat] = BAD_COORD
+                it[lon] = BAD_COORD
+                it[lastAutoValidationTime] = now(testing = true)
+            }
+        }
+        withPlanteTestApplication {
+            ShopsValidationWorker.waitUntilIdle()
+
+            val shopsDataRequestBody = """ { "osm_uids": [ "${shopOsmUid.asStr}" ] } """
+            var map = authedGet(userToken, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            var shop = shopFrom(map, shopOsmUid)
+
+            Thread.sleep(ShopsValidationWorker.millisBetweenAutoRevalidations)
+            Thread.sleep(ShopsValidationWorker.millisBetweenAutoRevalidations)
+            ShopsValidationWorker.waitUntilIdle()
+
+            // Not auto re-validated yet, even though a few auto-revalidations are expected to pass -
+            // the time that is actually supposed to pass is [ShopsValidationWorker.millisBeforeShopRevalidation].
+            assertEquals(shopOsmUid.asStr, shop["osm_uid"])
+            assertEquals(BAD_COORD, shop["lat"])
+            assertEquals(BAD_COORD, shop["lon"])
+
+            Thread.sleep(ShopsValidationWorker.millisBeforeShopRevalidation)
+            Thread.sleep(ShopsValidationWorker.millisBetweenAutoRevalidations)
+            ShopsValidationWorker.waitUntilIdle()
+
+            map = authedGet(userToken, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            shop = shopFrom(map, shopOsmUid)
+            assertEquals(VALIDATED_COORD, shop["lat"])
+            assertEquals(VALIDATED_COORD, shop["lon"])
         }
     }
 

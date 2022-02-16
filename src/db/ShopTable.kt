@@ -55,10 +55,11 @@ object ShopTable : Table("shop") {
         return result
     }
 
-    fun insertWithoutValidation(
+    fun insertValidated(
             creator: UUID,
             osmUID: OsmUID,
             creationTime: Long,
+            validationTime: Long,
             lat: Double?,
             lon: Double?,
             createdNewOsmNode: Boolean = false): InsertStatement<Number> {
@@ -69,6 +70,7 @@ object ShopTable : Table("shop") {
             it[ShopTable.lat] = lat
             it[ShopTable.lon] = lon
             it[ShopTable.createdNewOsmNode] = createdNewOsmNode
+            it[lastAutoValidationTime] = validationTime
         }
     }
 

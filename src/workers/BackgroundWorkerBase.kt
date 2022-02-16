@@ -86,6 +86,7 @@ abstract class BackgroundWorkerBase(
                 }
                 // Let's wait for new work if there's no work
                 synchronized(syncObjet) {
+                    maybePrepareNewWork()
                     if (!hasWork()) {
                         callIdleCallbacks()
                         if (!hasWork()) {
@@ -95,8 +96,13 @@ abstract class BackgroundWorkerBase(
                                 return
                             }
                             try {
-                                Log.i("BackgroundWorkerBase ($name)", "waiting for new work")
-                                syncObjet.wait()
+                                var msg = "waiting for new work"
+                                val autoRepeatPeriodMillis = autoRepeatPeriodMillis()
+                                if (autoRepeatPeriodMillis != null) {
+                                    msg += ", or for $autoRepeatPeriodMillis millis"
+                                }
+                                Log.i("BackgroundWorkerBase ($name)", msg)
+                                syncObjet.wait(autoRepeatPeriodMillis ?: 0)
                             } catch (e: InterruptedException) {
                                 Log.w("BackgroundWorkerBase ($name)", "interruption", e)
                                 // The 'started' field is used to stop
@@ -133,4 +139,6 @@ abstract class BackgroundWorkerBase(
 
     protected abstract fun hasWork(): Boolean
     protected abstract fun doWork()
+    protected open fun maybePrepareNewWork() {}
+    protected open fun autoRepeatPeriodMillis(): Long? = null
 }
