@@ -41,7 +41,7 @@ typealias OsmForTests = (uids: List<Shop>) -> Set<OsmShop>
 object ShopsValidationWorker : BackgroundWorkerBase(
         name = "ShopsValidationWorker",
         backoffDelays = listOf(MINUTE, MINUTE * 2, MINUTE * 4, MINUTE * 10)) {
-    const val SINGLE_VALIDATION_SHOPS_COUNT_MAX = 20
+    const val SINGLE_VALIDATION_SHOPS_COUNT_MAX = 50
 
     private var testing = false
 

@@ -37,7 +37,7 @@ object OpenStreetMap {
         }
         val cmd = "[out:json];($nodeCmdPiece$wayCmdPiece$relationCmdPiece);out center meta;"
         val response = httpClient.get<HttpResponse>(
-                urlString = "https://lz4.overpass-api.de/api/interpreter?data=$cmd")
+                urlString = "https://overpass-api.de/api/interpreter?data=$cmd")
 
         Log.i("OpenStreetMap", "requestsShopsJsonFor response: $response")
 
