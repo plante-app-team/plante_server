@@ -85,6 +85,7 @@ import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
 import vegancheckteam.plante_server.cmds.ProductsDataParams
 import vegancheckteam.plante_server.cmds.PutProductToShopParams
+import vegancheckteam.plante_server.cmds.SendFeedbackParams
 import vegancheckteam.plante_server.cmds.ShopsDataParams
 import vegancheckteam.plante_server.cmds.ShopsDataRequestBody
 import vegancheckteam.plante_server.cmds.ShopsInBoundsDataParams
@@ -136,6 +137,7 @@ import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
 import vegancheckteam.plante_server.cmds.productsData
 import vegancheckteam.plante_server.cmds.putProductToShop
+import vegancheckteam.plante_server.cmds.sendFeedback
 import vegancheckteam.plante_server.cmds.shopsData
 import vegancheckteam.plante_server.cmds.shopsInBoundsData
 import vegancheckteam.plante_server.cmds.signOutAll
@@ -400,6 +402,9 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<UserContributionsDataParams> { params, user ->
                 call.respond(userContributionsData(params, user))
+            }
+            authedLocation<SendFeedbackParams> { params, user ->
+                call.respond(sendFeedback(params, user, testing))
             }
 
             route(USER_AVATAR_UPLOAD, HttpMethod.Post) {

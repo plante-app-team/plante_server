@@ -195,7 +195,6 @@ class ModerationRequests_MakeReport_Test {
         }
     }
 
-
     @Test
     fun `max reports for user consider only unresolved tasks`() {
         withPlanteTestApplication {
