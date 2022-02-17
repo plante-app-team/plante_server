@@ -31,26 +31,8 @@ class DeleteShopLocallyTest {
             var shop = shopFrom(map, shopUid)
             assertEquals(shopUid.asStr, shop!!["osm_uid"])
             assertEquals(null, shop["deleted"])
-            assertEquals(1, shop["products_count"])
-
-            // Verify the product is still at the shop (sorry for the mess)
-            map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shopUid").jsonMap()
-            var productsAtShop = (map["results_v2"] as Map<*, *>)[shopUid.asStr] as Map<*, *>
-            assertEquals(1, (productsAtShop["products"] as List<*>).size)
 
             val moderator = registerModerator()
-            // Let's unsuccessfully try to delete the shop
-            map = authedGet(moderator, "/delete_shop_locally/", mapOf(
-                "shopOsmUID" to shopUid.asStr)).jsonMap()
-            assertEquals("shop_has_products", map["error"], message = map.toString())
-
-            // Let's remove the product from the shop
-            map = authedGet(user, "/product_presence_vote/", mapOf(
-                "barcode" to barcode,
-                "shopOsmUID" to shopUid.asStr,
-                "voteVal" to "0")).jsonMap()
-            assertEquals("ok", map["result"])
-
             // Now let's delete the shop successfully
             map = authedGet(moderator, "/delete_shop_locally/", mapOf(
                 "shopOsmUID" to shopUid.asStr)).jsonMap()
@@ -61,11 +43,15 @@ class DeleteShopLocallyTest {
             shop = shopFrom(map, shopUid)
             assertEquals(shopUid.asStr, shop!!["osm_uid"])
             assertEquals(true, shop["deleted"])
-            assertEquals(0, shop["products_count"])
 
-            // Verify the product is not at the shop anymore (sorry for the mess)
+            // Verify the product is still at the shop, even though
+            // the shop is marked as deleted - we want to easily un-delete the
+            // shop if needed.
+            // Sorry for messy code.
+            assertEquals(1, shop["products_count"])
             map = authedGet(user, "/products_at_shops_data/?osmShopsUIDs=$shopUid").jsonMap()
-            assertEquals(null, (map["results_v2"] as Map<*, *>)[shopUid.asStr])
+            val productsAtShop = (map["results_v2"] as Map<*, *>)[shopUid.asStr] as Map<*, *>
+            assertEquals(1, (productsAtShop["products"] as List<*>).size)
         }
     }
 

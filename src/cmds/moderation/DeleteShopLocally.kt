@@ -6,9 +6,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import vegancheckteam.plante_server.base.Log
-import vegancheckteam.plante_server.db.ProductAtShopTable
-import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.GenericResponse
@@ -32,14 +29,6 @@ fun deleteShopLocally(params: DeleteShopLocallyParams, user: User): Any {
             return@transaction GenericResponse.success()
         }
 
-        if (0 < shop.productsCount) {
-            return@transaction GenericResponse.failure("shop_has_products")
-        } else if (!ProductAtShopTable.select(ProductAtShopTable.shopId eq shop.id).empty()) {
-            Log.e("delete_shop_locally", "Deleted shops still has products in ProductAtShopTable")
-            return@transaction GenericResponse.failure("shop_has_products")
-        }
-
-        ProductPresenceVoteTable.deleteWhere { ProductPresenceVoteTable.shopId eq shop.id }
         ShopsValidationQueueTable.deleteWhere { ShopsValidationQueueTable.shopId eq shop.id }
         ShopTable.update({ShopTable.id eq shop.id}) {
             it[deleted] = true
