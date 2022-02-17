@@ -20,7 +20,9 @@ data class Shop(
     @JsonProperty("lat")
     val lat: Double?,
     @JsonProperty("lon")
-    val lon: Double?) {
+    val lon: Double?,
+    @JsonProperty("deleted")
+    val deleted: Boolean?) {
     companion object {
         fun from(tableRow: ResultRow): Shop {
             val osmUID = OsmUID.from(tableRow[ShopTable.osmUID])
@@ -30,7 +32,8 @@ data class Shop(
                 osmId = osmUID.osmId,
                 productsCount = tableRow[ShopTable.productsCount],
                 lat = tableRow[ShopTable.lat],
-                lon = tableRow[ShopTable.lon])
+                lon = tableRow[ShopTable.lon],
+                deleted = if (tableRow[ShopTable.deleted]) true else null)
         }
     }
 }

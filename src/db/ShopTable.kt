@@ -31,6 +31,7 @@ object ShopTable : Table("shop") {
     val lat = double("lat").nullable().index()
     val lon = double("lon").nullable().index()
     val lastAutoValidationTime = long("last_auto_validation_time").nullable().index()
+    val deleted = bool("deleted").default(false)
     override val primaryKey = PrimaryKey(id)
 
     fun insertWithValidation(

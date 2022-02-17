@@ -5,6 +5,8 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -15,9 +17,9 @@ import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
 
 @Location("/delete_shop_locally/")
-data class DeleteShopParams(val shopOsmUID: String)
+data class DeleteShopLocallyParams(val shopOsmUID: String)
 
-fun deleteShop(params: DeleteShopParams, user: User): Any {
+fun deleteShopLocally(params: DeleteShopLocallyParams, user: User): Any {
     if (user.userRightsGroup.persistentCode < UserRightsGroup.CONTENT_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
@@ -30,15 +32,18 @@ fun deleteShop(params: DeleteShopParams, user: User): Any {
             return@transaction GenericResponse.success()
         }
 
-        ProductAtShopTable.deleteWhere { ProductAtShopTable.shopId eq shop.id }
+        if (0 < shop.productsCount) {
+            return@transaction GenericResponse.failure("shop_has_products")
+        } else if (!ProductAtShopTable.select(ProductAtShopTable.shopId eq shop.id).empty()) {
+            Log.e("delete_shop_locally", "Deleted shops still has products in ProductAtShopTable")
+            return@transaction GenericResponse.failure("shop_has_products")
+        }
+
         ProductPresenceVoteTable.deleteWhere { ProductPresenceVoteTable.shopId eq shop.id }
         ShopsValidationQueueTable.deleteWhere { ShopsValidationQueueTable.shopId eq shop.id }
-        val deleted = ShopTable.deleteWhere { ShopTable.id eq shop.id }
-        if (deleted > 0) {
-            GenericResponse.success()
-        } else {
-            // Throwing exception to cancel the transaction
-            throw IllegalStateException("Couldn't delete shop ${params.shopOsmUID}")
+        ShopTable.update({ShopTable.id eq shop.id}) {
+            it[deleted] = true
         }
+        GenericResponse.success()
     }
 }

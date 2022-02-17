@@ -73,6 +73,7 @@ object ShopsValidationWorker : BackgroundWorkerBase(
             val lastValidationAcceptedTime = now(testing = testing) - secsBeforeShopRevalidation
             return ShopTable.lastAutoValidationTime less lastValidationAcceptedTime
         }
+    private val notDeleted = ShopTable.deleted eq false
 
     override fun autoRepeatPeriodMillis() = millisBetweenAutoRevalidations
 
@@ -94,7 +95,10 @@ object ShopsValidationWorker : BackgroundWorkerBase(
                 joinType = JoinType.LEFT,
                 onColumn = ShopTable.osmUID,
                 otherColumn = ModeratorTaskTable.osmUID).select(
-            invalidShop and autoValidationNotScheduled and notBeingManuallyModerated
+            invalidShop and
+                    autoValidationNotScheduled and
+                    notBeingManuallyModerated and
+                    notDeleted
         )
 
         for (row in notValidated) {
@@ -122,7 +126,10 @@ object ShopsValidationWorker : BackgroundWorkerBase(
             joinType = JoinType.LEFT,
             onColumn = ShopTable.osmUID,
             otherColumn = ModeratorTaskTable.osmUID).select(
-                autoValidatedTooLongAgo and autoValidationNotScheduled and notBeingManuallyModerated
+                autoValidatedTooLongAgo and
+                        autoValidationNotScheduled and
+                        notBeingManuallyModerated and
+                        notDeleted
         ).toList()
         if (notValidated.isEmpty()) {
             Log.w("ShopsValidationWorker", "Periodic revalidation: 0 shops need revalidation")

@@ -86,29 +86,36 @@ class MoveProductsDeleteShopTest {
         withPlanteTestApplication {
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val (user, userId) = registerAndGetTokenWithID()
             val moderator = registerModerator()
 
             // Prepare shops
-            // Bad shop is created in OSM by us (so that we would gain a moral right to delete it)
-            createShopCmd(badShop.osmId)
-            putProductToShop(user, barcode1, badShop)
-            putProductToShop(user, barcode2, goodShop)
-            assertEquals(setOf(barcode1), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShop))
-            assertTrue(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            createShopCmd(user, badShopUID.osmId)
+            putProductToShop(user, barcode1, badShopUID)
+            putProductToShop(user, barcode2, goodShopUID)
+            assertEquals(setOf(barcode1), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShopUID))
+            var goodShop = getShop(user, goodShopUID)!!
+            var badShop = getShop(user, badShopUID)!!
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(1, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(null, badShop["deleted"])
 
             // Execute cmd
-            moveProductsDeleteShopCmd(moderator, badShop = badShop, goodShop = goodShop)
+            moveProductsDeleteShopCmd(moderator, badShop = badShopUID, goodShop = goodShopUID)
 
             // Verify consequences
-            assertEquals(emptySet(), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode1, barcode2), getProductsAtShop(user, goodShop))
-            assertFalse(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            assertEquals(emptySet(), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode1, barcode2), getProductsAtShop(user, goodShopUID))
+            goodShop = getShop(user, goodShopUID)!!
+            badShop = getShop(user, badShopUID)!!
+            assertEquals(2, goodShop["products_count"])
+            assertEquals(0, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(true, badShop["deleted"])
 
             // User should keep being the author of all related to shops data,
             // the moderator shouldn't be one
@@ -132,26 +139,29 @@ class MoveProductsDeleteShopTest {
         withPlanteTestApplication {
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val user = register()
             val moderator = registerModerator()
 
             // Prepare shops
-            // Bad shop is created in OSM by us (so that we would gain a moral right to delete it)
-            createShopCmd(badShop.osmId)
-            putProductToShop(user, barcode1, badShop)
-            putProductToShop(user, barcode2, goodShop)
-            assertEquals(setOf(barcode1), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShop))
-            assertTrue(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            createShopCmd(user, badShopUID.osmId)
+            putProductToShop(user, barcode1, badShopUID)
+            putProductToShop(user, barcode2, goodShopUID)
+            assertEquals(setOf(barcode1), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShopUID))
+            val goodShop = getShop(user, goodShopUID)!!
+            val badShop = getShop(user, badShopUID)!!
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(1, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(null, badShop["deleted"])
 
             // Execute cmd
             moveProductsDeleteShopCmd(
                 moderator,
-                badShop = badShop,
-                goodShop = goodShop,
+                badShop = badShopUID,
+                goodShop = goodShopUID,
                 goodShopFoundInOsm = false,
                 expectedError = "shop_not_found")
         }
@@ -162,33 +172,40 @@ class MoveProductsDeleteShopTest {
         withPlanteTestApplication {
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val (user, userId) = registerAndGetTokenWithID()
             val moderator = registerModerator()
 
             // Prepare shops
-            // Bad shop is created in OSM by us (so that we would gain a moral right to delete it)
-            createShopCmd(badShop.osmId)
-            putProductToShop(user, barcode1, badShop)
-            putProductToShop(user, barcode2, goodShop)
-            assertEquals(setOf(barcode1), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShop))
-            assertTrue(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            createShopCmd(user, badShopUID.osmId)
+            putProductToShop(user, barcode1, badShopUID)
+            putProductToShop(user, barcode2, goodShopUID)
+            assertEquals(setOf(barcode1), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShopUID))
+            var goodShop = getShop(user, goodShopUID)!!
+            var badShop = getShop(user, badShopUID)!!
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(1, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(null, badShop["deleted"])
 
             // Execute cmd
             moveProductsDeleteShopCmd(
                 moderator,
-                badShop = badShop,
-                goodShop = goodShop,
+                badShop = badShopUID,
+                goodShop = goodShopUID,
                 badShopFoundInOsm = false)
 
             // Verify consequences
-            assertEquals(emptySet(), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode1, barcode2), getProductsAtShop(user, goodShop))
-            assertFalse(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            assertEquals(emptySet(), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode1, barcode2), getProductsAtShop(user, goodShopUID))
+            goodShop = getShop(user, goodShopUID)!!
+            badShop = getShop(user, badShopUID)!!
+            assertEquals(2, goodShop["products_count"])
+            assertEquals(0, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(true, badShop["deleted"])
 
             // User should keep being the author of all related to shops data,
             // the moderator shouldn't be one
@@ -200,28 +217,34 @@ class MoveProductsDeleteShopTest {
     fun `move_products_delete_shop when there is no good shop in DB`() {
         withPlanteTestApplication {
             val barcode1 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val (user, userId) = registerAndGetTokenWithID()
             val moderator = registerModerator()
 
             // Prepare shops
-            // Bad shop is created in OSM by us (so that we would gain a moral right to delete it)
-            createShopCmd(badShop.osmId)
-            putProductToShop(user, barcode1, badShop)
-            assertEquals(setOf(barcode1), getProductsAtShop(user, badShop))
-            assertEquals(emptySet(), getProductsAtShop(user, goodShop))
-            assertTrue(shopExistsInDB(user, badShop))
-            assertFalse(shopExistsInDB(user, goodShop))
+            createShopCmd(user, badShopUID.osmId)
+            putProductToShop(user, barcode1, badShopUID)
+            assertEquals(setOf(barcode1), getProductsAtShop(user, badShopUID))
+            assertEquals(emptySet(), getProductsAtShop(user, goodShopUID))
+            var goodShop = getShop(user, goodShopUID)
+            var badShop = getShop(user, badShopUID)!!
+            assertEquals(null, goodShop)
+            assertEquals(1, badShop["products_count"])
+            assertEquals(null, badShop["deleted"])
 
             // Execute cmd
-            moveProductsDeleteShopCmd(moderator, badShop = badShop, goodShop = goodShop)
+            moveProductsDeleteShopCmd(moderator, badShop = badShopUID, goodShop = goodShopUID)
 
             // Verify consequences
-            assertEquals(emptySet(), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode1), getProductsAtShop(user, goodShop))
-            assertFalse(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            assertEquals(emptySet(), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode1), getProductsAtShop(user, goodShopUID))
+            goodShop = getShop(user, goodShopUID)!!
+            badShop = getShop(user, badShopUID)!!
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(0, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(true, badShop["deleted"])
 
             // User should keep being the author of all related to shops data,
             // the moderator shouldn't be one
@@ -233,23 +256,26 @@ class MoveProductsDeleteShopTest {
     fun `move_products_delete_shop when there is no bad shop in DB`() {
         withPlanteTestApplication {
             val barcode2 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val user = register()
             val moderator = registerModerator()
 
             // Prepare shops
-            putProductToShop(user, barcode2, goodShop)
-            assertEquals(setOf(), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShop))
-            assertFalse(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            putProductToShop(user, barcode2, goodShopUID)
+            assertEquals(setOf(), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShopUID))
+            val goodShop = getShop(user, goodShopUID)!!
+            val badShop = getShop(user, badShopUID)
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(null, badShop)
+            assertEquals(null, goodShop["deleted"])
 
             // Execute cmd
             moveProductsDeleteShopCmd(
                 moderator,
-                badShop = badShop,
-                goodShop = goodShop,
+                badShop = badShopUID,
+                goodShop = goodShopUID,
                 expectedError = "shop_not_found")
         }
     }
@@ -259,25 +285,29 @@ class MoveProductsDeleteShopTest {
         withPlanteTestApplication {
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
-            val badShop = generateFakeOsmUID()
-            val goodShop = generateFakeOsmUID()
+            val badShopUID = generateFakeOsmUID()
+            val goodShopUID = generateFakeOsmUID()
             val user = register()
             val moderator = registerModerator()
 
             // Prepare shops
-            // createShopCmd(badShop.osmId) // Nope
-            putProductToShop(user, barcode1, badShop)
-            putProductToShop(user, barcode2, goodShop)
-            assertEquals(setOf(barcode1), getProductsAtShop(user, badShop))
-            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShop))
-            assertTrue(shopExistsInDB(user, badShop))
-            assertTrue(shopExistsInDB(user, goodShop))
+            // createShopCmd(badShopUID.osmId) // Nope
+            putProductToShop(user, barcode1, badShopUID)
+            putProductToShop(user, barcode2, goodShopUID)
+            assertEquals(setOf(barcode1), getProductsAtShop(user, badShopUID))
+            assertEquals(setOf(barcode2), getProductsAtShop(user, goodShopUID))
+            val goodShop = getShop(user, goodShopUID)!!
+            val badShop = getShop(user, badShopUID)!!
+            assertEquals(1, goodShop["products_count"])
+            assertEquals(1, badShop["products_count"])
+            assertEquals(null, goodShop["deleted"])
+            assertEquals(null, badShop["deleted"])
 
             // Execute cmd
             moveProductsDeleteShopCmd(
                 moderator,
-                badShop = badShop,
-                goodShop = goodShop,
+                badShop = badShopUID,
+                goodShop = goodShopUID,
                 expectedError = "wont_delete_shop_not_created_by_us")
         }
     }
@@ -298,17 +328,16 @@ class MoveProductsDeleteShopTest {
         return products.map { it["barcode"] as String }.toSet()
     }
 
-    private fun TestApplicationEngine.shopExistsInDB(user: String, shop: OsmUID): Boolean {
-        val map = authedGet(user, "/shops_data/", body = """ { "osm_uids": [ "${shop.asStr}" ] } """).jsonMap()
+    private fun TestApplicationEngine.getShop(user: String, osmUID: OsmUID): Map<*, *>? {
+        val map = authedGet(user, "/shops_data/", body = """ { "osm_uids": [ "${osmUID.asStr}" ] } """).jsonMap()
         val results = map["results_v2"] as Map<*, *>
-        return results.contains(shop.asStr)
+        return results[osmUID.asStr] as Map<*, *>?
     }
 
-    private fun TestApplicationEngine.createShopCmd(osmId: String) {
+    private fun TestApplicationEngine.createShopCmd(user: String, osmId: String) {
         val fakeOsmResponses = String(
             Base64.getEncoder().encode(
                 CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
-        val user = register()
         val map = authedGet(user, "/create_shop/", mapOf(
             "lat" to "-24",
             "lon" to "44",

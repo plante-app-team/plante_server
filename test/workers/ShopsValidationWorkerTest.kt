@@ -280,6 +280,35 @@ class ShopsValidationWorkerTest {
     }
 
     @Test
+    fun `on startup does not validate deleted shops`() {
+        val (userToken, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
+        val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
+        transaction {
+            ShopTable.insert {
+                it[osmUID] = shopOsmUid.asStr
+                it[creationTime] = 100
+                it[creatorUserId] = UUID.fromString(userId)
+                it[lat] = null
+                it[lon] = null
+                it[lastAutoValidationTime] = null
+                it[deleted] = true
+            }
+        }
+
+        withPlanteTestApplication {
+            ShopsValidationWorker.waitUntilIdle()
+
+            val shopsDataRequestBody = """ { "osm_uids": [ "${shopOsmUid.asStr}" ] } """
+            val map = authedGet(userToken, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            val shop = shopFrom(map, shopOsmUid)
+
+            assertEquals(shopOsmUid.asStr, shop["osm_uid"])
+            assertEquals(null, shop["lat"])
+            assertEquals(null, shop["lon"])
+        }
+    }
+
+    @Test
     fun `shop validation sets last validation time`() {
         val (_, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
         val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
@@ -577,6 +606,42 @@ class ShopsValidationWorkerTest {
             shop = shopFrom(map, shopOsmUid)
             assertEquals(VALIDATED_COORD, shop["lat"])
             assertEquals(VALIDATED_COORD, shop["lon"])
+        }
+    }
+
+    @Test
+    fun `deleted shops are not auto-revalidated`() {
+        ShopsValidationWorker.millisBetweenAutoRevalidations = 1000
+        ShopsValidationWorker.millisBeforeShopRevalidation = 3000
+
+        val (userToken, userId) = withPlanteTestApplication { registerAndGetTokenWithID() }
+        val shopOsmUid = OsmUID.from(OsmElementType.NODE, "12345")
+        transaction {
+            ShopTable.insert {
+                it[osmUID] = shopOsmUid.asStr
+                it[creationTime] = 100
+                it[creatorUserId] = UUID.fromString(userId)
+                it[lat] = BAD_COORD
+                it[lon] = BAD_COORD
+                it[lastAutoValidationTime] = now(testing = true)
+                it[deleted] = true
+            }
+        }
+        withPlanteTestApplication {
+            ShopsValidationWorker.waitUntilIdle()
+
+            Thread.sleep(ShopsValidationWorker.millisBeforeShopRevalidation)
+            Thread.sleep(ShopsValidationWorker.millisBetweenAutoRevalidations)
+            ShopsValidationWorker.waitUntilIdle()
+
+            val shopsDataRequestBody = """ { "osm_uids": [ "${shopOsmUid.asStr}" ] } """
+            val map = authedGet(userToken, "/shops_data/", body = shopsDataRequestBody).jsonMap()
+            val shop = shopFrom(map, shopOsmUid)
+
+            // No auto-revalidation - the shop was deleted!
+            assertEquals(shopOsmUid.asStr, shop["osm_uid"])
+            assertEquals(BAD_COORD, shop["lat"])
+            assertEquals(BAD_COORD, shop["lon"])
         }
     }
 

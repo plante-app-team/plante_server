@@ -56,6 +56,14 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
     if (shopRow == null) {
         return@transaction GenericResponse.failure("shop_not_found", "OSM UID: $osmUID")
     }
+    if (shopRow[ShopTable.deleted]) {
+        if (params.voteVal == 1) {
+            return@transaction GenericResponse.failure("shop_deleted", "OSM UID: $osmUID")
+        } else {
+            // The shop is deleted and the vote was to delete a product from it - sure, deleted
+            return@transaction ProductPresenceVoteResponse(deleted = true)
+        }
+    }
 
     val now = now(params.testingNow, testing)
     val product = Product.from(productRow)

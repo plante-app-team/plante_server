@@ -45,7 +45,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
     } else {
         val result = createUpdateProduct(CreateUpdateProductParams(params.barcode), user, testing)
         if (result.error != null) {
-            return@transaction result;
+            return@transaction result
         }
         val newProduct = ProductTable.select { ProductTable.barcode eq params.barcode }.first()
         newProduct[ProductTable.id]
@@ -53,6 +53,10 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
 
     val now = now(params.testingNow, testing)
     val existingShop = ShopTable.select { ShopTable.osmUID eq osmUID.asStr }.firstOrNull()
+    if (existingShop != null && existingShop[ShopTable.deleted]) {
+        return@transaction GenericResponse.failure("shop_deleted", "OSM UID: $osmUID")
+    }
+
     val shopId = if (existingShop != null) {
         ShopTable.maybeValidate(
             Shop.from(existingShop),

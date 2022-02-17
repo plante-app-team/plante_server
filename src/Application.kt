@@ -106,7 +106,7 @@ import vegancheckteam.plante_server.cmds.mobileAppConfigData
 import vegancheckteam.plante_server.cmds.moderation.ChangeModeratorTaskLangParams
 import vegancheckteam.plante_server.cmds.moderation.ClearProductVegStatusesParams
 import vegancheckteam.plante_server.cmds.moderation.CountModeratorTasksParams
-import vegancheckteam.plante_server.cmds.moderation.DeleteShopParams
+import vegancheckteam.plante_server.cmds.moderation.DeleteShopLocallyParams
 import vegancheckteam.plante_server.cmds.moderation.LatestProductsAddedToShopsDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorTaskDataParams
 import vegancheckteam.plante_server.cmds.moderation.ModeratorsActivitiesParams
@@ -117,7 +117,7 @@ import vegancheckteam.plante_server.cmds.moderation.UsersDataParams
 import vegancheckteam.plante_server.cmds.moderation.changeModeratorTaskLang
 import vegancheckteam.plante_server.cmds.moderation.clearProductVegStatuses
 import vegancheckteam.plante_server.cmds.moderation.countModeratorTasks
-import vegancheckteam.plante_server.cmds.moderation.deleteShop
+import vegancheckteam.plante_server.cmds.moderation.deleteShopLocally
 import vegancheckteam.plante_server.cmds.moderation.latestProductsAddedToShopsData
 import vegancheckteam.plante_server.cmds.moderation.moderatorTaskData
 import vegancheckteam.plante_server.cmds.moderation.moderatorsActivities
@@ -369,8 +369,8 @@ fun Application.module(testing: Boolean = false) {
             authedLocation<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
             }
-            authedLocation<DeleteShopParams> { params, user ->
-                call.respond(deleteShop(params, user))
+            authedLocation<DeleteShopLocallyParams> { params, user ->
+                call.respond(deleteShopLocally(params, user))
             }
             authedLocation<MoveProductsDeleteShopParams> { params, user ->
                 call.respond(moveProductsDeleteShop(params, user, testing, client))

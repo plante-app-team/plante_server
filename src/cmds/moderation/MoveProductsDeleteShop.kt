@@ -10,8 +10,10 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.base64.Base64
 import vegancheckteam.plante_server.Config
 import vegancheckteam.plante_server.GlobalStorage
@@ -68,7 +70,7 @@ suspend fun moveProductsDeleteShop(params: MoveProductsDeleteShopParams, user: U
     moveProducts(params, badShop, goodOsmShop, testing)
 
     // Delete bad shop locally
-    deleteShop(DeleteShopParams(badShop.osmUID.asStr), user)
+    deleteShopLocally(DeleteShopLocallyParams(badShop.osmUID.asStr), user)
 
     // Delete bad shop remotely
     if (badOsmShop != null) {
@@ -138,6 +140,12 @@ private fun moveProducts(
         // the current time. It's not very nice, but at the moment
         // of writing this code wasn't worth fixing.
         putProductToShop(moveParams, author, testing)
+    }
+    ProductAtShopTable.deleteWhere {
+        ProductAtShopTable.shopId eq from.id
+    }
+    ShopTable.update({ShopTable.id eq from.id}) {
+        it[productsCount] = 0
     }
 }
 
