@@ -46,7 +46,7 @@ object AppleAuthorizer {
         val json = GlobalStorage.jsonMapper.readValue(response, MutableMap::class.java)
 
         val responseJwt = JWT.decode(json["id_token"] as String)
-        print("AppleAuthorizer.auth, responseJwt: $responseJwt\n")
+        Log.i("AppleAuthorizer", "responseJwt: $responseJwt\n")
         val userId = responseJwt.subject
         return AuthResult.Ok(userId)
     }
