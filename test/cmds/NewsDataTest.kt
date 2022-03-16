@@ -434,20 +434,64 @@ class NewsDataTest {
         )
     }
 
+    @Test
+    fun `news pagination`() {
+        withPlanteTestApplication {
+            val userToken = register()
+            val barcodes = mutableListOf<String>()
+            for (i in 1..(NEWS_PAGE_SIZE*2.5).toInt()) {
+                barcodes.add(UUID.randomUUID().toString())
+            }
+            val shop = generateFakeOsmUID()
+
+            var now = 1L
+            for (barcode in barcodes) {
+                putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = ++now)
+            }
+
+            // Page 0
+            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 0, expectedLastPage = false)
+            assertEquals(NEWS_PAGE_SIZE, news.size, news.toString())
+            var newsData = news.map { it["data"] as Map<*, *> }
+            for (barcode in barcodes.reversed().subList(0, NEWS_PAGE_SIZE)) {
+                assertTrue(newsData.any { it["barcode"] == barcode }, "expected barcode: $barcode, all: $newsData")
+            }
+
+            // Page 1
+            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 1, expectedLastPage = false)
+            assertEquals(NEWS_PAGE_SIZE, news.size, news.toString())
+            newsData = news.map { it["data"] as Map<*, *> }
+            for (barcode in barcodes.reversed().subList(NEWS_PAGE_SIZE, NEWS_PAGE_SIZE * 2)) {
+                assertTrue(newsData.any { it["barcode"] == barcode }, "expected barcode: $barcode, all: $newsData")
+            }
+
+            // Page 2
+            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 2, expectedLastPage = true)
+            assertEquals(NEWS_PAGE_SIZE / 2, news.size, news.toString())
+            newsData = news.map { it["data"] as Map<*, *> }
+            for (barcode in barcodes.reversed().subList(NEWS_PAGE_SIZE * 2, barcodes.size)) {
+                assertTrue(newsData.any { it["barcode"] == barcode }, "expected barcode: $barcode, all: $newsData")
+            }
+        }
+    }
+
     private fun TestApplicationEngine.requestNews(
         clientToken: String,
         north: Double,
         south: Double,
         west: Double,
         east: Double,
+        page: Int = 0,
         now: Long? = null,
         expectedError: String? = null,
+        expectedLastPage: Boolean? = null,
     ): List<Map<*, *>> {
         val params = mutableMapOf(
             "north" to north.toString(),
             "south" to south.toString(),
             "east" to east.toString(),
             "west" to west.toString(),
+            "page" to page.toString(),
         )
         if (now != null) {
             params["testingNow"] = now.toString()
@@ -456,6 +500,9 @@ class NewsDataTest {
 
         return if (expectedError == null) {
             assertNull(map["error"], map.toString())
+            if (expectedLastPage != null) {
+                assertEquals(expectedLastPage, map["last_page"], map.toString())
+            }
             val result = map["results"] as List<*>
             result.map { it as Map<*, *> }
         } else {

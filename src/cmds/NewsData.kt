@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import java.util.concurrent.TimeUnit
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.deleteWhere
@@ -28,6 +27,7 @@ import vegancheckteam.plante_server.model.news.NewsPieceType
 
 const val NEWS_LIFETIME_DAYS = 90L
 const val NEWS_MAX_SQUARE_SIZE_KMS = 40.0
+const val NEWS_PAGE_SIZE = 20
 
 @Location("/news_data/")
 data class NewsDataParams(
@@ -35,6 +35,7 @@ data class NewsDataParams(
     val east: Double,
     val north: Double,
     val south: Double,
+    val page: Int,
     val testingNow: Long? = null,
 )
 
@@ -59,6 +60,8 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
 
     val pieces = NewsPieceTable
         .select(withinBounds)
+        .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
+        .limit(n = NEWS_PAGE_SIZE + 1, offset = params.page * NEWS_PAGE_SIZE.toLong())
         .map { NewsPiece.from(it) }
 
     val result = mutableListOf<NewsPiece>()
@@ -76,7 +79,9 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
         }
     }
     result.sortByDescending { it.creationTime }
-    NewsDataResponse(result)
+    NewsDataResponse(
+        news = result.take(NEWS_PAGE_SIZE),
+        lastPage = result.size <= NEWS_PAGE_SIZE)
 }
 
 private fun deleteOutdatedNews(now: Long) {
@@ -111,6 +116,9 @@ fun NewsPieceType.deleteWhereParentsAre(ids: List<Int>) {
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class NewsDataResponse(
     @JsonProperty("results")
-    val news: List<NewsPiece>) {
+    val news: List<NewsPiece>,
+    @JsonProperty("last_page")
+    val lastPage: Boolean,
+) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
 }

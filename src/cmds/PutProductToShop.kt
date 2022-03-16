@@ -77,7 +77,6 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             params.lat,
             params.lon,
         )
-        insertNewsPiece(params, user, now, osmUID)
         inserted[ShopTable.id]
     }
 
@@ -114,6 +113,8 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         now,
         barcode = params.barcode,
         shopUID = osmUID)
+
+    insertNewsPiece(params, user, now, osmUID)
 
     GenericResponse.success()
 }
