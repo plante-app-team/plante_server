@@ -79,6 +79,7 @@ import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
 import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
 import vegancheckteam.plante_server.cmds.MobileAppConfigDataParams
+import vegancheckteam.plante_server.cmds.NewsDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
@@ -125,6 +126,7 @@ import vegancheckteam.plante_server.cmds.moderation.moveProductsDeleteShop
 import vegancheckteam.plante_server.cmds.moderation.recordCustomModerationAction
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
+import vegancheckteam.plante_server.cmds.newsData
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_GET_PATH
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_MULTIPART_PATH
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_POST_FORM_PATH
@@ -147,6 +149,8 @@ import vegancheckteam.plante_server.cmds.userData
 import vegancheckteam.plante_server.cmds.userQuiz
 import vegancheckteam.plante_server.cmds.userQuizData
 import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
+import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductChangeTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
@@ -406,6 +410,9 @@ fun Application.module(testing: Boolean = false) {
             authedLocation<SendFeedbackParams> { params, user ->
                 call.respond(sendFeedback(params, user, testing))
             }
+            authedLocation<NewsDataParams> { params, user ->
+                call.respond(newsData(params, user, testing))
+            }
 
             route(USER_AVATAR_UPLOAD, HttpMethod.Post) {
                 authedRouteCustomResponse { call, user ->
@@ -468,6 +475,8 @@ private fun mainServerInit() {
             ProductPresenceVoteTable,
             ShopsValidationQueueTable,
             UserContributionTable,
+            NewsPieceTable,
+            NewsPieceProductAtShopTable,
         )
     }
 }

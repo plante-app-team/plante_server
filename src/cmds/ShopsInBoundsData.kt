@@ -13,7 +13,10 @@ import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.AreaTooBigException
 import vegancheckteam.plante_server.base.Log
+import vegancheckteam.plante_server.base.geoSelect
+import vegancheckteam.plante_server.base.kmToGrad
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -29,29 +32,23 @@ data class ShopsInBoundsDataParams(
     val south: Double)
 
 fun shopsInBoundsData(params: ShopsInBoundsDataParams) = transaction {
-    val edgeBorders = params.east < params.west
-
-    val width = if (!edgeBorders) {
-        (params.west - params.east).absoluteValue
-    } else {
-        (180 - params.west) + (180 + params.east)
-    }
-    val height = (params.north - params.south).absoluteValue
-    val maxSize = kmToGrad(500.0)
-    if (maxSize < width || maxSize < height) {
+    val withinBounds = try {
+        geoSelect(
+            params.west,
+            params.east,
+            params.north,
+            params.south,
+            ShopTable.lat,
+            ShopTable.lon,
+            maxSize = kmToGrad(500.0)
+        )
+    } catch (e: AreaTooBigException) {
         Log.w("/shops_in_bounds_data/", "Shops from too big area are requested: $params")
         return@transaction GenericResponse.failure("area_too_big")
     }
 
-    val withinLat = (ShopTable.lat greaterEq params.south) and (ShopTable.lat lessEq params.north)
-    val withinLon = if (!edgeBorders) {
-        (ShopTable.lon greaterEq params.west) and (ShopTable.lon lessEq params.east)
-    } else {
-        (ShopTable.lon greaterEq params.west) or (ShopTable.lon lessEq params.east)
-    }
-
     val shops = ShopTable
-        .select(withinLon and withinLat)
+        .select(withinBounds)
         .map { Shop.from(it) }
 
     val wantedProducts = (ProductAtShopTable.shopId inList shops.map { it.id }) and ProductTable.nothingNonVegan
@@ -83,9 +80,4 @@ data class ShopsInBoundsDataResponse(
     @JsonProperty("barcodes")
     val barcodes: Map<OsmUID, List<String>>) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
-}
-
-/// Note: it's very approximate since Earth is all round and complex.
-private fun kmToGrad(km: Double): Double {
-    return km * 1 / 111
 }

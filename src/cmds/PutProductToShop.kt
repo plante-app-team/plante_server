@@ -7,6 +7,8 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
+import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -18,6 +20,7 @@ import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.ShopValidationReason
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserContributionType
+import vegancheckteam.plante_server.model.news.NewsPieceType
 
 @Location("/put_product_to_shop/")
 data class PutProductToShopParams(
@@ -74,6 +77,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
             params.lat,
             params.lon,
         )
+        insertNewsPiece(params, user, now, osmUID)
         inserted[ShopTable.id]
     }
 
@@ -112,4 +116,27 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         shopUID = osmUID)
 
     GenericResponse.success()
+}
+
+private fun insertNewsPiece(
+    params: PutProductToShopParams,
+    user: User,
+    now: Long,
+    osmUID: OsmUID,
+) {
+    if (params.lat != null && params.lon != null) {
+        val insertedNewsPiece = NewsPieceTable.insert {
+            it[lat] = params.lat
+            it[lon] = params.lon
+            it[creatorUserId] = user.id
+            it[creationTime] = now
+            it[type] = NewsPieceType.PRODUCT_AT_SHOP.persistentCode
+        }
+        val newsPieceId = insertedNewsPiece[NewsPieceTable.id]
+        NewsPieceProductAtShopTable.insert {
+            it[NewsPieceProductAtShopTable.newsPieceId] = newsPieceId
+            it[barcode] = params.barcode
+            it[shopUID] = osmUID.asStr
+        }
+    }
 }
