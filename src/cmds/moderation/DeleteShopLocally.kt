@@ -6,9 +6,12 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
+import vegancheckteam.plante_server.db.deepDeleteNewsForShop
 import vegancheckteam.plante_server.model.GenericResponse
+import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.UserRightsGroup
@@ -33,6 +36,7 @@ fun deleteShopLocally(params: DeleteShopLocallyParams, user: User): Any {
         ShopTable.update({ShopTable.id eq shop.id}) {
             it[deleted] = true
         }
+        NewsPieceProductAtShopTable.deepDeleteNewsForShop(OsmUID.from(params.shopOsmUID))
         GenericResponse.success()
     }
 }

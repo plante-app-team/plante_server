@@ -18,6 +18,7 @@ import vegancheckteam.plante_server.base.kmToGrad
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
+import vegancheckteam.plante_server.db.deepDeleteNewsWhere
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.model.news.NewsPiece
@@ -86,15 +87,9 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
 
 private fun deleteOutdatedNews(now: Long) {
     val lastValidTime = now - TimeUnit.DAYS.toSeconds(NEWS_LIFETIME_DAYS)
-    val whereOutdated = NewsPieceTable.creationTime less lastValidTime
-    val outdatedNews = NewsPieceTable
-        .select(whereOutdated)
-        .map { NewsPiece.from(it) }
-    for (newsType in NewsPieceType.values()) {
-        val typedNews = outdatedNews.filter { it.type == newsType.persistentCode }
-        newsType.deleteWhereParentsAre(typedNews.map { it.id })
+    NewsPieceTable.deepDeleteNewsWhere {
+        NewsPieceTable.creationTime less lastValidTime
     }
-    NewsPieceTable.deleteWhere { whereOutdated }
 }
 
 fun NewsPieceType.select(ids: List<Int>): List<NewsPieceDataBase> {

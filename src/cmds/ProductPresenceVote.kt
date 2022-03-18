@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -13,10 +12,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.deepDeleteNewsForBarcode
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
@@ -124,6 +125,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         ProductPresenceVoteTable.deleteWhere {
             (ProductPresenceVoteTable.shopId eq shop.id) and (ProductPresenceVoteTable.productId eq product.id)
         }
+        NewsPieceProductAtShopTable.deepDeleteNewsForBarcode(product.barcode)
         val productsCountValue = ProductAtShopTable.countAcceptableProducts(shop.id)
         ShopTable.update( { ShopTable.id eq shop.id } ) {
             it[productsCount] = productsCountValue.toInt()

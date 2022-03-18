@@ -86,7 +86,9 @@ private suspend fun getOsmShopsPair(goodShopUID: String, badShopUID: String, cli
         var badShop: OsmShop? = null
         var goodShop: OsmShop? = null
         if (osmResponses.goodShopFound) {
-            goodShop = OsmShop(OsmUID.from(goodShopUID), 1.0, 2.0, "1")
+            val lat = osmResponses.goodShopLat
+            val lon = osmResponses.goodShopLon
+            goodShop = OsmShop(OsmUID.from(goodShopUID), lat, lon, "1")
         }
         if (osmResponses.badShopFound) {
             badShop = OsmShop(OsmUID.from(badShopUID), 1.0, 2.0, "1")
@@ -245,7 +247,11 @@ data class MoveProductsDeleteShopTestingOsmResponses(
     @JsonProperty("good_shop_found")
     val goodShopFound: Boolean,
     @JsonProperty("bad_shop_found")
-    val badShopFound: Boolean) {
+    val badShopFound: Boolean,
+    @JsonProperty("good_shop_lat")
+    val goodShopLat: Double = 1.0,
+    @JsonProperty("good_shop_lon")
+    val goodShopLon: Double = 2.0) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
     companion object {
         fun from(jsonString: String): MoveProductsDeleteShopTestingOsmResponses =
