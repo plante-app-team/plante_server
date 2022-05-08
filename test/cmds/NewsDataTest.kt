@@ -23,15 +23,12 @@ import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.news.NewsPieceType
-import vegancheckteam.plante_server.osm.OsmShop
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
 import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
-import vegancheckteam.plante_server.workers.ShopsValidationWorker
-import vegancheckteam.plante_server.workers.ShopsValidationWorkerTest
 
 class NewsDataTest {
     @Before
@@ -511,8 +508,8 @@ class NewsDataTest {
             val barcode2 = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode1, shop, lat = 1.0, lon = 1.0)
-            putProductToShop(userToken, barcode2, shop, lat = 1.0, lon = 1.0)
+            putProductToShop(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShop(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 123)
 
             var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertEquals(2, news.size, news.toString())
@@ -522,7 +519,7 @@ class NewsDataTest {
                 "shopOsmUID" to shop.asStr)).jsonMap()
             assertEquals("ok", map["result"])
 
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1)
+            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertEquals(0, news.size, news.toString())
         }
     }
@@ -576,6 +573,47 @@ class NewsDataTest {
         }
     }
 
+    @Test
+    fun `latestSecsUtc param`() {
+        withPlanteTestApplication {
+            val userToken = register()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val barcode3 = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+
+            putProductToShop(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 100)
+            putProductToShop(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 101)
+            putProductToShop(userToken, barcode3, shop, lat = 1.0, lon = 1.0, now = 102)
+
+            val newsData = { news: List<Map<*, *>> ->
+                news.map { it["data"] as Map<*, *> }
+            }
+            // News request without the 'until' params is expected to return all
+            // news up until Now
+            val newsUntilNow = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102)
+            val dataUntilNow = newsData(newsUntilNow)
+            val barcodesUntilNow = dataUntilNow.map { it["barcode"] }
+            assertEquals(listOf(barcode3, barcode2, barcode1), barcodesUntilNow)
+
+            // If the provided 'until' param equal to Now, the returned data is expected to be same
+            val newsUntil102 = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 102)
+            val dataUntil102 = newsData(newsUntil102)
+            val barcodesUntil102 = dataUntil102.map { it["barcode"] }
+            assertEquals(barcodesUntilNow, barcodesUntil102)
+            assertEquals(dataUntilNow, dataUntil102)
+
+            // The requested 'until' param here is 1 sec before Now, and therefore the
+            // returned news pieces are expected to not have the latest news piece, which
+            // was made with time 102
+            val newsUntil101 = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 101)
+            val dataUntil101 = newsData(newsUntil101)
+            val barcodesUntil101 = dataUntil101.map { it["barcode"] }
+            assertEquals(listOf(dataUntil102[1], dataUntil102[2]), dataUntil101)
+            assertEquals(listOf(barcodesUntil102[1], barcodesUntil102[2]), barcodesUntil101)
+        }
+    }
+
     private fun TestApplicationEngine.requestNews(
         clientToken: String,
         north: Double,
@@ -584,6 +622,7 @@ class NewsDataTest {
         east: Double,
         page: Int = 0,
         now: Long? = null,
+        until: Long? = null,
         expectedError: String? = null,
         expectedLastPage: Boolean? = null,
     ): List<Map<*, *>> {
@@ -594,9 +633,8 @@ class NewsDataTest {
             "west" to west.toString(),
             "page" to page.toString(),
         )
-        if (now != null) {
-            params["testingNow"] = now.toString()
-        }
+        now?.let { params["testingNow"] = it.toString() }
+        until?.let { params["untilSecsUtc"] = it.toString() }
         val map = authedGet(clientToken, "/news_data/", params).jsonMap()
 
         return if (expectedError == null) {

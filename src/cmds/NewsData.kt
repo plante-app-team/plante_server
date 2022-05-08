@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -37,6 +39,7 @@ data class NewsDataParams(
     val north: Double,
     val south: Double,
     val page: Int,
+    val untilSecsUtc: Long? = null,
     val testingNow: Long? = null,
 )
 
@@ -59,8 +62,11 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
         return@transaction GenericResponse.failure("area_too_big")
     }
 
+    val until = params.untilSecsUtc ?: now
+    val withinTimeBounds = NewsPieceTable.creationTime lessEq until
+
     val pieces = NewsPieceTable
-        .select(withinBounds)
+        .select(withinBounds and withinTimeBounds)
         .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
         .limit(n = NEWS_PAGE_SIZE + 1, offset = params.page * NEWS_PAGE_SIZE.toLong())
         .map { NewsPiece.from(it) }
