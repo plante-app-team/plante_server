@@ -11,6 +11,7 @@ import cmds.deprecated.registerUser
 import cmds.moderation.AllModeratorTasksDataParams
 import cmds.moderation.AssignModeratorTaskParams
 import cmds.moderation.AssignedModeratorTasksDataParams
+import cmds.moderation.DeleteNewsPieceParams
 import cmds.moderation.DeleteUserParams
 import cmds.moderation.ModerateProductVegStatusesParams
 import cmds.moderation.ProductChangesDataParams
@@ -21,6 +22,7 @@ import cmds.moderation.UnresolveModeratorTaskParams
 import cmds.moderation.allModeratorTasksData
 import cmds.moderation.assignModeratorTask
 import cmds.moderation.assignedModeratorTasksData
+import cmds.moderation.deleteNewsPiece
 import cmds.moderation.deleteUser
 import cmds.moderation.moderateProductVegStatuses
 import cmds.moderation.productChangesData
@@ -375,6 +377,9 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<DeleteShopLocallyParams> { params, user ->
                 call.respond(deleteShopLocally(params, user))
+            }
+            authedLocation<DeleteNewsPieceParams> { params, user ->
+                call.respond(deleteNewsPiece(params, user))
             }
             authedLocation<MoveProductsDeleteShopParams> { params, user ->
                 call.respond(moveProductsDeleteShop(params, user, testing, client))
