@@ -48,7 +48,8 @@ class NewsDataTest {
     @Test
     fun `a news piece created when a product added to a shop`() {
         withPlanteTestApplication {
-            val (userToken, userId) = registerAndGetTokenWithID()
+            val (userToken, userId) = registerAndGetTokenWithID(name = "Bob")
+
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
@@ -68,6 +69,7 @@ class NewsDataTest {
                 "lat" to 1.0,
                 "lon" to 1.0,
                 "creator_user_id" to userId,
+                "creator_user_name" to "Bob",
                 "creation_time" to 123,
                 "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
                 "data" to mapOf(
@@ -83,7 +85,7 @@ class NewsDataTest {
     @Test
     fun `products addition to multiple shops creates multiple news pieces`() {
         withPlanteTestApplication {
-            val (userToken, userId) = registerAndGetTokenWithID()
+            val (userToken, userId) = registerAndGetTokenWithID(name = "Helen")
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -106,6 +108,7 @@ class NewsDataTest {
                     "lat" to 1.0,
                     "lon" to 1.0,
                     "creator_user_id" to userId,
+                    "creator_user_name" to "Helen",
                     "creation_time" to 123,
                     "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
                     "data" to mapOf(
@@ -118,6 +121,7 @@ class NewsDataTest {
                     "lat" to 1.0,
                     "lon" to 1.0,
                     "creator_user_id" to userId,
+                    "creator_user_name" to "Helen",
                     "creation_time" to 124,
                     "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
                     "data" to mapOf(
@@ -134,7 +138,7 @@ class NewsDataTest {
     @Test
     fun `second put_product_to_shop command for same product and shop does not create a second news piece`() {
         withPlanteTestApplication {
-            val (userToken, userId) = registerAndGetTokenWithID()
+            val (userToken, userId) = registerAndGetTokenWithID(name = "Jake")
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
@@ -152,6 +156,7 @@ class NewsDataTest {
                 "lat" to 1.0,
                 "lon" to 1.0,
                 "creator_user_id" to userId,
+                "creator_user_name" to "Jake",
                 "creation_time" to 123,
                 "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
                 "data" to mapOf(
@@ -211,7 +216,7 @@ class NewsDataTest {
     @Test
     fun `can regulate news request bounds size`() {
         withPlanteTestApplication {
-            val (userToken, userId) = registerAndGetTokenWithID()
+            val (userToken, userId) = registerAndGetTokenWithID(name = "Donald")
             val barcode1 = UUID.randomUUID().toString()
             val barcode2 = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
@@ -234,6 +239,7 @@ class NewsDataTest {
                 "lat" to 1.0,
                 "lon" to 1.0,
                 "creator_user_id" to userId,
+                "creator_user_name" to "Donald",
                 "creation_time" to 123,
                 "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
                 "data" to mapOf(

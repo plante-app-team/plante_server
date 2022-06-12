@@ -5,6 +5,7 @@ import java.util.*
 import org.jetbrains.exposed.sql.ResultRow
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.db.NewsPieceTable
+import vegancheckteam.plante_server.db.UserTable
 
 data class NewsPiece(
     @JsonProperty("id")
@@ -15,6 +16,8 @@ data class NewsPiece(
     val lon: Double,
     @JsonProperty("creator_user_id")
     val creatorUserId: UUID,
+    @JsonProperty("creator_user_name")
+    val creatorUserName: String,
     @JsonProperty("creation_time")
     val creationTime: Long,
     @JsonProperty("type")
@@ -30,6 +33,7 @@ data class NewsPiece(
                 lat = tableRow[NewsPieceTable.lat],
                 lon = tableRow[NewsPieceTable.lon],
                 creatorUserId = tableRow[NewsPieceTable.creatorUserId],
+                creatorUserName = tableRow[UserTable.name],
                 creationTime = tableRow[NewsPieceTable.creationTime],
                 type = tableRow[NewsPieceTable.type],
                 data = emptyMap<Any, Any>(),

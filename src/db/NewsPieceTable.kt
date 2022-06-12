@@ -5,7 +5,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import vegancheckteam.plante_server.cmds.deleteWhereParentsAre
-import vegancheckteam.plante_server.model.news.NewsPiece
 import vegancheckteam.plante_server.model.news.NewsPieceType
 
 object NewsPieceTable : Table("news_piece_table") {
@@ -22,10 +21,9 @@ fun NewsPieceTable.deepDeleteNewsWhere(where: () -> Op<Boolean>) {
     val whereOp = where.invoke()
     val news = NewsPieceTable
         .select(whereOp)
-        .map { NewsPiece.from(it) }
     for (newsType in NewsPieceType.values()) {
-        val typedNews = news.filter { it.type == newsType.persistentCode }
-        newsType.deleteWhereParentsAre(typedNews.map { it.id })
+        val typedNews = news.filter { it[type] == newsType.persistentCode }
+        newsType.deleteWhereParentsAre(typedNews.map { it[id] })
     }
-    val deleted = NewsPieceTable.deleteWhere { whereOp }
+    NewsPieceTable.deleteWhere { whereOp }
 }

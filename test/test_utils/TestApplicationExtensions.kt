@@ -93,11 +93,17 @@ fun TestApplicationEngine.register(): String {
     return registerAndGetTokenWithID().first
 }
 
-fun TestApplicationEngine.registerAndGetTokenWithID(): Pair<String, String> {
-    val response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
+fun TestApplicationEngine.registerAndGetTokenWithID(name: String? = null): Pair<String, String> {
+    var response = get("/login_or_register_user/?deviceId=123&googleIdToken=${UUID.randomUUID()}").response
     assertEquals(200, response.status()?.value)
     val token = response.jsonMap()["client_token"] as String
     val id = response.jsonMap()["user_id"] as String
+
+    if (name != null) {
+        response = authedGet(token, "/update_user_data/?name=$name").response
+        assertEquals(200, response.status()?.value)
+    }
+
     return Pair(token, id)
 }
 

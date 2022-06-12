@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import java.util.concurrent.TimeUnit
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -18,8 +19,11 @@ import vegancheckteam.plante_server.base.Log
 import vegancheckteam.plante_server.base.geoSelect
 import vegancheckteam.plante_server.base.kmToGrad
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.ModeratorTaskTable
 import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
+import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.UserTable
 import vegancheckteam.plante_server.db.deepDeleteNewsWhere
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
@@ -65,7 +69,11 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
     val until = params.untilSecsUtc ?: now
     val withinTimeBounds = NewsPieceTable.creationTime lessEq until
 
-    val pieces = NewsPieceTable
+    val pieces = NewsPieceTable.join(
+            UserTable,
+            joinType = JoinType.LEFT,
+            onColumn = NewsPieceTable.creatorUserId,
+            otherColumn = UserTable.id)
         .select(withinBounds and withinTimeBounds)
         .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
         .limit(n = NEWS_PAGE_SIZE + 1, offset = params.page * NEWS_PAGE_SIZE.toLong())
