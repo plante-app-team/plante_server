@@ -11,6 +11,7 @@ import cmds.deprecated.registerUser
 import cmds.moderation.AllModeratorTasksDataParams
 import cmds.moderation.AssignModeratorTaskParams
 import cmds.moderation.AssignedModeratorTasksDataParams
+import cmds.moderation.BanUserParams
 import cmds.moderation.DeleteNewsPieceParams
 import cmds.moderation.DeleteUserParams
 import cmds.moderation.ModerateProductVegStatusesParams
@@ -22,6 +23,7 @@ import cmds.moderation.UnresolveModeratorTaskParams
 import cmds.moderation.allModeratorTasksData
 import cmds.moderation.assignModeratorTask
 import cmds.moderation.assignedModeratorTasksData
+import cmds.moderation.banUser
 import cmds.moderation.deleteNewsPiece
 import cmds.moderation.deleteUser
 import cmds.moderation.moderateProductVegStatuses
@@ -75,7 +77,6 @@ import org.slf4j.event.Level
 import vegancheckteam.plante_server.auth.CioHttpTransport
 import vegancheckteam.plante_server.auth.JwtController
 import vegancheckteam.plante_server.auth.userPrincipal
-import vegancheckteam.plante_server.cmds.BanMeParams
 import vegancheckteam.plante_server.cmds.CreateShopParams
 import vegancheckteam.plante_server.cmds.CreateUpdateProductParams
 import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
@@ -100,7 +101,6 @@ import vegancheckteam.plante_server.cmds.UserQuizDataParams
 import vegancheckteam.plante_server.cmds.UserQuizParams
 import vegancheckteam.plante_server.cmds.avatar.UserAvatarDeleteParams
 import vegancheckteam.plante_server.cmds.avatar.userAvatarDelete
-import vegancheckteam.plante_server.cmds.banMe
 import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
@@ -288,12 +288,6 @@ fun Application.module(testing: Boolean = false) {
         }
 
         authenticate {
-            authedLocation<BanMeParams> { _, user ->
-                if (!testing) {
-                    return@authedLocation
-                }
-                call.respond(banMe(user))
-            }
             authedLocation<UserDataParams> { _, user ->
                 call.respond(userData(user))
             }
@@ -374,6 +368,9 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
+            }
+            authedLocation<BanUserParams> { params, user ->
+                call.respond(banUser(params, user))
             }
             authedLocation<DeleteShopLocallyParams> { params, user ->
                 call.respond(deleteShopLocally(params, user))

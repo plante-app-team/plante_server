@@ -89,8 +89,8 @@ fun TestApplicationResponse.jsonMap(): Map<*, *> {
 
 fun TestApplicationCall.jsonMap() = response.jsonMap()
 
-fun TestApplicationEngine.register(): String {
-    return registerAndGetTokenWithID().first
+fun TestApplicationEngine.register(name: String? = null): String {
+    return registerAndGetTokenWithID(name = name).first
 }
 
 fun TestApplicationEngine.registerAndGetTokenWithID(name: String? = null): Pair<String, String> {

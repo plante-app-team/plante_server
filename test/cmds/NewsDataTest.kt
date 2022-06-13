@@ -1,12 +1,10 @@
 package vegancheckteam.plante_server.cmds
 
-import io.ktor.server.testing.TestApplicationEngine
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -14,20 +12,23 @@ import org.junit.Before
 import org.junit.Test
 import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.base.kmToGrad
-import vegancheckteam.plante_server.cmds.moderation.MoveProductsDeleteShopTestingOsmResponses
 import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
-import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.news.NewsPieceType
 import vegancheckteam.plante_server.test_utils.authedGet
+import vegancheckteam.plante_server.test_utils.banUserCmd
+import vegancheckteam.plante_server.test_utils.createShopCmd
 import vegancheckteam.plante_server.test_utils.jsonMap
+import vegancheckteam.plante_server.test_utils.moveProductsDeleteShopCmd
+import vegancheckteam.plante_server.test_utils.putProductToShopCmd
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
 import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.requestNewsCmd
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class NewsDataTest {
@@ -53,12 +54,12 @@ class NewsDataTest {
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertTrue(news.isEmpty(), news.toString())
 
-            putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
 
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertEquals(1, news.size, news.toString())
 
             val newsPiece = news[0].toMutableMap()
@@ -91,10 +92,10 @@ class NewsDataTest {
             val shop1 = generateFakeOsmUID()
             val shop2 = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
-            putProductToShop(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 124)
+            putProductToShopCmd(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 124)
 
-            val news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
+            val news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
             assertEquals(2, news.size, news.toString())
 
             val newsPiece1 = news[0].toMutableMap()
@@ -142,10 +143,10 @@ class NewsDataTest {
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
-            putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 124)
+            putProductToShopCmd(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = 124)
 
-            val news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
+            val news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
             assertEquals(1, news.size, news.toString())
 
             val newsPiece = news[0].toMutableMap()
@@ -179,10 +180,10 @@ class NewsDataTest {
         withPlanteTestApplication {
             val userToken = register()
 
-            putProductToShop(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
-            putProductToShop(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 124)
+            putProductToShopCmd(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 124)
 
-            val news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
+            val news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
             val data1 = news[0]["data"] as Map<*, *>
             val data2 = news[1]["data"] as Map<*, *>
 
@@ -199,10 +200,10 @@ class NewsDataTest {
         withPlanteTestApplication {
             val userToken = register()
 
-            putProductToShop(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 124)
-            putProductToShop(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 124)
+            putProductToShopCmd(userToken, barcode2, shop2, lat = 1.0, lon = 1.0, now = 123)
 
-            val news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
+            val news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 124)
             val data1 = news[0]["data"] as Map<*, *>
             val data2 = news[1]["data"] as Map<*, *>
 
@@ -222,13 +223,13 @@ class NewsDataTest {
             val shop1 = generateFakeOsmUID()
             val shop2 = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
-            putProductToShop(userToken, barcode2, shop2, lat = 1.01, lon = 1.01, now = 123)
+            putProductToShopCmd(userToken, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode2, shop2, lat = 1.01, lon = 1.01, now = 123)
 
-            var news = requestNews(userToken, 1.01, 0.9, 0.9, 1.01, now = 123)
+            var news = requestNewsCmd(userToken, 1.01, 0.9, 0.9, 1.01, now = 123)
             assertEquals(2, news.size, news.toString())
 
-            news = requestNews(userToken, 1.0, 0.9, 0.9, 1.0, now = 123)
+            news = requestNewsCmd(userToken, 1.0, 0.9, 0.9, 1.0, now = 123)
             assertEquals(1, news.size, news.toString())
 
             val newsPiece = news[0].toMutableMap()
@@ -257,14 +258,14 @@ class NewsDataTest {
             val userToken = register()
 
             val newsMaxSize = kmToGrad(NEWS_MAX_SQUARE_SIZE_KMS)
-            requestNews(
+            requestNewsCmd(
                 userToken,
                 north = newsMaxSize + 0.000000001,
                 south = 0.0,
                 west = 0.0,
                 east = newsMaxSize + 0.000000001,
                 expectedError = "area_too_big")
-            requestNews(
+            requestNewsCmd(
                 userToken,
                 north = newsMaxSize - 0.001,
                 south = 0.0,
@@ -279,7 +280,7 @@ class NewsDataTest {
         southWestBounds: Pair<Double, Double>) {
         withPlanteTestApplication {
             val clientToken = register()
-            requestNews(
+            requestNewsCmd(
                 clientToken,
                 north = northEastBounds.first,
                 south = southWestBounds.first,
@@ -320,40 +321,40 @@ class NewsDataTest {
             val barcode1 = UUID.randomUUID().toString()
             val shop1 = generateFakeOsmUID()
             var now = 0L
-            putProductToShop(
+            putProductToShopCmd(
                 userToken,
                 barcode1,
                 shop1,
                 lat = 1.0,
                 lon = 1.0,
                 now = now)
-            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
             assertEquals(1, news.size, news.toString())
 
             val barcode2 = UUID.randomUUID().toString()
             val shop2 = generateFakeOsmUID()
             now = TimeUnit.DAYS.toSeconds(NEWS_LIFETIME_DAYS / 2)
-            putProductToShop(
+            putProductToShopCmd(
                 userToken,
                 barcode2,
                 shop2,
                 lat = 1.0,
                 lon = 1.0,
                 now = now)
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
             assertEquals(2, news.size, news.toString())
 
             val barcode3 = UUID.randomUUID().toString()
             val shop3 = generateFakeOsmUID()
             now = TimeUnit.DAYS.toSeconds(NEWS_LIFETIME_DAYS) + 1
-            putProductToShop(
+            putProductToShopCmd(
                 userToken,
                 barcode3,
                 shop3,
                 lat = 1.0,
                 lon = 1.0,
                 now = now)
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
             // Still 2 news
             assertEquals(2, news.size, news.toString())
 
@@ -395,9 +396,9 @@ class NewsDataTest {
                 val osmUid = entry.key
                 val lat = entry.value.first
                 val lon = entry.value.second
-                putProductToShop(clientToken, barcode, osmUid, lat, lon)
+                putProductToShopCmd(clientToken, barcode, osmUid, lat, lon)
             }
-            val news = requestNews(
+            val news = requestNewsCmd(
                 clientToken,
                 north = northEastBounds.first,
                 south = southWestBounds.first,
@@ -454,11 +455,11 @@ class NewsDataTest {
 
             var now = 1L
             for (barcode in barcodes) {
-                putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = ++now)
+                putProductToShopCmd(userToken, barcode, shop, lat = 1.0, lon = 1.0, now = ++now)
             }
 
             // Page 0
-            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 0, expectedLastPage = false)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 0, expectedLastPage = false)
             assertEquals(NEWS_PAGE_SIZE, news.size, news.toString())
             var newsData = news.map { it["data"] as Map<*, *> }
             for (barcode in barcodes.reversed().subList(0, NEWS_PAGE_SIZE)) {
@@ -466,7 +467,7 @@ class NewsDataTest {
             }
 
             // Page 1
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 1, expectedLastPage = false)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 1, expectedLastPage = false)
             assertEquals(NEWS_PAGE_SIZE, news.size, news.toString())
             newsData = news.map { it["data"] as Map<*, *> }
             for (barcode in barcodes.reversed().subList(NEWS_PAGE_SIZE, NEWS_PAGE_SIZE * 2)) {
@@ -474,7 +475,7 @@ class NewsDataTest {
             }
 
             // Page 2
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 2, expectedLastPage = true)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now, page = 2, expectedLastPage = true)
             assertEquals(NEWS_PAGE_SIZE / 2, news.size, news.toString())
             newsData = news.map { it["data"] as Map<*, *> }
             for (barcode in barcodes.reversed().subList(NEWS_PAGE_SIZE * 2, barcodes.size)) {
@@ -490,9 +491,9 @@ class NewsDataTest {
             val barcode = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode, shop, lat = 1.0, lon = 1.0)
+            putProductToShopCmd(userToken, barcode, shop, lat = 1.0, lon = 1.0)
 
-            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1)
             assertEquals(1, news.size, news.toString())
 
             val map = authedGet(userToken, "/product_presence_vote/", mapOf(
@@ -501,7 +502,7 @@ class NewsDataTest {
                 "voteVal" to "0")).jsonMap()
             assertEquals("ok", map["result"])
 
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1)
             assertEquals(0, news.size, news.toString())
         }
     }
@@ -514,10 +515,10 @@ class NewsDataTest {
             val barcode2 = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 123)
-            putProductToShop(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 123)
 
-            var news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertEquals(2, news.size, news.toString())
 
             val moderator = registerModerator()
@@ -525,7 +526,7 @@ class NewsDataTest {
                 "shopOsmUID" to shop.asStr)).jsonMap()
             assertEquals("ok", map["result"])
 
-            news = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 123)
             assertEquals(0, news.size, news.toString())
         }
     }
@@ -540,17 +541,17 @@ class NewsDataTest {
             val shop2 = generateFakeOsmUID()
 
             createShopCmd(userToken, shop1.osmId, lat = 10.0, lon = 10.0)
-            putProductToShop(userToken, barcode1, shop1, lat = 10.0, lon = 10.0)
+            putProductToShopCmd(userToken, barcode1, shop1, lat = 10.0, lon = 10.0)
             createShopCmd(userToken, shop2.osmId, lat = 20.0, lon = 20.0)
-            putProductToShop(userToken, barcode2, shop2, lat = 20.0, lon = 20.0)
+            putProductToShopCmd(userToken, barcode2, shop2, lat = 20.0, lon = 20.0)
 
             // 1 news piece for each of the shops, yet
-            var news = requestNews(userToken, 10.1, 9.9, 9.9, 10.1)
+            var news = requestNewsCmd(userToken, 10.1, 9.9, 9.9, 10.1)
             assertEquals(1, news.size, news.toString())
             var newsData = news.map { it["data"] as Map<*, *> }
             assertEquals(1, newsData.count { it["shop_uid"] == shop1.asStr })
 
-            news = requestNews(userToken, 20.1, 19.9, 19.9, 20.1)
+            news = requestNewsCmd(userToken, 20.1, 19.9, 19.9, 20.1)
             assertEquals(1, news.size, news.toString())
             newsData = news.map { it["data"] as Map<*, *> }
             assertEquals(1, newsData.count { it["shop_uid"] == shop2.asStr })
@@ -565,13 +566,13 @@ class NewsDataTest {
             )
 
             // 0 news piece for the deleted shop, 2 news pieces for the remained shop
-            news = requestNews(userToken, 10.1, 9.9, 9.9, 10.1)
+            news = requestNewsCmd(userToken, 10.1, 9.9, 9.9, 10.1)
             assertEquals(0, news.size, news.toString())
             newsData = news.map { it["data"] as Map<*, *> }
             assertEquals(0, newsData.count { it["shop_uid"] == shop1.asStr })
             assertEquals(0, newsData.count { it["shop_uid"] == shop2.asStr })
 
-            news = requestNews(userToken, 20.1, 19.9, 19.9, 20.1)
+            news = requestNewsCmd(userToken, 20.1, 19.9, 19.9, 20.1)
             assertEquals(2, news.size, news.toString())
             newsData = news.map { it["data"] as Map<*, *> }
             assertEquals(0, newsData.count { it["shop_uid"] == shop1.asStr })
@@ -588,22 +589,22 @@ class NewsDataTest {
             val barcode3 = UUID.randomUUID().toString()
             val shop = generateFakeOsmUID()
 
-            putProductToShop(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 100)
-            putProductToShop(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 101)
-            putProductToShop(userToken, barcode3, shop, lat = 1.0, lon = 1.0, now = 102)
+            putProductToShopCmd(userToken, barcode1, shop, lat = 1.0, lon = 1.0, now = 100)
+            putProductToShopCmd(userToken, barcode2, shop, lat = 1.0, lon = 1.0, now = 101)
+            putProductToShopCmd(userToken, barcode3, shop, lat = 1.0, lon = 1.0, now = 102)
 
             val newsData = { news: List<Map<*, *>> ->
                 news.map { it["data"] as Map<*, *> }
             }
             // News request without the 'until' params is expected to return all
             // news up until Now
-            val newsUntilNow = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102)
+            val newsUntilNow = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 102)
             val dataUntilNow = newsData(newsUntilNow)
             val barcodesUntilNow = dataUntilNow.map { it["barcode"] }
             assertEquals(listOf(barcode3, barcode2, barcode1), barcodesUntilNow)
 
             // If the provided 'until' param equal to Now, the returned data is expected to be same
-            val newsUntil102 = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 102)
+            val newsUntil102 = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 102)
             val dataUntil102 = newsData(newsUntil102)
             val barcodesUntil102 = dataUntil102.map { it["barcode"] }
             assertEquals(barcodesUntilNow, barcodesUntil102)
@@ -612,7 +613,7 @@ class NewsDataTest {
             // The requested 'until' param here is 1 sec before Now, and therefore the
             // returned news pieces are expected to not have the latest news piece, which
             // was made with time 102
-            val newsUntil101 = requestNews(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 101)
+            val newsUntil101 = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = 102, until = 101)
             val dataUntil101 = newsData(newsUntil101)
             val barcodesUntil101 = dataUntil101.map { it["barcode"] }
             assertEquals(listOf(dataUntil102[1], dataUntil102[2]), dataUntil101)
@@ -620,97 +621,38 @@ class NewsDataTest {
         }
     }
 
-    private fun TestApplicationEngine.requestNews(
-        clientToken: String,
-        north: Double,
-        south: Double,
-        west: Double,
-        east: Double,
-        page: Int = 0,
-        now: Long? = null,
-        until: Long? = null,
-        expectedError: String? = null,
-        expectedLastPage: Boolean? = null,
-    ): List<Map<*, *>> {
-        val params = mutableMapOf(
-            "north" to north.toString(),
-            "south" to south.toString(),
-            "east" to east.toString(),
-            "west" to west.toString(),
-            "page" to page.toString(),
-        )
-        now?.let { params["testingNow"] = it.toString() }
-        until?.let { params["untilSecsUtc"] = it.toString() }
-        val map = authedGet(clientToken, "/news_data/", params).jsonMap()
+    @Test
+    fun `news from a banned and unbanned user`() {
+        withPlanteTestApplication {
+            val (userToken1, userId1) = registerAndGetTokenWithID(name = "Bob")
+            val (userToken2, userId2) = registerAndGetTokenWithID(name = "Jake")
 
-        return if (expectedError == null) {
-            assertNull(map["error"], map.toString())
-            if (expectedLastPage != null) {
-                assertEquals(expectedLastPage, map["last_page"], map.toString())
-            }
-            val result = map["results"] as List<*>
-            result.map { it as Map<*, *> }
-        } else {
-            assertEquals(expectedError, map["error"], map.toString())
-            emptyList()
+            val barcode1 = UUID.randomUUID().toString()
+            val barcode2 = UUID.randomUUID().toString()
+            val shop1 = generateFakeOsmUID()
+            val shop2 = generateFakeOsmUID()
+
+            putProductToShopCmd(userToken1, barcode1, shop1, lat = 1.0, lon = 1.0, now = 123)
+            putProductToShopCmd(userToken2, barcode2, shop2, lat = 1.0, lon = 1.0, now = 124)
+
+            var news = requestNewsCmd(userToken1, 1.1, 0.9, 0.9, 1.1, now = 125)
+            assertEquals(2, news.size, news.toString())
+            assertEquals(userId2, news[0]["creator_user_id"])
+            assertEquals(userId1, news[1]["creator_user_id"])
+
+            val moderator = registerModerator()
+            banUserCmd(moderator, targetUserId = userId2)
+
+            news = requestNewsCmd(userToken1, 1.1, 0.9, 0.9, 1.1, now = 125)
+            assertEquals(1, news.size, news.toString())
+            assertEquals(userId1, news[0]["creator_user_id"])
+
+            banUserCmd(moderator, targetUserId = userId2, unban = true)
+
+            news = requestNewsCmd(userToken1, 1.1, 0.9, 0.9, 1.1, now = 125)
+            assertEquals(2, news.size, news.toString())
+            assertEquals(userId2, news[0]["creator_user_id"])
+            assertEquals(userId1, news[1]["creator_user_id"])
         }
-    }
-
-    private fun TestApplicationEngine.putProductToShop(
-        clientToken: String,
-        barcode: String,
-        shop: OsmUID,
-        lat: Double,
-        lon: Double,
-        now: Long? = null,
-    ) {
-        val params = mutableMapOf(
-            "barcode" to barcode,
-            "shopOsmUID" to shop.asStr,
-            "lat" to lat.toString(),
-            "lon" to lon.toString(),
-        )
-        if (now != null) {
-            params["testingNow"] = now.toString()
-        }
-        val map = authedGet(clientToken, "/put_product_to_shop/", params).jsonMap()
-        assertEquals("ok", map["result"])
-    }
-
-    private fun TestApplicationEngine.createShopCmd(user: String, osmId: String, lat: Double, lon: Double) {
-        val fakeOsmResponses = String(
-            Base64.getEncoder().encode(
-                CreateShopTestingOsmResponses("123456", osmId, "").toString().toByteArray()))
-        val map = authedGet(user, "/create_shop/", mapOf(
-            "lat" to lat.toString(),
-            "lon" to lon.toString(),
-            "name" to "myshop",
-            "type" to "general",
-            "testingResponsesJsonBase64" to fakeOsmResponses,
-        )).jsonMap()
-        assertEquals(osmId, map["osm_id"])
-    }
-
-    private fun TestApplicationEngine.moveProductsDeleteShopCmd(
-        user: String,
-        badShop: OsmUID,
-        goodShop: OsmUID,
-        goodShopLat: Double,
-        goodShopLon: Double) {
-        val fakeOsmResponses = String(
-            Base64.getEncoder().encode(
-                MoveProductsDeleteShopTestingOsmResponses(
-                    "123456", "", "",
-                    goodShopFound = true,
-                    badShopFound = true,
-                    goodShopLat = goodShopLat,
-                    goodShopLon = goodShopLon,
-                ).toString().toByteArray()))
-        val map = authedGet(user, "/move_products_delete_shop/", mapOf(
-            "badOsmUID" to badShop.asStr,
-            "goodOsmUID" to goodShop.asStr,
-            "testingResponsesJsonBase64" to fakeOsmResponses
-        )).jsonMap()
-        assertEquals("ok", map["result"], map.toString())
     }
 }

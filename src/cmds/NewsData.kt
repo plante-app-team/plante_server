@@ -6,6 +6,7 @@ import io.ktor.locations.Location
 import java.util.concurrent.TimeUnit
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
@@ -68,13 +69,14 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
 
     val until = params.untilSecsUtc ?: now
     val withinTimeBounds = NewsPieceTable.creationTime lessEq until
+    val userNotBanned = UserTable.banned eq false
 
     val pieces = NewsPieceTable.join(
             UserTable,
             joinType = JoinType.LEFT,
             onColumn = NewsPieceTable.creatorUserId,
             otherColumn = UserTable.id)
-        .select(withinBounds and withinTimeBounds)
+        .select(withinBounds and withinTimeBounds and userNotBanned)
         .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
         .limit(n = NEWS_PAGE_SIZE + 1, offset = params.page * NEWS_PAGE_SIZE.toLong())
         .map { NewsPiece.from(it) }
