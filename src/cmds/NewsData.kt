@@ -70,57 +70,21 @@ fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transa
     val until = params.untilSecsUtc ?: now
     val withinTimeBounds = NewsPieceTable.creationTime lessEq until
     val userNotBanned = UserTable.banned eq false
-
-    val pieces = NewsPieceTable.join(
-            UserTable,
-            joinType = JoinType.LEFT,
-            onColumn = NewsPieceTable.creatorUserId,
-            otherColumn = UserTable.id)
-        .select(withinBounds and withinTimeBounds and userNotBanned)
-        .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
-        .limit(n = NEWS_PAGE_SIZE + 1, offset = params.page * NEWS_PAGE_SIZE.toLong())
-        .map { NewsPiece.from(it) }
-
-    val result = mutableListOf<NewsPiece>()
-    for (newsType in NewsPieceType.values()) {
-        val piecesWithType = pieces.filter { it.type == newsType.persistentCode }
-        val piecesMap = piecesWithType.associateBy { it.id }
-        val data = newsType.select(piecesWithType.map { it.id })
-        for (dataEntry in data) {
-            val piece = piecesMap[dataEntry.newsPieceId]
-            if (piece == null) {
-                Log.e("/news_data/", "Can't get news piece even though it must exist")
-                continue
-            }
-            result.add(piece.copy(data = dataEntry.toData()))
-        }
-    }
-    result.sortByDescending { it.creationTime }
+    val result = NewsPiece.selectFromDB(
+        where = withinBounds and withinTimeBounds and userNotBanned,
+        pageSize = NEWS_PAGE_SIZE,
+        pageNumber = params.page,
+    )
     NewsDataResponse(
         news = result.take(NEWS_PAGE_SIZE),
-        lastPage = result.size <= NEWS_PAGE_SIZE)
+        lastPage = result.size <= NEWS_PAGE_SIZE,
+    )
 }
 
 private fun deleteOutdatedNews(now: Long) {
     val lastValidTime = now - TimeUnit.DAYS.toSeconds(NEWS_LIFETIME_DAYS)
     NewsPieceTable.deepDeleteNewsWhere {
         NewsPieceTable.creationTime less lastValidTime
-    }
-}
-
-fun NewsPieceType.select(ids: List<Int>): List<NewsPieceDataBase> {
-    return when (this) {
-        NewsPieceType.PRODUCT_AT_SHOP -> NewsPieceProductAtShopTable.select(
-            NewsPieceProductAtShopTable.newsPieceId inList ids)
-            .map { NewsPieceProductAtShop.from(it) }
-    }
-}
-
-fun NewsPieceType.deleteWhereParentsAre(ids: List<Int>) {
-    when (this) {
-        NewsPieceType.PRODUCT_AT_SHOP -> NewsPieceProductAtShopTable.deleteWhere {
-            NewsPieceProductAtShopTable.newsPieceId inList ids
-        }
     }
 }
 

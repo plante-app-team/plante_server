@@ -2,8 +2,15 @@ package vegancheckteam.plante_server.model.news
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.select
 import vegancheckteam.plante_server.GlobalStorage
+import vegancheckteam.plante_server.base.Log
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.UserTable
 
@@ -27,7 +34,38 @@ data class NewsPiece(
 ) {
     override fun toString(): String = GlobalStorage.jsonMapper.writeValueAsString(this)
     companion object {
-        fun from(tableRow: ResultRow): NewsPiece {
+        // NOTE: in a perfect world this function would be in some other place,
+        // but it makes the code simpler when the client can just do "NewsPiece.selectFromDB(..)"
+        fun selectFromDB(where: Op<Boolean>, pageSize: Int, pageNumber: Int): List<NewsPiece> {
+            val pieces = NewsPieceTable.join(
+                    UserTable,
+                    joinType = JoinType.LEFT,
+                    onColumn = NewsPieceTable.creatorUserId,
+                    otherColumn = UserTable.id)
+                .select(where)
+                .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
+                .limit(n = pageSize + 1, offset = (pageNumber * pageSize).toLong())
+                .map { from(it) }
+
+            val result = mutableListOf<NewsPiece>()
+            for (newsType in NewsPieceType.values()) {
+                val piecesWithType = pieces.filter { it.type == newsType.persistentCode }
+                val piecesMap = piecesWithType.associateBy { it.id }
+                val data = newsType.select(piecesWithType.map { it.id })
+                for (dataEntry in data) {
+                    val piece = piecesMap[dataEntry.newsPieceId]
+                    if (piece == null) {
+                        Log.e("NewsPiece.selectFromDB", "Can't get news piece even though it must exist")
+                        continue
+                    }
+                    result.add(piece.copy(data = dataEntry.toData()))
+                }
+            }
+            result.sortByDescending { it.creationTime }
+            return result
+        }
+
+        private fun from(tableRow: ResultRow): NewsPiece {
             return NewsPiece(
                 id = tableRow[NewsPieceTable.id],
                 lat = tableRow[NewsPieceTable.lat],
@@ -39,5 +77,13 @@ data class NewsPiece(
                 data = emptyMap<Any, Any>(),
             )
         }
+    }
+}
+
+private fun NewsPieceType.select(ids: List<Int>): List<NewsPieceDataBase> {
+    return when (this) {
+        NewsPieceType.PRODUCT_AT_SHOP -> NewsPieceProductAtShopTable.select(
+            NewsPieceProductAtShopTable.newsPieceId inList ids)
+            .map { NewsPieceProductAtShop.from(it) }
     }
 }

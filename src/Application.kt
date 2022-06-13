@@ -83,6 +83,7 @@ import vegancheckteam.plante_server.cmds.LoginOrRegisterUserParams
 import vegancheckteam.plante_server.cmds.MakeReportParams
 import vegancheckteam.plante_server.cmds.MobileAppConfigDataParams
 import vegancheckteam.plante_server.cmds.NewsDataParams
+import vegancheckteam.plante_server.cmds.NewsPieceDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
@@ -129,6 +130,7 @@ import vegancheckteam.plante_server.cmds.moderation.recordCustomModerationAction
 import vegancheckteam.plante_server.cmds.moderation.specifyModeratorChoiceReasonParams
 import vegancheckteam.plante_server.cmds.moderation.usersData
 import vegancheckteam.plante_server.cmds.newsData
+import vegancheckteam.plante_server.cmds.newsPieceData
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_GET_PATH
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_MULTIPART_PATH
 import vegancheckteam.plante_server.cmds.off_proxy.OFF_PROXY_POST_FORM_PATH
@@ -414,6 +416,9 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<NewsDataParams> { params, user ->
                 call.respond(newsData(params, user, testing))
+            }
+            authedLocation<NewsPieceDataParams> { params, _ ->
+                call.respond(newsPieceData(params))
             }
 
             route(USER_AVATAR_UPLOAD, HttpMethod.Post) {

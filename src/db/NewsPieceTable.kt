@@ -1,10 +1,11 @@
 package vegancheckteam.plante_server.db
 
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
-import vegancheckteam.plante_server.cmds.deleteWhereParentsAre
 import vegancheckteam.plante_server.model.news.NewsPieceType
 
 object NewsPieceTable : Table("news_piece_table") {
@@ -26,4 +27,12 @@ fun NewsPieceTable.deepDeleteNewsWhere(where: () -> Op<Boolean>) {
         newsType.deleteWhereParentsAre(typedNews.map { it[id] })
     }
     NewsPieceTable.deleteWhere { whereOp }
+}
+
+private fun NewsPieceType.deleteWhereParentsAre(ids: List<Int>) {
+    when (this) {
+        NewsPieceType.PRODUCT_AT_SHOP -> NewsPieceProductAtShopTable.deleteWhere {
+            NewsPieceProductAtShopTable.newsPieceId inList ids
+        }
+    }
 }
