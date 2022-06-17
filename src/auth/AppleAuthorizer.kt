@@ -35,6 +35,7 @@ object AppleAuthorizer {
             .withClaim("sub", "vegancheckteam.plante")
             .sign(Algorithm.ECDSA256(null, privateKey))
 
+        // https://developer.apple.com/documentation/sign_in_with_apple/generate_and_validate_tokens
         val response = client.post<String>(urlString = "https://appleid.apple.com/auth/token?" +
                 "client_id=vegancheckteam.plante&" +
                 "code=$idTokenString&" +
