@@ -270,12 +270,12 @@ class ModerationRequests_General_Test {
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", queryParamsLists = mapOf(
                 "excludeTypes" to listOf(
                         ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
-                        ModeratorTaskType.USER_REPORT.typeName))
+                        ModeratorTaskType.USER_PRODUCT_REPORT.typeName))
             ).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
             val expectedTypes = ModeratorTaskType
                 .values()
-                .filter { it != ModeratorTaskType.PRODUCT_CHANGE_IN_OFF && it != ModeratorTaskType.USER_REPORT }
+                .filter { it != ModeratorTaskType.PRODUCT_CHANGE_IN_OFF && it != ModeratorTaskType.USER_PRODUCT_REPORT }
             assertEquals(expectedTypes.size, tasks.size, map.toString())
             types = tasks.map { it["task_type"] as String }
             assertEquals(expectedTypes.map { it.typeName }.toSet(), types.toSet())
@@ -310,10 +310,10 @@ class ModerationRequests_General_Test {
             map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/", queryParamsLists = mapOf(
                 "includeTypes" to listOf(
                     ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
-                    ModeratorTaskType.USER_REPORT.typeName))
+                    ModeratorTaskType.USER_PRODUCT_REPORT.typeName))
             ).jsonMap()
             tasks = (map["tasks"] as List<*>).map { it as Map<*, *> }
-            val expectedTypes = listOf(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF, ModeratorTaskType.USER_REPORT)
+            val expectedTypes = listOf(ModeratorTaskType.PRODUCT_CHANGE_IN_OFF, ModeratorTaskType.USER_PRODUCT_REPORT)
             assertEquals(expectedTypes.size, tasks.size, map.toString())
             types = tasks.map { it["task_type"] as String }
             assertEquals(expectedTypes.map { it.typeName }.toSet(), types.toSet())

@@ -10,16 +10,23 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
-import vegancheckteam.plante_server.cmds.MAX_REPORTS_FOR_PRODUCT_TESTING
-import vegancheckteam.plante_server.cmds.MAX_REPORTS_FOR_USER_TESTING
+import test_utils.generateFakeOsmUID
 import vegancheckteam.plante_server.cmds.REPORT_TEXT_MAX_LENGTH
 import vegancheckteam.plante_server.cmds.REPORT_TEXT_MIN_LENGTH
 import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
+import vegancheckteam.plante_server.db.NewsPieceTable
+import vegancheckteam.plante_server.db.ProductAtShopTable
+import vegancheckteam.plante_server.db.ProductPresenceVoteTable
+import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
+import vegancheckteam.plante_server.test_utils.makeReportCmd
+import vegancheckteam.plante_server.test_utils.putProductToShopCmd
 import vegancheckteam.plante_server.test_utils.register
-import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.requestNewsCmd
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class ModerationRequests_MakeReport_Test {
@@ -28,31 +35,34 @@ class ModerationRequests_MakeReport_Test {
         withPlanteTestApplication {
             transaction {
                 ModeratorTaskTable.deleteAll()
+                ProductPresenceVoteTable.deleteAll()
+                ProductAtShopTable.deleteAll()
+                ShopsValidationQueueTable.deleteAll()
+                ShopTable.deleteAll()
+                NewsPieceProductAtShopTable.deleteAll()
+                NewsPieceTable.deleteAll()
             }
         }
     }
 
     @Test
-    fun `make_report command`() {
+    fun `make_report command with barcode`() {
         withPlanteTestApplication {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
-            var map = authedGet(clientToken, "/create_update_product/?"
+            val map = authedGet(clientToken, "/create_update_product/?"
                     + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
-            map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=text1").jsonMap()
-            assertEquals("ok", map["result"])
-            map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=text2").jsonMap()
-            assertEquals("ok", map["result"])
-            map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=text3").jsonMap()
-            assertEquals("ok", map["result"])
+            makeReportCmd(clientToken, "text1", barcode = barcode)
+            makeReportCmd(clientToken, "text2", barcode = barcode)
+            makeReportCmd(clientToken, "text3", barcode = barcode)
 
             transaction {
                 val tasks = ModeratorTaskTable.select {
                     (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentCode)
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode)
                 }.toList()
                 assertEquals(3, tasks.count())
 
@@ -65,103 +75,44 @@ class ModerationRequests_MakeReport_Test {
     }
 
     @Test
-    fun `make_report max reports for user`() {
+    fun `make_report command with news piece ID`() {
         withPlanteTestApplication {
-            // Set up
-            transaction {
-                ModeratorTaskTable.deleteAll()
-            }
-
             val clientToken = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
 
-            val barcode1 = UUID.randomUUID().toString()
-            var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode1}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-            val barcode2 = UUID.randomUUID().toString()
-            map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode2}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
+            putProductToShopCmd(clientToken, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
 
-            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 2' is because
-            // product creation also creates a moderator task
-            // and there are 2 products
-            for (index in 0 until MAX_REPORTS_FOR_USER_TESTING - 2) {
-                val barcode = if (index % 2 == 1) {
-                    barcode1
-                } else {
-                    barcode2
-                }
-                map = authedGet(
-                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
-                assertEquals("ok", map["result"], map.toString())
-            }
+            val news = requestNewsCmd(clientToken, 1.1, 0.9, 0.9, 1.1, now = 124)
+            assertEquals(1, news.size, news.toString())
+            val newsPieceId = (news[0]["id"] as Int)
 
-            // Ensure there's a max number of tasks
+            makeReportCmd(clientToken, "text1", newsPieceID = newsPieceId)
+
             transaction {
-                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTaskTable.selectAll().count().toInt())
-            }
+                val tasks = ModeratorTaskTable.select {
+                    (ModeratorTaskTable.newsPieceId eq newsPieceId) and
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_NEWS_PIECE_REPORT.persistentCode)
+                }.toList()
+                assertEquals(1, tasks.count())
 
-            // Error expected now
-            map = authedGet(
-                clientToken, "/make_report/?barcode=${barcode1}&text=finaltext1").jsonMap()
-            assertEquals("too_many_reports_for_user", map["error"])
-            map = authedGet(
-                clientToken, "/make_report/?barcode=${barcode2}&text=finaltext2").jsonMap()
-            assertEquals("too_many_reports_for_user", map["error"])
-
-            // Ensure there's still a max number of tasks
-            transaction {
-                assertEquals(MAX_REPORTS_FOR_USER_TESTING, ModeratorTaskTable.selectAll().count().toInt())
+                assertEquals(tasks.first()[ModeratorTaskTable.textFromUser], "text1")
             }
         }
     }
 
     @Test
-    fun `make_report max reports for product`() {
+    fun `make_report command with invalid news piece ID`() {
         withPlanteTestApplication {
-            // Set up
+            val clientToken = register()
+
+            val invalidNewsPieceId = 999999
+
+            makeReportCmd(clientToken, "text1", newsPieceID = invalidNewsPieceId, expectedError = "news_piece_not_found")
+
             transaction {
-                ModeratorTaskTable.deleteAll()
-            }
-
-            val clientToken1 = register()
-            val clientToken2 = register()
-
-            val barcode = UUID.randomUUID().toString()
-            var map = authedGet(clientToken1, "/create_update_product/?"
-                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-
-            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 1' is because
-            // product creation also creates a moderator task
-            for (index in 0 until MAX_REPORTS_FOR_PRODUCT_TESTING - 1) {
-                val clientToken = if (index % 2 == 1) {
-                    clientToken1
-                } else {
-                    clientToken2
-                }
-                map = authedGet(
-                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
-                assertEquals("ok", map["result"], map.toString())
-            }
-
-            // Ensure there's a max number of tasks
-            transaction {
-                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
-            }
-
-            // Error expected now
-            map = authedGet(
-                clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
-            assertEquals("too_many_reports_for_product", map["error"])
-            map = authedGet(
-                clientToken2, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
-            assertEquals("too_many_reports_for_product", map["error"])
-
-            // Ensure there's still a max number of tasks
-            transaction {
-                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
+                val tasks = ModeratorTaskTable.selectAll().toList()
+                assertEquals(0, tasks.count())
             }
         }
     }
@@ -172,140 +123,24 @@ class ModerationRequests_MakeReport_Test {
             val clientToken = register()
 
             val barcode = UUID.randomUUID().toString()
-            var map = authedGet(clientToken, "/create_update_product/?"
+            val map = authedGet(clientToken, "/create_update_product/?"
                     + "barcode=${barcode}&veganStatus=unknown").jsonMap()
             assertEquals("ok", map["result"])
 
             val text1 = "a".repeat(REPORT_TEXT_MIN_LENGTH - 1)
-            map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=$text1").jsonMap()
-            assertEquals("report_text_too_short", map["error"])
+            makeReportCmd(clientToken, text1, barcode = barcode, expectedError = "report_text_too_short")
 
             val text2 = "a".repeat(REPORT_TEXT_MAX_LENGTH + 1)
-            map = authedGet(clientToken, "/make_report/?barcode=${barcode}&text=$text2").jsonMap()
-            assertEquals("report_text_too_long", map["error"])
+            makeReportCmd(clientToken, text2, barcode = barcode, expectedError = "report_text_too_long")
 
             // No reports should be created
             transaction {
                 val tasks = ModeratorTaskTable.select {
                     (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentCode)
+                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode)
                 }
                 assertEquals(0, tasks.count())
             }
-        }
-    }
-
-    @Test
-    fun `max reports for user consider only unresolved tasks`() {
-        withPlanteTestApplication {
-            // Set up
-            transaction {
-                ModeratorTaskTable.deleteAll()
-            }
-
-            val clientToken = register()
-
-            val barcode1 = UUID.randomUUID().toString()
-            var map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode1}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-            val barcode2 = UUID.randomUUID().toString()
-            map = authedGet(clientToken, "/create_update_product/?"
-                    + "barcode=${barcode2}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-
-            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 2' is because
-            // product creation also creates a moderator task
-            // and there are 2 products
-            for (index in 0 until MAX_REPORTS_FOR_USER_TESTING - 2) {
-                val barcode = if (index % 2 == 1) {
-                    barcode1
-                } else {
-                    barcode2
-                }
-                map = authedGet(
-                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
-                assertEquals("ok", map["result"], map.toString())
-            }
-
-            // Error expected now
-            map = authedGet(
-                clientToken, "/make_report/?barcode=${barcode1}&text=finaltext1").jsonMap()
-            assertEquals("too_many_reports_for_user", map["error"])
-
-            // Resolve 1 task
-            val moderatorClientToken = registerModerator()
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
-            val allTasks = map["tasks"] as List<*>
-            val taskId = (allTasks[0] as Map<*, *>)["id"]
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
-                "taskId" to "$taskId",
-                "performedAction" to "testing",
-            )).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Can make another report now
-            map = authedGet(
-                clientToken, "/make_report/?barcode=${barcode1}&text=finaltext1").jsonMap()
-            assertEquals("ok", map["result"])
-        }
-    }
-
-
-    @Test
-    fun `max reports for product consider only unresolved tasks`() {
-        withPlanteTestApplication {
-            // Set up
-            transaction {
-                ModeratorTaskTable.deleteAll()
-            }
-
-            val clientToken1 = register()
-            val clientToken2 = register()
-
-            val barcode = UUID.randomUUID().toString()
-            var map = authedGet(clientToken1, "/create_update_product/?"
-                    + "barcode=${barcode}&veganStatus=unknown").jsonMap()
-            assertEquals("ok", map["result"])
-
-            // NOTE: 'MAX_REPORTS_FOR_PRODUCT - 1' is because
-            // product creation also creates a moderator task
-            for (index in 0 until MAX_REPORTS_FOR_PRODUCT_TESTING - 1) {
-                val clientToken = if (index % 2 == 1) {
-                    clientToken1
-                } else {
-                    clientToken2
-                }
-                map = authedGet(
-                    clientToken, "/make_report/?barcode=${barcode}&text=text$index").jsonMap()
-                assertEquals("ok", map["result"], map.toString())
-            }
-
-            // Ensure there's a max number of tasks
-            transaction {
-                assertEquals(MAX_REPORTS_FOR_PRODUCT_TESTING, ModeratorTaskTable.selectAll().count().toInt())
-            }
-
-            // Error expected now
-            map = authedGet(
-                clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
-            assertEquals("too_many_reports_for_product", map["error"])
-
-            // Resolve 1 task
-            val moderatorClientToken = registerModerator()
-            map = authedGet(moderatorClientToken, "/all_moderator_tasks_data/").jsonMap()
-            val allTasks = map["tasks"] as List<*>
-            val taskId = (allTasks[0] as Map<*, *>)["id"]
-            map = authedGet(moderatorClientToken, "/resolve_moderator_task/", mapOf(
-                "taskId" to "$taskId",
-                "performedAction" to "testing",
-            )).jsonMap()
-            assertEquals("ok", map["result"])
-
-            // Can make another report now
-            map = authedGet(
-                clientToken1, "/make_report/?barcode=${barcode}&text=finaltext1").jsonMap()
-            assertEquals("ok", map["result"])
         }
     }
 }

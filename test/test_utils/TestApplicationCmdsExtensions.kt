@@ -129,3 +129,27 @@ fun TestApplicationEngine.banUserCmd(
         assertEquals(expectedError, map["error"], map.toString())
     }
 }
+
+fun TestApplicationEngine.makeReportCmd(
+    user: String,
+    text: String,
+    barcode: String? = null,
+    newsPieceID: Int? = null,
+    now: Long? = null,
+    expectedError: String? = null,
+) {
+    val params = mutableMapOf(
+        "text" to text,
+    )
+    barcode?.let { params["barcode"] = barcode }
+    newsPieceID?.let { params["newsPieceId"] = "$it" }
+    now?.let { params["testingNow"] = "$it" }
+
+    val map = authedGet(user, "/make_report/", params).jsonMap()
+    return if (expectedError == null) {
+        assertNull(map["error"], map.toString())
+        assertEquals("ok", map["result"], map.toString())
+    } else {
+        assertEquals(expectedError, map["error"], map.toString())
+    }
+}

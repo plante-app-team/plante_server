@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -10,51 +11,22 @@ import vegancheckteam.plante_server.model.ModeratorTaskType
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
 import vegancheckteam.plante_server.base.now
+import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.UserContributionTable
 import vegancheckteam.plante_server.model.UserContributionType
 
-const val MAX_REPORTS_FOR_PRODUCT = 100
-const val MAX_REPORTS_FOR_PRODUCT_TESTING = 10
-const val MAX_REPORTS_FOR_USER = 100
-const val MAX_REPORTS_FOR_USER_TESTING = 10
 const val REPORT_TEXT_MAX_LENGTH = 10000
 const val REPORT_TEXT_MIN_LENGTH = 3
 
 @Location("/make_report/")
 data class MakeReportParams(
-    val barcode: String,
     val text: String,
-    val testingNow: Long? = null)
+    val barcode: String? = null,
+    val newsPieceId: Int? = null,
+    val testingNow: Long? = null,
+)
 
 fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
-    val maxReportsForUser = if (testing) MAX_REPORTS_FOR_USER_TESTING else MAX_REPORTS_FOR_USER
-    val existingTasksOfUser = transaction {
-        val existingModeratorTasksOfUser = ModeratorTaskTable.select {
-            (ModeratorTaskTable.taskSourceUserId eq user.id) and
-                    (ModeratorTaskTable.resolutionTime eq null)
-        }
-        existingModeratorTasksOfUser.count()
-    }
-    if (existingTasksOfUser >= maxReportsForUser) {
-        return GenericResponse.failure(
-            "too_many_reports_for_user",
-            "User sent too many reports: $existingTasksOfUser")
-    }
-
-    val maxReportsForProduct = if (testing) MAX_REPORTS_FOR_PRODUCT_TESTING else MAX_REPORTS_FOR_PRODUCT
-    val existingTasksOfProduct = transaction {
-        val existingModeratorTasksOfProduct = ModeratorTaskTable.select {
-            (ModeratorTaskTable.productBarcode eq params.barcode) and
-                    (ModeratorTaskTable.resolutionTime eq null)
-        }
-        existingModeratorTasksOfProduct.count()
-    }
-    if (existingTasksOfProduct >= maxReportsForProduct) {
-        return GenericResponse.failure(
-            "too_many_reports_for_product",
-            "Product received too many reports: $existingTasksOfProduct")
-    }
-
     if (params.text.length < REPORT_TEXT_MIN_LENGTH) {
         return GenericResponse.failure("report_text_too_short")
     }
@@ -63,20 +35,47 @@ fun makeReport(params: MakeReportParams, user: User, testing: Boolean): Any {
     }
 
     val now = now(testingNow = params.testingNow, testing)
-    transaction {
-        ModeratorTaskTable.insert {
-            it[productBarcode] = params.barcode
-            it[taskType] = ModeratorTaskType.USER_REPORT.persistentCode
-            it[taskSourceUserId] = user.id
-            it[textFromUser] = params.text
-            it[creationTime] = now
+    return transaction {
+        if (params.barcode != null) {
+            ModeratorTaskTable.insert {
+                it[productBarcode] = params.barcode
+                it[taskType] = ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode
+                it[taskSourceUserId] = user.id
+                it[textFromUser] = params.text
+                it[creationTime] = now
+            }
+            UserContributionTable.add(
+                user,
+                UserContributionType.REPORT_WAS_MADE,
+                now,
+                barcode = params.barcode,
+            )
+        } else if (params.newsPieceId != null) {
+            val newsPieceExists = NewsPieceTable.select(NewsPieceTable.id eq params.newsPieceId).count() > 0
+            if (!newsPieceExists) {
+                return@transaction GenericResponse.failure(
+                    "news_piece_not_found",
+                    "no news pieces with ID ${params.newsPieceId} exist",
+                )
+            }
+            ModeratorTaskTable.insert {
+                it[newsPieceId] = params.newsPieceId
+                it[taskType] = ModeratorTaskType.USER_NEWS_PIECE_REPORT.persistentCode
+                it[taskSourceUserId] = user.id
+                it[textFromUser] = params.text
+                it[creationTime] = now
+            }
+            UserContributionTable.add(
+                user,
+                UserContributionType.REPORT_WAS_MADE,
+                now,
+                newsPieceID = params.newsPieceId,
+            )
+        } else {
+            return@transaction GenericResponse.failure("invalid_params", "needed params were not provided")
         }
-        UserContributionTable.add(
-            user,
-            UserContributionType.PRODUCT_REPORTED,
-            now,
-            barcode = params.barcode,
-        )
+
+        GenericResponse.success()
     }
-    return GenericResponse.success()
+
 }

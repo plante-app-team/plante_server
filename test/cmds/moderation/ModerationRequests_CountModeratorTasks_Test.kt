@@ -165,7 +165,7 @@ class ModerationRequests_CountModeratorTasks_Test {
             map = authedGet(moderatorClientToken, "/count_moderator_tasks/", queryParamsLists = mapOf(
                 "excludeTypes" to listOf(
                     ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
-                    ModeratorTaskType.USER_REPORT.typeName))
+                    ModeratorTaskType.USER_PRODUCT_REPORT.typeName))
             ).jsonMap()
             assertEquals(ModeratorTaskType.values().size - 2, map["total_count"], map.toString())
         }
@@ -196,7 +196,7 @@ class ModerationRequests_CountModeratorTasks_Test {
             map = authedGet(moderatorClientToken, "/count_moderator_tasks/", queryParamsLists = mapOf(
                 "includeTypes" to listOf(
                     ModeratorTaskType.PRODUCT_CHANGE_IN_OFF.typeName,
-                    ModeratorTaskType.USER_REPORT.typeName))
+                    ModeratorTaskType.USER_PRODUCT_REPORT.typeName))
             ).jsonMap()
             assertEquals(2, map["total_count"], map.toString())
         }

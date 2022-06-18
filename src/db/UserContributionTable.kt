@@ -18,10 +18,13 @@ object UserContributionTable : Table("user_contribution") {
             type: UserContributionType,
             time: Long,
             barcode: String? = null,
-            shopUID: OsmUID? = null) {
-        if (barcode == null && shopUID == null) {
-            throw IllegalArgumentException("Both barcode and shop UID must not be null")
+            shopUID: OsmUID? = null,
+            newsPieceID: Int? = null) {
+        if (barcode == null && shopUID == null && newsPieceID == null) {
+            throw IllegalArgumentException("Either barcode, shop UID or newsPieceID should not be null")
         }
+        // NOTE: we don't store newsPieceID, because most likely it was reported, and very likely
+        // it was deleted afterwards
         UserContributionTable.insert { row ->
             row[userId] = user.id
             row[UserContributionTable.barcode] = barcode

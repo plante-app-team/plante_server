@@ -63,7 +63,7 @@ class ModerationRequests_SendFeedback_Test {
             // No reports should be created
             transaction {
                 val tasks = ModeratorTaskTable.select {
-                    ModeratorTaskTable.taskType eq ModeratorTaskType.USER_REPORT.persistentCode
+                    ModeratorTaskTable.taskType eq ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode
                 }
                 assertEquals(0, tasks.count())
             }

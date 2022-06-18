@@ -6,6 +6,7 @@ object ModeratorTaskTable : Table("moderator_task") {
     val id = integer("id").autoIncrement()
     val productBarcode = text("barcode").nullable().index()
     val osmUID = text("osmId").nullable().index()
+    val newsPieceId = integer("news_piece_id").references(NewsPieceTable.id).nullable().index()
     val taskType = short("task_type").index()
     val taskSourceUserId = uuid("task_source_user_id").references(UserTable.id).index()
     val textFromUser = text("text_from_user").nullable()

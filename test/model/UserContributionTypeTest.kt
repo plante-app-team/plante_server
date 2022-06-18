@@ -11,7 +11,7 @@ class UserContributionTypeTest {
         // it's prohibited to change the values.
         assertEquals(1, UserContributionType.PRODUCT_EDITED.persistentCode)
         assertEquals(2, UserContributionType.PRODUCT_ADDED_TO_SHOP.persistentCode)
-        assertEquals(3, UserContributionType.PRODUCT_REPORTED.persistentCode)
+        assertEquals(3, UserContributionType.REPORT_WAS_MADE.persistentCode)
         assertEquals(4, UserContributionType.SHOP_CREATED.persistentCode)
         assertEquals(5, UserContributionType.LEGACY_PRODUCT_EDITED.persistentCode)
     }

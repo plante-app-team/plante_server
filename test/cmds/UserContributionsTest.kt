@@ -9,6 +9,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Before
 import org.junit.Test
 import test_utils.generateFakeOsmUID
+import vegancheckteam.plante_server.db.ModeratorTaskTable
+import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
+import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
@@ -17,9 +20,12 @@ import vegancheckteam.plante_server.db.UserContributionTable
 import vegancheckteam.plante_server.model.UserContributionType
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
+import vegancheckteam.plante_server.test_utils.makeReportCmd
+import vegancheckteam.plante_server.test_utils.putProductToShopCmd
 import vegancheckteam.plante_server.test_utils.register
 import vegancheckteam.plante_server.test_utils.registerAndGetTokenWithID
 import vegancheckteam.plante_server.test_utils.registerModerator
+import vegancheckteam.plante_server.test_utils.requestNewsCmd
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
 class UserContributionsTest {
@@ -32,6 +38,9 @@ class UserContributionsTest {
                 ShopsValidationQueueTable.deleteAll()
                 ShopTable.deleteAll()
                 UserContributionTable.deleteAll()
+                NewsPieceProductAtShopTable.deleteAll()
+                ModeratorTaskTable.deleteAll()
+                NewsPieceTable.deleteAll()
             }
         }
     }
@@ -130,8 +139,35 @@ class UserContributionsTest {
             assertEquals(1, contributions.size, contributions.toString())
             assertEquals(listOf(mapOf(
                 "time_utc" to 123,
-                "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                 "barcode" to barcode,
+            )), contributions)
+        }
+    }
+
+    @Test
+    fun `make news piece report contribution`() {
+        withPlanteTestApplication {
+            val user1 = register()
+            val user2 = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+
+            var contributions = userContributionsData(user2)
+            assertEquals(emptyList(), contributions)
+
+            putProductToShopCmd(user1, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
+
+            val news = requestNewsCmd(user2, 1.1, 0.9, 0.9, 1.1, now = 124)
+            assertEquals(1, news.size, news.toString())
+            val newsPieceId = (news[0]["id"] as Int)
+            makeReportCmd(user2, "text1", newsPieceID = newsPieceId, now = 123L)
+
+            contributions = userContributionsData(user2)
+            assertEquals(1, contributions.size, contributions.toString())
+            assertEquals(listOf(mapOf(
+                "time_utc" to 123,
+                "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
             )), contributions)
         }
     }
@@ -197,11 +233,11 @@ class UserContributionsTest {
             var contributions = userContributionsData(
                 clientToken, contributionsTypes = listOf(
                     UserContributionType.PRODUCT_EDITED,
-                    UserContributionType.PRODUCT_REPORTED))
+                    UserContributionType.REPORT_WAS_MADE))
             assertEquals(listOf(
                 mapOf(
                     "time_utc" to 2,
-                    "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                    "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                     "barcode" to barcode,
                 ),
                 mapOf(
@@ -226,11 +262,11 @@ class UserContributionsTest {
             // Second type
             contributions = userContributionsData(
                 clientToken, contributionsTypes = listOf(
-                    UserContributionType.PRODUCT_REPORTED))
+                    UserContributionType.REPORT_WAS_MADE))
             assertEquals(listOf(
                 mapOf(
                     "time_utc" to 2,
-                    "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                    "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                     "barcode" to barcode,
                 ),
             ), contributions)
@@ -275,7 +311,7 @@ class UserContributionsTest {
             assertEquals(listOf(
                 mapOf(
                     "time_utc" to 3,
-                    "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                    "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                     "barcode" to barcode,
                 ),
                 mapOf(
@@ -329,7 +365,7 @@ class UserContributionsTest {
             assertEquals(listOf(
                 mapOf(
                     "time_utc" to 3,
-                    "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                    "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                     "barcode" to barcode,
                 ),
                 mapOf(
@@ -350,7 +386,7 @@ class UserContributionsTest {
             assertEquals(listOf(
                 mapOf(
                     "time_utc" to 3,
-                    "type" to UserContributionType.PRODUCT_REPORTED.persistentCode.toInt(),
+                    "type" to UserContributionType.REPORT_WAS_MADE.persistentCode.toInt(),
                     "barcode" to barcode,
                 ),
                 mapOf(
