@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
@@ -34,6 +35,8 @@ class UserRequestsTest {
             map = authedGet(clientToken, "/user_data/").jsonMap()
             assertEquals(map["user_id"], id)
             assertEquals(map["name"], "Bob")
+            assertNull(map["apple_id"])
+            assertNotNull(map["google_id"])
         }
     }
 
@@ -97,6 +100,8 @@ class UserRequestsTest {
             map = authedGet(clientToken, "/user_data/").jsonMap()
             assertEquals(map["user_id"], id)
             assertEquals(map["name"], "Bob")
+            assertNotNull(map["apple_id"])
+            assertNull(map["google_id"])
         }
     }
 

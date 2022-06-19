@@ -25,7 +25,12 @@ data class UserDataResponse(
     @JsonProperty("rights_group")
     val rightsGroup: Short? = null,
     @JsonProperty("avatar_id")
-    val avatarId: String? = null) {
+    val avatarId: String? = null,
+    @JsonProperty("google_id")
+    val googleId: String? = null,
+    @JsonProperty("apple_id")
+    val appleId: String? = null,
+) {
 
     companion object {
         fun from(user: User) = UserDataResponse(
@@ -36,7 +41,10 @@ data class UserDataResponse(
                 birthday = user.birthday,
                 langsPrioritized = user.langsPrioritizedStr?.let { UserTable.splitLangs(it) },
                 rightsGroup = user.userRightsGroup.persistentCode,
-                avatarId = user.avatarId?.toString())
+                avatarId = user.avatarId?.toString(),
+                googleId = user.googleId,
+                appleId = user.appleId,
+        )
     }
     override fun toString(): String = jsonMapper.writeValueAsString(this)
 }
