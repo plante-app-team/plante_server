@@ -20,15 +20,18 @@ suspend fun deleteUser(params: DeleteUserParams, requester: User): Any {
     if (requester.userRightsGroup.persistentCode < UserRightsGroup.EVERYTHING_MODERATOR.persistentCode) {
         return GenericResponse.failure("denied")
     }
+    return deleteUserImpl(params.userId)
+}
 
+suspend fun deleteUserImpl(userId: String): GenericResponse {
     val targetUser = transaction {
         UserTable
-            .select(UserTable.id eq UUID.fromString(params.userId))
+            .select(UserTable.id eq UUID.fromString(userId))
             .map { User.from(it) }
             .firstOrNull()
     }
     if (targetUser == null) {
-        return GenericResponse.failure("user_not_found", "No user with ID: ${params.userId}")
+        return GenericResponse.failure("user_not_found", "No user with ID: $userId")
     }
 
     if (targetUser.avatarId != null) {
@@ -46,6 +49,6 @@ suspend fun deleteUser(params: DeleteUserParams, requester: User): Any {
     return if (updated > 0) {
         GenericResponse.success()
     } else {
-        GenericResponse.failure("internal_error", "Could not delete: ${params.userId}")
+        GenericResponse.failure("internal_error", "Could not delete: $userId")
     }
 }

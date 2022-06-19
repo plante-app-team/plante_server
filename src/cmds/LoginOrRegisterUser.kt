@@ -2,8 +2,10 @@ package vegancheckteam.plante_server.cmds
 
 import io.ktor.client.HttpClient
 import io.ktor.locations.Location
-import java.util.UUID
+import java.util.*
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.Config
@@ -26,37 +28,44 @@ data class LoginOrRegisterUserParams(
     val userName: String? = null)
 
 suspend fun loginOrRegisterUser(params: LoginOrRegisterUserParams, client: HttpClient, testing: Boolean): Any {
+    var googleId: String? = null
+    var appleId: String? = null
     if (params.googleIdToken != null) {
-        return googleAuth(testing, params, params.googleIdToken)
+        val idOrError = GoogleAuthorizer.authOrServerError(params.googleIdToken, testing)
+        googleId = when (idOrError) {
+            is GoogleIdOrServerError.Error -> return idOrError.error
+            is GoogleIdOrServerError.Ok -> idOrError.googleId
+        }
     } else if (params.appleAuthorizationCode != null) {
-        return appleAuth(testing, params, params.appleAuthorizationCode, client)
-    }
-    throw IllegalArgumentException("Both Google ID and Apple ID are nulls")
-}
-
-private fun googleAuth(testing: Boolean, params: LoginOrRegisterUserParams, googleIdToken: String): Any {
-    val idOrError = GoogleAuthorizer.authOrServerError(googleIdToken, testing)
-    val googleId = when (idOrError) {
-        is GoogleIdOrServerError.Error -> return idOrError.error
-        is GoogleIdOrServerError.Ok -> idOrError.googleId
+        val idOrError = AppleAuthorizer.auth(
+            testing,
+            params.appleAuthorizationCode,
+            Config.instance.iOSBackendPrivateKeyFilePath,
+            client)
+        appleId = when (idOrError) {
+            is AppleAuthorizer.AuthResult.Ok -> idOrError.appleId
+        }
+    } else {
+        throw IllegalArgumentException("Both Google ID and Apple ID are nulls")
     }
 
     val existingUser = transaction {
         UserTable.select {
-            UserTable.googleId eq googleId
+            ((UserTable.googleId eq googleId) and (UserTable.googleId neq null)) or
+                    ((UserTable.appleId eq appleId) and (UserTable.appleId neq null))
         }.firstOrNull()
     }
     return if (existingUser == null) {
-        registerUserImpl(googleId, null, params)
+        registerUserImpl(params, googleId = googleId, appleId = appleId)
     } else {
         loginUserImpl(User.from(existingUser), params)
     }
 }
 
 private fun registerUserImpl(
-    googleId: String?,
-    appleId: String?,
-    params: LoginOrRegisterUserParams
+    params: LoginOrRegisterUserParams,
+    googleId: String? = null,
+    appleId: String? = null,
 ): UserDataResponse {
     if (googleId == null && appleId == null) {
         throw IllegalArgumentException("Both Google ID and Apple ID are nulls");
@@ -94,31 +103,4 @@ private fun registerUserImpl(
 fun loginUserImpl(user: User, params: LoginOrRegisterUserParams): UserDataResponse {
     val jwtToken = JwtController.makeToken(user, params.deviceId)
     return UserDataResponse.from(user).copy(clientToken = jwtToken)
-}
-
-suspend fun appleAuth(
-    testing: Boolean,
-    params: LoginOrRegisterUserParams,
-    appleAuthorizationCode: String,
-    client: HttpClient
-): Any {
-    val idOrError = AppleAuthorizer.auth(
-        testing,
-        appleAuthorizationCode,
-        Config.instance.iOSBackendPrivateKeyFilePath,
-        client)
-    val appleId = when (idOrError) {
-        is AppleAuthorizer.AuthResult.Ok -> idOrError.appleId
-    }
-
-    val existingUser = transaction {
-        UserTable.select {
-            UserTable.appleId eq appleId
-        }.firstOrNull()
-    }
-    return if (existingUser == null) {
-        registerUserImpl(null, appleId, params)
-    } else {
-        loginUserImpl(User.from(existingUser), params)
-    }
 }

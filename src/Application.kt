@@ -1,9 +1,11 @@
 package vegancheckteam.plante_server
 
+import cmds.DeleteMyUserParams
 import cmds.avatar.USER_AVATAR_DATA
 import cmds.avatar.USER_AVATAR_UPLOAD
 import cmds.avatar.userAvatarData
 import cmds.avatar.userAvatarUpload
+import cmds.deleteMyUser
 import cmds.deprecated.LoginParams
 import cmds.deprecated.RegisterParams
 import cmds.deprecated.loginUser
@@ -370,6 +372,9 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<DeleteUserParams> { params, user ->
                 call.respond(deleteUser(params, user))
+            }
+            authedLocation<DeleteMyUserParams> { params, user ->
+                call.respond(deleteMyUser(params, user, client, testing))
             }
             authedLocation<BanUserParams> { params, user ->
                 call.respond(banUser(params, user))
