@@ -10,7 +10,6 @@ import vegancheckteam.plante_server.model.User
 
 @Location("/delete_my_user/")
 data class DeleteMyUserParams(
-    val userId: String,
     val googleIdToken: String? = null,
     val appleAuthorizationCode: String? = null,
 )
