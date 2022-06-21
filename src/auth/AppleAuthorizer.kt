@@ -86,7 +86,7 @@ object AppleAuthorizer {
         val response = client.post<HttpResponse>(urlString = "https://appleid.apple.com/auth/revoke?" +
                 "client_id=vegancheckteam.plante&" +
                 "client_secret=$jwt&" +
-                "token=${authResult.accessToken}" +
+                "token=${authResult.accessToken}&" +
                 "token_type_hint=access_token")
         Log.i("AppleAuthorizer", "revokeTokens, apple response: $response")
 
