@@ -12,6 +12,9 @@ import java.util.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.select
 import vegancheckteam.plante_server.aws.S3
+import vegancheckteam.plante_server.db.UserTable.default
+import vegancheckteam.plante_server.db.UserTable.index
+import vegancheckteam.plante_server.db.UserTable.nullable
 
 @Location("/delete_user/")
 data class DeleteUserParams(val userId: String)
@@ -40,10 +43,13 @@ suspend fun deleteUserImpl(userId: String): GenericResponse {
     val updated = transaction {
         UserTable.update({ UserTable.id eq targetUser.id }) { row ->
             row[googleId] = null
+            row[appleId] = null
             row[name] = ""
+            row[selfDescription] = ""
             row[birthday] = null
             row[loginGeneration] = targetUser.loginGeneration + 1 // Sign out
             row[avatarId] = null
+            row[langsPrioritized] = ""
         }
     }
     return if (updated > 0) {

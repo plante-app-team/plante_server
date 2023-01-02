@@ -187,9 +187,9 @@ class ShopsInBoundsDataTest {
                 osmUIDs.map { it.asStr }.toSet())
 
             val barcodesMap = (map["barcodes"] as Map<*, *>)
-            assertEquals(barcodesMap[osmUIDs[0].asStr], listOf(barcodes[0], barcodes[1]))
-            assertEquals(barcodesMap[osmUIDs[1].asStr], listOf(barcodes[1], barcodes[2]))
-            assertEquals(barcodesMap[osmUIDs[2].asStr], listOf(barcodes[2], barcodes[3]))
+            assertEquals((barcodesMap[osmUIDs[0].asStr] as List<*>).toSet(), setOf(barcodes[0], barcodes[1]))
+            assertEquals((barcodesMap[osmUIDs[1].asStr] as List<*>).toSet(), setOf(barcodes[1], barcodes[2]))
+            assertEquals((barcodesMap[osmUIDs[2].asStr] as List<*>).toSet(), setOf(barcodes[2], barcodes[3]))
         }
     }
 

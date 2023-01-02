@@ -106,6 +106,10 @@ import vegancheckteam.plante_server.cmds.avatar.UserAvatarDeleteParams
 import vegancheckteam.plante_server.cmds.avatar.userAvatarDelete
 import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
+import vegancheckteam.plante_server.cmds.likes.LikeProductParams
+import vegancheckteam.plante_server.cmds.likes.likeProduct
+import vegancheckteam.plante_server.cmds.likes.unlikeProduct
+import vegancheckteam.plante_server.cmds.likes.UnlikeProductParams
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
 import vegancheckteam.plante_server.cmds.mobileAppConfigData
@@ -159,6 +163,7 @@ import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductChangeTable
+import vegancheckteam.plante_server.db.ProductLikeTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductScanTable
 import vegancheckteam.plante_server.db.ProductTable
@@ -281,9 +286,6 @@ fun Application.module(testing: Boolean = false) {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
-        get<ProductDataParams> { params ->
-            call.respond(productData(params))
-        }
 
         route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
             handle {
@@ -292,6 +294,9 @@ fun Application.module(testing: Boolean = false) {
         }
 
         authenticate {
+            authedLocation<ProductDataParams> { params, user ->
+                call.respond(productData(params, user))
+            }
             authedLocation<UserDataParams> { _, user ->
                 call.respond(userData(user))
             }
@@ -310,8 +315,8 @@ fun Application.module(testing: Boolean = false) {
             authedLocation<CreateUpdateProductParams> { params, user ->
                 call.respond(createUpdateProduct(params, user, testing))
             }
-            authedLocation<ProductsDataParams> { params, _ ->
-                call.respond(productsData(params))
+            authedLocation<ProductsDataParams> { params, user ->
+                call.respond(productsData(params, user))
             }
             authedLocation<ProductChangesDataParams> { params, user ->
                 call.respond(productChangesData(params, user))
@@ -391,8 +396,8 @@ fun Application.module(testing: Boolean = false) {
             authedLocation<PutProductToShopParams> { params, user ->
                 call.respond(putProductToShop(params, user, testing))
             }
-            authedLocation<ProductsAtShopsDataParams> { params, _ ->
-                call.respond(productsAtShopsData(params))
+            authedLocation<ProductsAtShopsDataParams> { params, user ->
+                call.respond(productsAtShopsData(params, user))
             }
             authedLocation<ProductPresenceVoteParams> { params, user ->
                 call.respond(productPresenceVote(params, user, testing))
@@ -424,6 +429,12 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<NewsPieceDataParams> { params, _ ->
                 call.respond(newsPieceData(params))
+            }
+            authedLocation<LikeProductParams> { params, user ->
+                call.respond(likeProduct(params, user, testing))
+            }
+            authedLocation<UnlikeProductParams> { params, user ->
+                call.respond(unlikeProduct(params, user))
             }
 
             route(USER_AVATAR_UPLOAD, HttpMethod.Post) {
@@ -489,6 +500,7 @@ private fun mainServerInit() {
             UserContributionTable,
             NewsPieceTable,
             NewsPieceProductAtShopTable,
+            ProductLikeTable,
         )
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -11,6 +12,8 @@ import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.Shop
@@ -39,7 +42,7 @@ fun latestProductsAddedToShopsData(params: LatestProductsAddedToShopsDataParams,
     val shops = ShopTable.select { ShopTable.id inList shopsIds }
         .map { Shop.from(it) }
         .associateBy { it.id }
-    val products = ProductTable.select { ProductTable.id inList productsIds }
+    val products = ProductTable.select2(by = user) { ProductTable.id inList productsIds }
         .map { Product.from(it) }
         .associateBy { it.id }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -18,6 +19,8 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.deepDeleteNewsForBarcode
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
@@ -48,7 +51,7 @@ fun productPresenceVote(params: ProductPresenceVoteParams, user: User, testing: 
         return@transaction GenericResponse.failure("invalid_vote_val", "Barcode: ${params.barcode}")
     }
 
-    val productRow = ProductTable.select { ProductTable.barcode eq params.barcode }.firstOrNull()
+    val productRow = ProductTable.select2(by = user) { ProductTable.barcode eq params.barcode }.firstOrNull()
     if (productRow == null) {
         return@transaction GenericResponse.failure("product_not_found", "Barcode: ${params.barcode}")
     }

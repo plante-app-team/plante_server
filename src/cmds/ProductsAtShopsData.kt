@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -9,6 +10,8 @@ import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmElementType
 import vegancheckteam.plante_server.model.OsmUID
@@ -16,13 +19,14 @@ import vegancheckteam.plante_server.model.Product
 import vegancheckteam.plante_server.model.ProductsAtShop
 import vegancheckteam.plante_server.model.Shop
 import vegancheckteam.plante_server.model.ProductsAtShopsResponse
+import vegancheckteam.plante_server.model.User
 
 @Location("/products_at_shops_data/")
 data class ProductsAtShopsDataParams(
     val osmShopsIds: List<String>? = null,
     val osmShopsUIDs: List<String>? = null)
 
-fun productsAtShopsData(params: ProductsAtShopsDataParams) = transaction {
+fun productsAtShopsData(params: ProductsAtShopsDataParams, user: User) = transaction {
     val uids = if (params.osmShopsUIDs != null) {
         params.osmShopsUIDs.map { OsmUID.from(it) }
     } else if (params.osmShopsIds != null) {
@@ -31,7 +35,7 @@ fun productsAtShopsData(params: ProductsAtShopsDataParams) = transaction {
         return@transaction GenericResponse.failure("wtf")
     }
 
-    val selected = (ProductAtShopTable innerJoin ShopTable innerJoin ProductTable).select {
+    val selected = ProductTable.select2(by = user, joinWith = listOf(ProductAtShopTable, ShopTable)) {
         ShopTable.osmUID inList uids.map { it.asStr }
     }
 

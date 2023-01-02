@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.cmds
 
 import io.ktor.locations.Location
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -13,6 +14,7 @@ import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.UserContributionTable
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.ProductAtShopSource
@@ -42,7 +44,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         return@transaction GenericResponse.failure("invalid_source", "Invalid source: ${params.source}")
     }
 
-    val existingProduct = ProductTable.select { ProductTable.barcode eq params.barcode }.firstOrNull()
+    val existingProduct = ProductTable.select2(by = user) { ProductTable.barcode eq params.barcode }.firstOrNull()
     val productId = if (existingProduct != null) {
         existingProduct[ProductTable.id]
     } else {
@@ -50,7 +52,7 @@ fun putProductToShop(params: PutProductToShopParams, user: User, testing: Boolea
         if (result.error != null) {
             return@transaction result
         }
-        val newProduct = ProductTable.select { ProductTable.barcode eq params.barcode }.first()
+        val newProduct = ProductTable.select2(by = user) { ProductTable.barcode eq params.barcode }.first()
         newProduct[ProductTable.id]
     }
 

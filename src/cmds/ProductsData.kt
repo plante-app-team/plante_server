@@ -3,11 +3,14 @@ package vegancheckteam.plante_server.cmds
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.locations.Location
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.transactions.transaction
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.db.ProductTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.Product
+import vegancheckteam.plante_server.model.User
 
 const val PRODUCTS_DATA_PARAMS_PAGE_SIZE = 24
 
@@ -16,8 +19,8 @@ data class ProductsDataParams(
     val barcodes: List<String>,
     val page: Long)
 
-fun productsData(params: ProductsDataParams) = transaction {
-    val products = ProductTable.select {
+fun productsData(params: ProductsDataParams, user: User) = transaction {
+    val products = ProductTable.select2(by = user) {
         ProductTable.barcode inList params.barcodes
     }.orderBy(ProductTable.barcode)
      .limit(PRODUCTS_DATA_PARAMS_PAGE_SIZE + 1, PRODUCTS_DATA_PARAMS_PAGE_SIZE * params.page)

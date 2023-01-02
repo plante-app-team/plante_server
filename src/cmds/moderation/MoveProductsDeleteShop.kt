@@ -24,6 +24,8 @@ import vegancheckteam.plante_server.db.ProductAtShopTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.UserTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
@@ -67,7 +69,7 @@ suspend fun moveProductsDeleteShop(params: MoveProductsDeleteShopParams, user: U
     }
 
     // Move products
-    moveProducts(params, badShop, goodOsmShop, testing)
+    moveProducts(user, params, badShop, goodOsmShop, testing)
 
     // Delete bad shop locally
     deleteShopLocally(DeleteShopLocallyParams(badShop.osmUID.asStr), user)
@@ -106,6 +108,7 @@ private suspend fun getOsmShopsPair(goodShopUID: String, badShopUID: String, cli
 }
 
 private fun moveProducts(
+        by: User,
         params: MoveProductsDeleteShopParams,
         from: Shop,
         to: OsmShop,
@@ -114,7 +117,7 @@ private fun moveProducts(
     for (row in productsAtShopRows) {
         val productId = row[ProductAtShopTable.productId]
         val product = ProductTable
-            .select(ProductTable.id eq productId)
+            .select2(by) { ProductTable.id eq productId }
             .map { Product.from(it) }
             .firstOrNull()
         if (product == null) {

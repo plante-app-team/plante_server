@@ -1,6 +1,7 @@
 package vegancheckteam.plante_server.db
 
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.Table
@@ -21,4 +22,9 @@ object ProductTable : Table("product") {
 
     val nothingNonVegan: Op<Boolean>
         get() = veganStatus.isNull() or (veganStatus neq VegStatus.NEGATIVE.persistentCode)
+
+    fun select(where: SqlExpressionBuilder.() -> Op<Boolean>) {
+        // Intentionally nothing to do - we shadow an extension function with same name
+    }
+
 }

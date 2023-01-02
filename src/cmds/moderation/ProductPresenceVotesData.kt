@@ -2,11 +2,11 @@ package cmds.moderation
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.ktor.client.HttpClient
 import io.ktor.locations.Location
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -14,6 +14,8 @@ import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ProductTable
 import vegancheckteam.plante_server.db.ShopTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.OsmUID
 import vegancheckteam.plante_server.model.Product
@@ -33,7 +35,7 @@ fun productPresenceVotesData(params: ProductPresenceVotesDataParams, user: User)
     }
 
     val product = if (params.barcode != null) {
-        val row = ProductTable.select { ProductTable.barcode eq params.barcode }.firstOrNull()
+        val row = ProductTable.select2(by = user) { ProductTable.barcode eq params.barcode }.firstOrNull()
         if (row == null) {
             return@transaction ProductPresenceVotesDataResponse(votes = emptyList())
         } else {

@@ -23,6 +23,8 @@ import java.lang.Integer.max
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import vegancheckteam.plante_server.base.now
 import vegancheckteam.plante_server.db.UserContributionTable
+import vegancheckteam.plante_server.db.from
+import vegancheckteam.plante_server.db.select2
 import vegancheckteam.plante_server.model.UserContributionType
 
 @Location("/create_update_product/")
@@ -41,10 +43,10 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User, testing: 
     }
 
     transaction {
-        val existingProductRow = ProductTable.select { barcode eq params.barcode }.firstOrNull()
+        val existingProductRow = ProductTable.select2(by = user) { barcode eq params.barcode }.firstOrNull()
         val oldProduct = existingProductRow?.let { Product.from(it) }
 
-        val productRow = if (oldProduct == null) {
+        if (oldProduct == null) {
             ProductTable.insert { row ->
                 row[barcode] = params.barcode
                 if (veganStatus != null) {
@@ -62,9 +64,8 @@ fun createUpdateProduct(params: CreateUpdateProductParams, user: User, testing: 
                     }
                 }
             }
-            ProductTable.select { barcode eq params.barcode }.first()
         }
-
+        val productRow = ProductTable.select2(user.id) { barcode eq params.barcode }.first()
         val newProduct = Product.from(productRow)
         maybeInsertProductChangeInfo(oldProduct, newProduct, user)
         deleteExtraProductChanges(newProduct.barcode)
@@ -178,5 +179,5 @@ private fun maybeAddContribution(
 }
 
 private fun emptyProductWith(id: Int, barcode: String): Product {
-    return Product(id, barcode, null, null, null, null, null)
+    return Product(id, barcode, null, null, null, null, null, false, 0)
 }
