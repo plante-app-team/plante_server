@@ -44,6 +44,8 @@ def main(args):
                       help='Access key ID of your AWS user, which has the rights to write to the provided S3 bucket')
   parser.add_argument('--aws-s3-secret-access-key', required=True,
                       help='Secret access key of your AWS user, which has the rights to write to the provided S3 bucket')
+  parser.add_argument('--psql-execute-file', required=False,
+                      help='In most cases the file would be a backup file, execution of which would put its data into the started DB')
   args = parser.parse_args()
   step('Args: {}'.format(args))
   step('std out log file: {}'.format(stdout_log_file))
@@ -54,7 +56,7 @@ def main(args):
   elif not os.path.exists(docker_repo_dir):
     step('No docker repo dir found - clonning docker repo into dir: {}'.format(docker_repo_dir))
     os.makedirs(docker_repo_dir, exist_ok=True)
-    check_call('git clone https://github.com/blazern/plante_docker.git {}'.format(docker_repo_dir))
+    check_call('git clone https://github.com/plante-app-team/plante_docker {}'.format(docker_repo_dir))
   else:
     step('Docker repo dir found, no need to clone the repo')
 
@@ -65,6 +67,8 @@ def main(args):
   step('Building db container')
   db_container_dir = os.path.join(docker_repo_dir, 'db')
   users_password = '123'
+  psql_user = 'main_user'
+  psql_db = 'main'
   db_container_name = 'db_container_for_plante_server_tests'
   check_call('docker build -t {} {} --build-arg USER_PASSWORD={}'.format(db_container_name, db_container_dir, users_password))
 
@@ -82,6 +86,14 @@ def main(args):
   sleep_time = 7
   step('Sleeping for {} seconds to wait for db container start'.format(sleep_time))
   time.sleep(sleep_time)
+
+  if args.psql_execute_file:
+    step('Executing psql_execute_file: {}'.format(args.psql_execute_file))
+    if not os.path.exists(args.psql_execute_file) or os.path.isdir(args.psql_execute_file):
+      raise RuntimeError('psql_execute_file does not exist or is a folder: {}'.format(args.psql_execute_file))
+    check_call('docker cp {} db_container_for_plante_server_tests:/extra.sql'.format(args.psql_execute_file))
+    check_call('docker exec -it db_container_for_plante_server_tests psql -U {} -d {} -f /extra.sql'
+      .format(psql_user, psql_db))
 
   step('Generating testing config')
   config_template = '''
@@ -109,10 +121,10 @@ def main(args):
    "metrics_endpoint": "doesnt_matter_its_not_tested"
   }}
   '''
-  postgres_url = 'postgresql://localhost/main'
+  postgres_url = 'postgresql://localhost/{}'.format(psql_db)
   config = config_template.format(
     postgres_url,
-    'main_user',
+    psql_user,
     users_password,
     args.ios_server_private_key_path,
     args.osm_testing_user,
