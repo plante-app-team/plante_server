@@ -143,7 +143,10 @@ def main(args):
   step('Wrote config to file: {}'.format(config_file))
 
   step('Blocking until db container finishes')
+  step('')
   step('You can start the tests now, don\'t forget to export env var PLANTE_BACKEND_CONFIG_FILE_PATH with value: {}'.format(config_file))
+  step('You can connect to the running psql now by executing: docker exec -it {} psql -U {} -d {}'.format(
+    db_container_name, psql_user, psql_db))
 
   docker_run_process.communicate()
   step('Finishing')
