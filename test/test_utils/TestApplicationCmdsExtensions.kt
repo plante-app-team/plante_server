@@ -153,3 +153,10 @@ fun TestApplicationEngine.makeReportCmd(
         assertEquals(expectedError, map["error"], map.toString())
     }
 }
+
+fun TestApplicationEngine.allModeratorTasksCmd(
+    moderator: String,
+): List<Map<*, *>> {
+    val map = authedGet(moderator, "/all_moderator_tasks_data/").jsonMap()
+    return (map["tasks"] as List<*>).map { it as Map<*, *> }
+}

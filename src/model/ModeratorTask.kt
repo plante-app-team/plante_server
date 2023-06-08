@@ -15,6 +15,8 @@ data class ModeratorTask(
     val barcode: String?,
     @JsonProperty("osm_uid")
     val osmUID: OsmUID?,
+    @JsonProperty("news_piece_id")
+    val newsPieceId: Int?,
     @JsonProperty("task_type")
     val taskType: ModeratorTaskType,
     @JsonProperty("task_source_user_id")
@@ -42,6 +44,7 @@ data class ModeratorTask(
             id = tableRow[ModeratorTaskTable.id],
             barcode = tableRow[ModeratorTaskTable.productBarcode],
             osmUID = tableRow[ModeratorTaskTable.osmUID]?.let { OsmUID.from(it) },
+            newsPieceId = tableRow[ModeratorTaskTable.newsPieceId],
             taskType = taskTypeFrom(tableRow[ModeratorTaskTable.taskType])!!,
             taskSourceUserId = tableRow[ModeratorTaskTable.taskSourceUserId].toString(),
             textFromUser = tableRow[ModeratorTaskTable.textFromUser],

@@ -21,11 +21,13 @@ import vegancheckteam.plante_server.db.ProductPresenceVoteTable
 import vegancheckteam.plante_server.db.ShopTable
 import vegancheckteam.plante_server.db.ShopsValidationQueueTable
 import vegancheckteam.plante_server.model.ModeratorTaskType
+import vegancheckteam.plante_server.test_utils.allModeratorTasksCmd
 import vegancheckteam.plante_server.test_utils.authedGet
 import vegancheckteam.plante_server.test_utils.jsonMap
 import vegancheckteam.plante_server.test_utils.makeReportCmd
 import vegancheckteam.plante_server.test_utils.putProductToShopCmd
 import vegancheckteam.plante_server.test_utils.register
+import vegancheckteam.plante_server.test_utils.registerModerator
 import vegancheckteam.plante_server.test_utils.requestNewsCmd
 import vegancheckteam.plante_server.test_utils.withPlanteTestApplication
 
@@ -59,18 +61,13 @@ class ModerationRequests_MakeReport_Test {
             makeReportCmd(clientToken, "text2", barcode = barcode)
             makeReportCmd(clientToken, "text3", barcode = barcode)
 
-            transaction {
-                val tasks = ModeratorTaskTable.select {
-                    (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode)
-                }.toList()
-                assertEquals(3, tasks.count())
-
-                val texts = tasks.map { it[ModeratorTaskTable.textFromUser] }
-                assertTrue("text1" in texts)
-                assertTrue("text2" in texts)
-                assertTrue("text3" in texts)
-            }
+            val moderatorClientToken = registerModerator()
+            val tasks = allModeratorTasksCmd(moderatorClientToken)
+                .filter { it["task_type"] == ModeratorTaskType.USER_PRODUCT_REPORT.typeName }
+            val texts = tasks.map { it["text_from_user"] }
+            assertTrue("text1" in texts)
+            assertTrue("text2" in texts)
+            assertTrue("text3" in texts)
         }
     }
 
@@ -89,15 +86,13 @@ class ModerationRequests_MakeReport_Test {
 
             makeReportCmd(clientToken, "text1", newsPieceID = newsPieceId)
 
-            transaction {
-                val tasks = ModeratorTaskTable.select {
-                    (ModeratorTaskTable.newsPieceId eq newsPieceId) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_NEWS_PIECE_REPORT.persistentCode)
-                }.toList()
-                assertEquals(1, tasks.count())
+            val moderatorClientToken = registerModerator()
+            val tasks = allModeratorTasksCmd(moderatorClientToken)
+                .filter { it["task_type"] == ModeratorTaskType.USER_NEWS_PIECE_REPORT.typeName }
 
-                assertEquals(tasks.first()[ModeratorTaskTable.textFromUser], "text1")
-            }
+            assertEquals(1, tasks.size)
+            assertEquals(newsPieceId, tasks[0]["news_piece_id"])
+            assertEquals("text1", tasks[0]["text_from_user"])
         }
     }
 
@@ -110,10 +105,10 @@ class ModerationRequests_MakeReport_Test {
 
             makeReportCmd(clientToken, "text1", newsPieceID = invalidNewsPieceId, expectedError = "news_piece_not_found")
 
-            transaction {
-                val tasks = ModeratorTaskTable.selectAll().toList()
-                assertEquals(0, tasks.count())
-            }
+            val moderatorClientToken = registerModerator()
+            val tasks = allModeratorTasksCmd(moderatorClientToken)
+                .filter { it["task_type"] == ModeratorTaskType.USER_NEWS_PIECE_REPORT.typeName }
+            assertEquals(0, tasks.count())
         }
     }
 
@@ -134,13 +129,10 @@ class ModerationRequests_MakeReport_Test {
             makeReportCmd(clientToken, text2, barcode = barcode, expectedError = "report_text_too_long")
 
             // No reports should be created
-            transaction {
-                val tasks = ModeratorTaskTable.select {
-                    (ModeratorTaskTable.productBarcode eq barcode) and
-                            (ModeratorTaskTable.taskType eq ModeratorTaskType.USER_PRODUCT_REPORT.persistentCode)
-                }
-                assertEquals(0, tasks.count())
-            }
+            val moderatorClientToken = registerModerator()
+            val tasks = allModeratorTasksCmd(moderatorClientToken)
+                .filter { it["task_type"] == ModeratorTaskType.USER_PRODUCT_REPORT.typeName }
+            assertEquals(0, tasks.size)
         }
     }
 }
