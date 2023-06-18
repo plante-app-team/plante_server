@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import vegancheckteam.plante_server.GlobalStorage
 import vegancheckteam.plante_server.base.Log
@@ -42,7 +43,7 @@ data class NewsPiece(
                     joinType = JoinType.LEFT,
                     onColumn = NewsPieceTable.creatorUserId,
                     otherColumn = UserTable.id)
-                .select(where)
+                .select { where and (NewsPieceTable.deleted eq false) }
                 .orderBy(NewsPieceTable.creationTime, order = SortOrder.DESC)
                 .limit(n = pageSize + 1, offset = (pageNumber * pageSize).toLong())
                 .map { from(it) }

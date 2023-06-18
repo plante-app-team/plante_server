@@ -1,8 +1,6 @@
 package vegancheckteam.plante_server.db
 
-import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
@@ -15,6 +13,7 @@ object NewsPieceTable : Table("news_piece_table") {
     val creatorUserId = uuid("creator_user_id").references(UserTable.id).index()
     val creationTime = long("creation_time").index()
     val type = short("type").index()
+    val deleted = bool("deleted").default(false)
     override val primaryKey = PrimaryKey(id)
 }
 

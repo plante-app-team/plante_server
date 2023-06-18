@@ -1,9 +1,8 @@
 package cmds.moderation
 
 import io.ktor.locations.Location
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
-import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
+import org.jetbrains.exposed.sql.update
 import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.model.GenericResponse
 import vegancheckteam.plante_server.model.User
@@ -18,8 +17,9 @@ fun deleteNewsPiece(params: DeleteNewsPieceParams, requester: User): Any {
     }
 
     transaction {
-        NewsPieceProductAtShopTable.deleteWhere { NewsPieceProductAtShopTable.newsPieceId eq params.newsPieceId }
-        NewsPieceTable.deleteWhere { NewsPieceTable.id eq params.newsPieceId }
+        NewsPieceTable.update( { NewsPieceTable.id eq params.newsPieceId } ) {
+            it[deleted] = true
+        }
     }
     return GenericResponse.success()
 }
