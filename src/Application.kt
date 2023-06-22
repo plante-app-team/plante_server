@@ -87,6 +87,7 @@ import vegancheckteam.plante_server.cmds.MobileAppConfigDataParams
 import vegancheckteam.plante_server.cmds.NewsDataParams
 import vegancheckteam.plante_server.cmds.NewsPieceDataParams
 import vegancheckteam.plante_server.cmds.ProductDataParams
+import vegancheckteam.plante_server.cmds.ProductDataParamsNoAuth
 import vegancheckteam.plante_server.cmds.ProductPresenceVoteParams
 import vegancheckteam.plante_server.cmds.ProductScanParams
 import vegancheckteam.plante_server.cmds.ProductsAtShopsDataParams
@@ -144,6 +145,7 @@ import vegancheckteam.plante_server.cmds.off_proxy.offProxyGet
 import vegancheckteam.plante_server.cmds.off_proxy.offProxyMultipart
 import vegancheckteam.plante_server.cmds.off_proxy.offProxyPostForm
 import vegancheckteam.plante_server.cmds.productData
+import vegancheckteam.plante_server.cmds.productDataNoAuth
 import vegancheckteam.plante_server.cmds.productPresenceVote
 import vegancheckteam.plante_server.cmds.productScan
 import vegancheckteam.plante_server.cmds.productsAtShopsData
@@ -286,7 +288,7 @@ fun Application.module(testing: Boolean = false) {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
-        get<ProductDataParams> { call.respond(productData(it, user = null)) }
+        get<ProductDataParamsNoAuth> { call.respond(productDataNoAuth(it)) }
 
         route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
             handle {

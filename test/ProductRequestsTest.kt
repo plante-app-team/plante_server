@@ -351,6 +351,16 @@ class ProductRequestsTest {
     fun `unauthorized user cannot request product data`() {
         withPlanteTestApplication {
             val barcode = UUID.randomUUID().toString()
+            // Unauthorized get
+            val response = get("/product_data/?barcode=${barcode}").response
+            assertEquals(HttpStatusCode.Unauthorized, response.status())
+        }
+    }
+
+    @Test
+    fun `unauthorized user can request product data from second endpoint`() {
+        withPlanteTestApplication {
+            val barcode = UUID.randomUUID().toString()
 
             val clientToken = register()
             var map = authedGet(
@@ -360,7 +370,7 @@ class ProductRequestsTest {
             assertEquals("ok", map["result"])
 
             // Unauthorized get
-            map = get("/product_data/?barcode=${barcode}").jsonMap()
+            map = get("/product_data_no_auth/?barcode=${barcode}").jsonMap()
             assertEquals("unknown", map["vegan_status"])
             assertEquals("community", map["vegan_status_source"])
         }
