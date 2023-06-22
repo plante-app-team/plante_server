@@ -19,10 +19,11 @@ private val tableAliasLikesCount = ProductLikeTable.alias("likesCountAlias")
 private val tableAliasMyLikesCount = ProductLikeTable.alias("myLikesAlias")
 private val columnAliasLikesCount = tableAliasLikesCount[ProductLikeTable.id].count().alias("AllLikesCount")
 private val columnAliasMyLikesCount = tableAliasMyLikesCount[ProductLikeTable.id].count().alias("MyLikesCount")
+private val nullUuid = UUID.fromString("00000000-0000-0000-0000-000000000000")
 
-fun ProductTable.select2(by: User, joinWith: List<Table> = emptyList(), where: () -> Op<Boolean>) = select2(by.id, joinWith, where)
+fun ProductTable.select2(by: User?, joinWith: List<Table> = emptyList(), where: () -> Op<Boolean>) = select2(by?.id, joinWith, where)
 
-fun ProductTable.select2(by: UUID, joinWith: List<Table> = emptyList(), where: () -> Op<Boolean>): Query {
+fun ProductTable.select2(by: UUID?, joinWith: List<Table> = emptyList(), where: () -> Op<Boolean>): Query {
     val allColumns = ProductTable.columns + joinWith.flatMap { it.columns }
     return ProductTable
         .let {
@@ -37,7 +38,7 @@ fun ProductTable.select2(by: UUID, joinWith: List<Table> = emptyList(), where: (
             tableAliasMyLikesCount,
             { ProductTable.barcode },
             { tableAliasMyLikesCount[ProductLikeTable.barcode] },
-            { tableAliasMyLikesCount[ProductLikeTable.userId] eq by })
+            { tableAliasMyLikesCount[ProductLikeTable.userId] eq (by ?: nullUuid) })
         .slice(
             columnAliasLikesCount,
             columnAliasMyLikesCount,

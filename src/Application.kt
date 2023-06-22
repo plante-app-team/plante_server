@@ -286,6 +286,7 @@ fun Application.module(testing: Boolean = false) {
         get<RegisterParams> { call.respond(registerUser(it, client, testing)) }
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
+        get<ProductDataParams> { call.respond(productData(it, user = null)) }
 
         route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
             handle {

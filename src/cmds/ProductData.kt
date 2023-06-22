@@ -13,7 +13,7 @@ import vegancheckteam.plante_server.model.User
 @Location("/product_data/")
 data class ProductDataParams(val barcode: String)
 
-fun productData(params: ProductDataParams, user: User): Any {
+fun productData(params: ProductDataParams, user: User?): Any {
     val product = transaction {
         val existingProductRow = ProductTable.select2(by = user) { ProductTable.barcode eq params.barcode }.firstOrNull()
         existingProductRow?.let { Product.from(it) }
