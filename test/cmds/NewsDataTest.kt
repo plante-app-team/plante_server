@@ -1,5 +1,9 @@
 package vegancheckteam.plante_server.cmds
 
+import io.ktor.http.HttpMethod
+import io.ktor.server.testing.handleRequest
+import io.ktor.server.testing.setBody
+import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
@@ -653,6 +657,51 @@ class NewsDataTest {
             assertEquals(2, news.size, news.toString())
             assertEquals(userId2, news[0]["creator_user_id"])
             assertEquals(userId1, news[1]["creator_user_id"])
+        }
+    }
+
+    @Test
+    fun `a news piece contains a user avatar if the user has it`() {
+        withPlanteTestApplication {
+            val (token1, userId1) = registerAndGetTokenWithID(name = "Jack")
+
+            // Set avatar
+            val img = File("./assets_for_tests/front_coca_light_de.jpg")
+            assertTrue(img.exists())
+            val avatarResp = handleRequest(HttpMethod.Post, "/user_avatar_upload/") {
+                addHeader("Authorization", "Bearer $token1")
+                setBody(img.readBytes())
+            }
+            val avatarId = avatarResp.jsonMap()["result"].toString()
+
+            // Create a news piece
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+            putProductToShopCmd(token1, barcode, shop, lat = 1.0, lon = 1.0, now = 123)
+
+            // Register another user and requests news for them
+            val token2 = register()
+            val news = requestNewsCmd(token2, 1.1, 0.9, 0.9, 1.1, now = 123)
+            assertEquals(1, news.size, news.toString())
+
+            val newsPiece = news[0].toMutableMap()
+            assertNotNull(newsPiece["id"])
+            val expected = mapOf(
+                "id" to null,
+                "lat" to 1.0,
+                "lon" to 1.0,
+                "creator_user_id" to userId1,
+                "creator_user_name" to "Jack",
+                "creator_user_avatar_id" to avatarId, // <------ ensuring the avatar is there
+                "creation_time" to 123,
+                "type" to NewsPieceType.PRODUCT_AT_SHOP.persistentCode.toInt(),
+                "data" to mapOf(
+                    "barcode" to barcode,
+                    "shop_uid" to shop.asStr,
+                )
+            )
+            newsPiece["id"] = null
+            assertEquals<Map<*, *>>(expected, newsPiece)
         }
     }
 }

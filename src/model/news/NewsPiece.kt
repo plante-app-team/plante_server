@@ -1,5 +1,6 @@
 package vegancheckteam.plante_server.model.news
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 import org.jetbrains.exposed.sql.JoinType
@@ -15,6 +16,7 @@ import vegancheckteam.plante_server.db.NewsPieceProductAtShopTable
 import vegancheckteam.plante_server.db.NewsPieceTable
 import vegancheckteam.plante_server.db.UserTable
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class NewsPiece(
     @JsonProperty("id")
     val id: Int,
@@ -26,6 +28,8 @@ data class NewsPiece(
     val creatorUserId: UUID,
     @JsonProperty("creator_user_name")
     val creatorUserName: String,
+    @JsonProperty("creator_user_avatar_id")
+    val creatorAvatarId: UUID?,
     @JsonProperty("creation_time")
     val creationTime: Long,
     @JsonProperty("type")
@@ -73,6 +77,7 @@ data class NewsPiece(
                 lon = tableRow[NewsPieceTable.lon],
                 creatorUserId = tableRow[NewsPieceTable.creatorUserId],
                 creatorUserName = tableRow[UserTable.name],
+                creatorAvatarId = tableRow[UserTable.avatarId],
                 creationTime = tableRow[NewsPieceTable.creationTime],
                 type = tableRow[NewsPieceTable.type],
                 data = emptyMap<Any, Any>(),
