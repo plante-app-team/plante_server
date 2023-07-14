@@ -373,6 +373,37 @@ class NewsDataTest {
         }
     }
 
+    @Test
+    fun `outdated news are deleted even when they have related moderator tasks`() {
+        withPlanteTestApplication {
+            val userToken = register()
+            val barcode = UUID.randomUUID().toString()
+            val shop = generateFakeOsmUID()
+            var now = 0L
+            putProductToShopCmd(
+                userToken,
+                barcode,
+                shop,
+                lat = 1.0,
+                lon = 1.0,
+                now = now)
+            var news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
+            assertEquals(1, news.size, news.toString())
+
+            val reportRes = authedGet(userToken, "/make_report/", mapOf(
+                "newsPieceId" to news[0]["id"].toString(),
+                "text" to "some text",
+                "testingNow" to now.toString(),
+            ))
+            assertEquals(200, reportRes.response.status()?.value)
+
+            // No news anymore
+            now = TimeUnit.DAYS.toSeconds(NEWS_LIFETIME_DAYS * 2)
+            news = requestNewsCmd(userToken, 1.1, 0.9, 0.9, 1.1, now = now)
+            assertEquals(0, news.size, news.toString())
+        }
+    }
+
     private fun areaTest(
         center: Pair<Double, Double>,
         northEastBounds: Pair<Double, Double>,

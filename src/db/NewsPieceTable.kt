@@ -21,6 +21,11 @@ fun NewsPieceTable.deepDeleteNewsWhere(where: () -> Op<Boolean>) {
     val whereOp = where.invoke()
     val news = NewsPieceTable
         .select(whereOp)
+
+    ModeratorTaskTable.deleteWhere {
+        ModeratorTaskTable.newsPieceId inList news.map { it[id] }
+    }
+
     for (newsType in NewsPieceType.values()) {
         val typedNews = news.filter { it[type] == newsType.persistentCode }
         newsType.deleteWhereParentsAre(typedNews.map { it[id] })
