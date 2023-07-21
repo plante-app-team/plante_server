@@ -248,11 +248,13 @@ fun Application.module(testing: Boolean = false) {
         method(HttpMethod.Options)
         allowHeaders { true }
         allowXHttpMethodOverride()
+        allowSameOrigin = true
         allowCredentials = true
         allowNonSimpleContentTypes = true
         if (Config.instance.allowCors) {
             anyHost()
         } else {
+            host("planteapp.com", listOf("https"))
             host("planteapp.vercel.app", listOf("http", "https"))
             host("localhost:3000")
         }
