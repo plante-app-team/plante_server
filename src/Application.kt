@@ -57,6 +57,7 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.locations.get
 import io.ktor.metrics.micrometer.MicrometerMetrics
+import io.ktor.request.httpMethod
 import io.ktor.request.receive
 import io.ktor.request.uri
 import io.ktor.response.respond
@@ -108,9 +109,9 @@ import vegancheckteam.plante_server.cmds.avatar.userAvatarDelete
 import vegancheckteam.plante_server.cmds.createShop
 import vegancheckteam.plante_server.cmds.createUpdateProduct
 import vegancheckteam.plante_server.cmds.likes.LikeProductParams
+import vegancheckteam.plante_server.cmds.likes.UnlikeProductParams
 import vegancheckteam.plante_server.cmds.likes.likeProduct
 import vegancheckteam.plante_server.cmds.likes.unlikeProduct
-import vegancheckteam.plante_server.cmds.likes.UnlikeProductParams
 import vegancheckteam.plante_server.cmds.loginOrRegisterUser
 import vegancheckteam.plante_server.cmds.makeReport
 import vegancheckteam.plante_server.cmds.mobileAppConfigData
@@ -225,7 +226,7 @@ fun Application.module(testing: Boolean = false) {
             val uri = call.request.uri
             val user = call.userPrincipal?.user
             val userStr = user?.let { "${it.id} (${it.name})" } ?: "{Invalid}"
-            "User: $userStr, req: $uri, resp status: $responseStatus"
+            "User: $userStr, req: $uri (${call.request.httpMethod}), resp status: $responseStatus"
         }
     }
 
@@ -248,6 +249,7 @@ fun Application.module(testing: Boolean = false) {
         method(HttpMethod.Options)
         header(HttpHeaders.Authorization)
         header(HttpHeaders.ContentType)
+        allowXHttpMethodOverride()
         allowCredentials = true
         allowNonSimpleContentTypes = true
         if (Config.instance.allowCors) {
