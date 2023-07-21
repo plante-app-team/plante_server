@@ -50,7 +50,6 @@ import io.ktor.client.features.logging.Logging
 import io.ktor.features.CORS
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
@@ -247,8 +246,7 @@ fun Application.module(testing: Boolean = false) {
 
     install(CORS) {
         method(HttpMethod.Options)
-        header(HttpHeaders.Authorization)
-        header(HttpHeaders.ContentType)
+        allowHeaders { true }
         allowXHttpMethodOverride()
         allowCredentials = true
         allowNonSimpleContentTypes = true
