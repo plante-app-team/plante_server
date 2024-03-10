@@ -291,6 +291,7 @@ fun Application.module(testing: Boolean = false) {
         get<LoginParams> { call.respond(loginUser(it, client, testing)) }
         get<LoginOrRegisterUserParams> { call.respond(loginOrRegisterUser(it, client, testing)) }
         get<ProductDataParamsNoAuth> { call.respond(productDataNoAuth(it)) }
+        get<NewsDataParams> { call.respond(newsData(it, testing)) }
 
         route("/${Config.instance.metricsEndpoint}", HttpMethod.Get) {
             handle {
@@ -428,9 +429,6 @@ fun Application.module(testing: Boolean = false) {
             }
             authedLocation<SendFeedbackParams> { params, user ->
                 call.respond(sendFeedback(params, user, testing))
-            }
-            authedLocation<NewsDataParams> { params, user ->
-                call.respond(newsData(params, user, testing))
             }
             authedLocation<NewsPieceDataParams> { params, _ ->
                 call.respond(newsPieceData(params))

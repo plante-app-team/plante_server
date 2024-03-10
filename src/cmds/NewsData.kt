@@ -48,7 +48,7 @@ data class NewsDataParams(
     val testingNow: Long? = null,
 )
 
-fun newsData(params: NewsDataParams, user: User, testing: Boolean): Any = transaction {
+fun newsData(params: NewsDataParams, testing: Boolean): Any = transaction {
     val now = now(params.testingNow, testing)
     deleteOutdatedNews(now)
 
